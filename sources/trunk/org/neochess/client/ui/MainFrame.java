@@ -41,7 +41,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
         setJMenuBar (createMenuBar());
         getContentPane().add(desktopPane, BorderLayout.CENTER);
         getContentPane().add(statusBar, BorderLayout.SOUTH );
-        updateMenuBar();
+        update();
     }
     
     @Override
