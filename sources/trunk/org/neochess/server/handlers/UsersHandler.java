@@ -4,6 +4,7 @@ package org.neochess.server.handlers;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import org.json.simple.JSONObject;
 import org.neochess.engine.User;
@@ -34,7 +35,19 @@ public class UsersHandler extends Handler implements Console.ConsoleListener, Cl
     @Override
     public void onCommandEntered(String command, List<String> commandTokens)
     {
-        
+        String cmd = commandTokens.get(0);
+        if (cmd.equals("listUsers"))
+        {
+            System.console().printf("%-10s%-40s\n", "UserId", "UserName");
+            List<User> users = getUsers();
+            for (User user : users)
+                System.console().printf("%-10d%-40s\n", user.getId(), user.getUserName());
+        }
+        else if (cmd.equals("deleteUser"))
+        {
+            boolean userDeleted = deleteUser(Integer.parseInt(commandTokens.get(1)));
+            System.console().printf(userDeleted? "User deleted successfully !!\n": "Error deleting user !!\n");
+        }
     }
 
     @Override
@@ -299,6 +312,22 @@ public class UsersHandler extends Handler implements Console.ConsoleListener, Cl
         return user;
     }
     
+    private List<User> getUsers ()
+    {
+        List<User> users = new ArrayList<User>();
+        String sql = "SELECT * FROM SYSUSER";
+        try
+        {
+            Statement statement = Application.getInstance().getDatabase().execute(sql);
+            ResultSet resultSet = statement.getResultSet();
+            while (resultSet.next())
+                users.add(getUserFromResultSet(resultSet));
+            statement.close();
+        }
+        catch (Exception ex){}
+        return users;
+    }
+    
     private boolean persistUser (User user)
     {
         boolean userPersisted = true;
@@ -351,31 +380,31 @@ public class UsersHandler extends Handler implements Console.ConsoleListener, Cl
         } 
         catch (SQLException e)
         {
-            Application.getInstance().getLogger().warning("Error " + (isUpdatingUser?"updating":"inserting") + " User " + user.getId() + " Sql: " + sql.toString() + " Ex: " + e.getMessage());
+            Application.getInstance().getLogger().warning("Error " + (isUpdatingUser?"updating":"inserting") + " User [" + user.getUserName() + "] Sql: " + sql.toString() + " Ex: " + e.getMessage());
             userPersisted = false;
         }
         
         return userPersisted;
     }
     
-    private boolean deleteUser (User user)
+    private boolean deleteUser (int userId)
     {
         boolean userDeleted = true;
-        
-        Application.getInstance().getLogger().info("Deleting User [" + user.getUserName() + "] ...");
-        String sql = "DELETE FROM SYSUSER WHERE ID=" + user.getId();
+        User user = getUserById(userId);
+        String userName = (user != null)? user.getUserName() : "?";
+        Application.getInstance().getLogger().info("Deleting User [" + userName + "] ...");
+        String sql = "DELETE FROM SYSUSER WHERE ID=" + userId;
         try
         {
             Statement statement = Application.getInstance().getDatabase().execute(sql);
             statement.close();
-            Application.getInstance().getLogger().info("User [" + user.getUserName() + "] deleted successfully !!");
+            Application.getInstance().getLogger().info("User [" + userName + "] deleted successfully !!");
         }
         catch (Exception e)
         {
-            Application.getInstance().getLogger().warning("Error deleting User " + user.getId() + " Sql: " + sql + " Ex: " + e.getMessage());
+            Application.getInstance().getLogger().warning("Error deleting User [" + userName + "] Sql: " + sql + " Ex: " + e.getMessage());
             userDeleted = false;
         }
-        
         return userDeleted;
     }
     
