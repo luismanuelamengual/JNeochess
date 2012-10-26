@@ -52,14 +52,14 @@ public class UsersHandler extends Handler implements Console.ConsoleListener, Cl
     public void onClientDataReceeived (ClientConnection client, JSONObject json)
     {
         String cmd = String.valueOf(json.get("cmd"));
-        if (cmd.equals("createUser"))
+        if (cmd.equals("createUser") || cmd.equals("updateUser"))
         {
             JSONObject params = (JSONObject)json.get("params");
             String errorMessage = getUserErrorMessage(params);
             if (errorMessage.equals(""))
             {
-                if (!insertUser(getUserFromObject(params)))
-                    errorMessage = "Unexpected error. User could not be created";
+                if (!persistUser(getUserFromObject(params)))
+                    errorMessage = "Unexpected error. User could not be persisted";
             }
             
             JSONObject responseJson = new JSONObject();
@@ -71,32 +71,6 @@ public class UsersHandler extends Handler implements Console.ConsoleListener, Cl
             {   
                 responseParams.put("status", "failure");
                 responseParams.put("errorMessage", errorMessage);
-            }
-            else
-            {
-                responseParams.put("status", "success");
-            }
-            Application.getInstance().getConnection().sendToClient(client, responseJson);
-        }
-        else if (cmd.equals("updateUser"))
-        {
-            JSONObject params = (JSONObject)json.get("params");
-            String errorMessage = getUserErrorMessage(params);
-            if (errorMessage.equals(""))
-            {
-                if (!updateUser(getUserFromObject(params)))
-                    errorMessage = "Unexpected error. User could not be updated";
-            }    
-            
-            JSONObject responseJson = new JSONObject();
-            JSONObject responseParams = new JSONObject();
-            responseJson.put("cmd", "response");
-            responseJson.put("params", responseParams);
-            responseParams.put("cmd", cmd);
-            if (!errorMessage.equals(""))
-            {
-                responseParams.put("status", "failure");
-                responseParams.put("errorMessage", errorMessage);   
             }
             else
             {
@@ -325,30 +299,46 @@ public class UsersHandler extends Handler implements Console.ConsoleListener, Cl
         return user;
     }
     
-    private boolean insertUser (User user)
+    private boolean persistUser (User user)
     {
-        boolean userInserted = true;
+        boolean userPersisted = true;
+        boolean isUpdatingUser = user.getId() > 0;
         
-        Application.getInstance().getLogger().info("Inserting new User ...");
+        Application.getInstance().getLogger().info((isUpdatingUser?"Updating":"Inserting") + " User [" + user.getUserName() + "] ...");
         StringBuilder sql = new StringBuilder();
-        sql.append("INSERT INTO SYSUSER ");
-        sql.append("(");
-        sql.append("FIRSTNAME, ");
-        sql.append("LASTNAME, ");
-        sql.append("USERNAME, ");
-        sql.append("PASSWORD, ");
-        sql.append("NICKNAME, ");
-        sql.append("IMAGEURL, ");
-        sql.append("ELO ");
-        sql.append(") VALUES (" );
-        sql.append("'" + user.getFirstName() + "', ");
-        sql.append("'" + user.getLastName() + "', ");
-        sql.append("'" + user.getUserName() + "', ");
-        sql.append("'" + user.getPassword() + "', ");
-        sql.append("'" + user.getNickName() + "', ");
-        sql.append("'" + user.getImageUrl() + "', ");
-        sql.append(user.getElo());
-        sql.append(")");
+        if (isUpdatingUser)
+        {
+            sql.append("UPDATE SYSUSER SET ");
+            sql.append("FIRSTNAME = '" + user.getFirstName() + "', ");
+            sql.append("LASTNAME = '" + user.getLastName() + "', ");
+            sql.append("USERNAME = '" + user.getUserName() + "', ");
+            sql.append("PASSWORD = '" + user.getPassword() + "', ");
+            sql.append("NICKNAME = '" + user.getNickName() + "', ");
+            sql.append("IMAGEURL = '" + user.getImageUrl() + "', ");
+            sql.append("ELO = " + user.getElo() + " ");
+            sql.append("WHERE (ID=" + user.getId() + ")");
+        }
+        else
+        {
+            sql.append("INSERT INTO SYSUSER ");
+            sql.append("(");
+            sql.append("FIRSTNAME, ");
+            sql.append("LASTNAME, ");
+            sql.append("USERNAME, ");
+            sql.append("PASSWORD, ");
+            sql.append("NICKNAME, ");
+            sql.append("IMAGEURL, ");
+            sql.append("ELO ");
+            sql.append(") VALUES (" );
+            sql.append("'" + user.getFirstName() + "', ");
+            sql.append("'" + user.getLastName() + "', ");
+            sql.append("'" + user.getUserName() + "', ");
+            sql.append("'" + user.getPassword() + "', ");
+            sql.append("'" + user.getNickName() + "', ");
+            sql.append("'" + user.getImageUrl() + "', ");
+            sql.append(user.getElo());
+            sql.append(")");
+        }
         
         try
         {    
@@ -357,48 +347,15 @@ public class UsersHandler extends Handler implements Console.ConsoleListener, Cl
             if (rs != null && rs.next())
                 user.setId(rs.getInt(1));
             statement.close();
-            Application.getInstance().getLogger().info("User [" + user.getUserName() + "] inserted successfully !!");
+            Application.getInstance().getLogger().info("User [" + user.getUserName() + "] " + (isUpdatingUser?"updated":"inserted") + " successfully !!");
         } 
         catch (SQLException e)
         {
-            Application.getInstance().getLogger().warning("Error inserting User. Sql: " + sql.toString() + " Ex: " + e.getMessage());
-            userInserted = false; 
-        }
-        return userInserted;
-    }
-    
-    private boolean updateUser (User user)
-    {
-        boolean userUpdated = true;
-        
-        Application.getInstance().getLogger().info("Updating User [" + user.getUserName() + "] ...");
-        StringBuilder sql = new StringBuilder();
-        sql.append("UPDATE SYSUSER SET ");
-        sql.append("FIRSTNAME = '" + user.getFirstName() + "', ");
-        sql.append("LASTNAME = '" + user.getLastName() + "', ");
-        sql.append("USERNAME = '" + user.getUserName() + "', ");
-        sql.append("PASSWORD = '" + user.getPassword() + "', ");
-        sql.append("NICKNAME = '" + user.getNickName() + "', ");
-        sql.append("IMAGEURL = '" + user.getImageUrl() + "', ");
-        sql.append("ELO = " + user.getElo() + " ");
-        sql.append("WHERE (ID=" + user.getId() + ")");
-        
-        try
-        {    
-            Statement statement = Application.getInstance().getDatabase().execute(sql.toString(), Statement.RETURN_GENERATED_KEYS);
-            ResultSet rs = statement.getGeneratedKeys();
-            if (rs != null && rs.next())
-                user.setId(rs.getBigDecimal(1).intValue());
-            statement.close();
-            Application.getInstance().getLogger().info("User [" + user.getUserName() + "] updated successfully !!");
-        } 
-        catch (SQLException e)
-        {
-            Application.getInstance().getLogger().warning("Error updating User " + user.getId() + " Sql: " + sql.toString() + " Ex: " + e.getMessage());
-            userUpdated = false;
+            Application.getInstance().getLogger().warning("Error " + (isUpdatingUser?"updating":"inserting") + " User " + user.getId() + " Sql: " + sql.toString() + " Ex: " + e.getMessage());
+            userPersisted = false;
         }
         
-        return userUpdated;
+        return userPersisted;
     }
     
     private boolean deleteUser (User user)
