@@ -176,16 +176,16 @@ public class Board implements Disposable, Cloneable
         FIGUREOFFSETSCOUNT = new byte[] {0, 8, 4, 4, 8, 8};
 
         Random randomGenerator = new Random(0);
-	for (byte piece = WHITEPAWN; piece <= BLACKKING; piece++)
+        for (byte piece = WHITEPAWN; piece <= BLACKKING; piece++)
             for (byte square = A8; square <= H1; square++)
                 HASHPIECE[piece][square] = randomGenerator.nextLong();
-	for (byte epSquare = 0; epSquare < 64; epSquare++)
+        for (byte epSquare = 0; epSquare < 64; epSquare++)
             HASHEP[epSquare] = randomGenerator.nextLong();
-	HASHCASTLEWS = randomGenerator.nextLong();
-	HASHCASTLEWL = randomGenerator.nextLong();
-	HASHCASTLEBS = randomGenerator.nextLong();
-	HASHCASTLEBL = randomGenerator.nextLong();
-	HASHSIDE = randomGenerator.nextLong();
+        HASHCASTLEWS = randomGenerator.nextLong();
+        HASHCASTLEWL = randomGenerator.nextLong();
+        HASHCASTLEBS = randomGenerator.nextLong();
+        HASHCASTLEBL = randomGenerator.nextLong();
+        HASHSIDE = randomGenerator.nextLong();
     }
 
     public Board ()
