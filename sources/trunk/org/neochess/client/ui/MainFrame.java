@@ -89,6 +89,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
             Application.getInstance().destroy();
     }
     
+    @Override
     public void windowClosing (WindowEvent we)
     {
         destroyApplication ();
@@ -309,6 +310,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed (ActionEvent ae)
             {
                 setSkin(skin);
@@ -324,6 +326,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed (ActionEvent ae)
             {
                 destroyApplication ();
@@ -338,6 +341,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed(ActionEvent e) 
             {
                 InternalFrame loginFrame = getInternalFrame(LoginFrame.class);
@@ -356,8 +360,12 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed(ActionEvent e) 
             {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("cmd", "logoutUser");
+                Application.getInstance().getConnection().sendData(jsonObject);
                 Application.getInstance().getSession().destroySession();
             }
         });
@@ -397,6 +405,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed(ActionEvent e) 
             {
                 List<InternalFrame> frames = getInternalFrames(UserFrame.class);
@@ -424,6 +433,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed(ActionEvent e) 
             {
                 Player whitePlayer = new Player("Practice Player 1", 0);
@@ -440,6 +450,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed(ActionEvent e) 
             {
                 Player whitePlayer = new Player("Practice Player", 0);

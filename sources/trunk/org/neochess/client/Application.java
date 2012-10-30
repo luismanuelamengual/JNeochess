@@ -64,8 +64,8 @@ public final class Application
     
     public void start ()
     {
-        session = new Session();
         connection = new Connection();
+        session = new Session();
         connection.open();
         mainFrame = new MainFrame();
         mainFrame.setVisible(true);
