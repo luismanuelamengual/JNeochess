@@ -68,26 +68,21 @@ public class LoginFrame extends InternalFrame implements ConnectionListener
     {
         Font defaultFont = new Font("Arial", Font.BOLD, 12);
         Color defaultColor = new Color(197, 175, 123);
-        Dimension defaultDimension = new Dimension(120, 16);
         JPanel controlPane = new JPanel();
         controlPane.setLayout(new BoxLayout(controlPane, BoxLayout.Y_AXIS));
         controlPane.setBorder(new EmptyBorder(0, 30, 0, 30));
         controlPane.setOpaque(false);
         JLabel usernamelabel = new JLabel("Username");
         usernamelabel.setFont(defaultFont);
-        usernamelabel.setPreferredSize(defaultDimension);
         usernamelabel.setAlignmentX(LEFT_ALIGNMENT);
         usernamelabel.setForeground(defaultColor);
         JLabel passwordlabel = new JLabel("Password");
         passwordlabel.setFont(defaultFont);
-        passwordlabel.setPreferredSize(defaultDimension);
         passwordlabel.setAlignmentX(LEFT_ALIGNMENT);
         passwordlabel.setForeground(defaultColor);
         usernameField = new JTextField(16);
-        usernameField.setPreferredSize(defaultDimension);
         usernameField.setAlignmentX(LEFT_ALIGNMENT);
         passwordField = new JPasswordField(16);
-        passwordField.setPreferredSize(defaultDimension);
         passwordField.setAlignmentX(LEFT_ALIGNMENT);
         controlPane.add(usernamelabel);
         controlPane.add(usernameField);

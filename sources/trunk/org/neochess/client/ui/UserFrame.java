@@ -31,7 +31,8 @@ public class UserFrame extends InternalFrame implements ConnectionListener
         super();
         this.user = user;
         setTitle(isUserCreationFrame() ? "User Creation" : "User Edition");
-        setResizable(false);
+        setPreferredSize(new Dimension(440, 300));
+        setResizable(true);
         setLayout(new BorderLayout());
         add(createUserAccountPanel(), BorderLayout.NORTH);
         add(createButtonsPanel(), BorderLayout.SOUTH);
@@ -75,11 +76,7 @@ public class UserFrame extends InternalFrame implements ConnectionListener
 
     private JPanel createUserAccountPanel()
     {
-        Dimension defaultDimension = new Dimension(280, 25);
-        Dimension defaultLeftDimension = new Dimension(120, 25);
-        Dimension defaultComboboxDimension = new Dimension(60, 25);
-        JPanel userPanel = new JPanel();
-        
+        JPanel userPanel = new JPanel();   
         userPanel.setLayout(new GridBagLayout());
         userPanel.setBorder(BorderFactory.createEmptyBorder(8, 10, 2, 10));
         JLabel usernameLabel = new JLabel("Username: ");
@@ -99,25 +96,11 @@ public class UserFrame extends InternalFrame implements ConnectionListener
         usernameLabel.setAlignmentX(JLabel.LEFT);
         userpasswordLabel.setAlignmentX(JLabel.LEFT);
         userpasswordrepeatLabel.setAlignmentX(JLabel.LEFT);
-        usernameLabel.setPreferredSize(defaultLeftDimension);
-        userpasswordLabel.setPreferredSize(defaultLeftDimension);
-        userpasswordrepeatLabel.setPreferredSize(defaultLeftDimension);
-        usernameTextField.setPreferredSize(defaultDimension);
-        userpasswordField.setPreferredSize(defaultDimension);
-        userpasswordrepeatField.setPreferredSize(defaultDimension);
         avatarComboBox.setRenderer(new ComboBoxRenderer());
         firstnameLabel.setAlignmentX(JLabel.LEFT);
         lastnameLabel.setAlignmentX(JLabel.LEFT);
         nicknameLabel.setAlignmentX(JLabel.LEFT);
         avatarLabel.setAlignmentX(JLabel.LEFT);
-        firstnameLabel.setPreferredSize(defaultLeftDimension);
-        lastnameLabel.setPreferredSize(defaultLeftDimension);
-        nicknameLabel.setPreferredSize(defaultLeftDimension);
-        avatarLabel.setPreferredSize(defaultLeftDimension);
-        firstnameTextField.setPreferredSize(defaultDimension);
-        lastnameTextField.setPreferredSize(defaultDimension);
-        nicknameTextField.setPreferredSize(defaultDimension);
-        avatarComboBox.setPreferredSize(defaultComboboxDimension);
         avatarComboBox.setAlignmentX(JLabel.LEFT);
         addGridBagComponent(userPanel, usernameLabel, 0, 0);
         addGridBagComponent(userPanel, usernameTextField, 0, 1);
@@ -159,6 +142,8 @@ public class UserFrame extends InternalFrame implements ConnectionListener
             gbc.insets = new Insets(1, 0, 4, 0);
             gbc.gridx = col;
             gbc.gridy = row;
+            gbc.fill = gbc.BOTH;
+            gbc.weightx = col == 1? 1 : 0;
             gridBag.setConstraints(component, gbc);
             panel.add(component);
         }
