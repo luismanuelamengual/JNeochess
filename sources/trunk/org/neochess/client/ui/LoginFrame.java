@@ -47,8 +47,8 @@ public class LoginFrame extends InternalFrame implements ConnectionListener
     {
         ImageIcon icon1 = new ImageIcon();
         ImageIcon icon2 = new ImageIcon();
-        try { icon1.setImage(GraphicsUtils.getScaledInstance(ResourceUtils.getBufferedImage(Application.getInstance().getResourceImagesPath() + "login1.jpg"), 340, 220)); } catch (Exception ex1) {}
-        try { icon2.setImage(GraphicsUtils.getScaledInstance(ResourceUtils.getBufferedImage(Application.getInstance().getResourceImagesPath() + "login2.jpg"), 340, 220)); } catch (Exception ex1) {}        
+        try { icon1.setImage(GraphicsUtils.getScaledInstance(ResourceUtils.getBufferedImage(Application.getInstance().getResourceImagesPath() + "login1.jpg"), 380, 240)); } catch (Exception ex1) {}
+        try { icon2.setImage(GraphicsUtils.getScaledInstance(ResourceUtils.getBufferedImage(Application.getInstance().getResourceImagesPath() + "login2.jpg"), 380, 240)); } catch (Exception ex1) {}        
         JLabel loginImage1 = new JLabel(icon1);
         loginImage1.setBorder(new LineBorder(UserInterfaceUtils.getColor("Panel.background"), 4));
         JLabel loginImage2 = new JLabel(icon2);
@@ -71,7 +71,7 @@ public class LoginFrame extends InternalFrame implements ConnectionListener
         Dimension defaultDimension = new Dimension(120, 16);
         JPanel controlPane = new JPanel();
         controlPane.setLayout(new BoxLayout(controlPane, BoxLayout.Y_AXIS));
-        controlPane.setBorder(new EmptyBorder(0, 20, 0, 20));
+        controlPane.setBorder(new EmptyBorder(0, 30, 0, 30));
         controlPane.setOpaque(false);
         JLabel usernamelabel = new JLabel("Username");
         usernamelabel.setFont(defaultFont);
