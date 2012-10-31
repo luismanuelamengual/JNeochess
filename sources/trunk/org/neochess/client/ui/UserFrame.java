@@ -6,11 +6,10 @@ import java.awt.event.ActionEvent;
 import javax.swing.*;
 import org.json.simple.JSONObject;
 import org.neochess.client.Application;
-import org.neochess.client.Connection.ConnectionListener;
 import org.neochess.engine.User;
 import org.neochess.util.ResourceUtils;
 
-public class UserFrame extends InternalFrame implements ConnectionListener
+public class UserFrame extends InternalFrame
 {
     private User user;
     private JTextField usernameTextField;
@@ -38,13 +37,11 @@ public class UserFrame extends InternalFrame implements ConnectionListener
         add(createButtonsPanel(), BorderLayout.SOUTH);
         setVisible(true);
         pack();
-        Application.getInstance().getConnection().addConnectionListener(this);
     }
 
     @Override
     public void dispose ()
     {
-        Application.getInstance().getConnection().removeConnectionListener(this);
         user = null;
         usernameTextField = null;
         userpasswordField = null;
@@ -177,7 +174,33 @@ public class UserFrame extends InternalFrame implements ConnectionListener
                     JSONObject userCommand = new JSONObject();
                     userCommand.put("cmd", isUserCreationFrame()? "createUser" : "updateUser");
                     userCommand.put("params", userObject);
-                    Application.getInstance().getConnection().sendData(userCommand);
+                    JSONObject responseObject = Application.getInstance().getConnection().sendDataAndWaitForResponse(userCommand);
+                    if (responseObject != null)
+                    {
+                        JSONObject params = (JSONObject)responseObject.get("params");
+                        if (params.get("status").equals("success"))
+                        {
+                            if (user != null)
+                            {
+                                user.setFirstName(firstnameTextField.getText());
+                                user.setLastName(lastnameTextField.getText());
+                                user.setUserName(usernameTextField.getText());
+                                user.setNickName(nicknameTextField.getText());
+                                user.setPassword(String.valueOf(userpasswordField.getPassword()));
+                                user.setImageUrl("{" + avatarComboBox.getSelectedIndex() + "}");
+                            }
+                            JOptionPane.showMessageDialog(UserFrame.this, "User created/edited successfully !!");
+                            close();
+                        }
+                        else
+                        {
+                            JOptionPane.showMessageDialog(UserFrame.this, String.valueOf(params.get("errorMessage")));
+                        }
+                    }
+                    else
+                    {
+                        JOptionPane.showMessageDialog(UserFrame.this, "Error de conexión con el servidor");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -202,54 +225,6 @@ public class UserFrame extends InternalFrame implements ConnectionListener
 
         getRootPane().setDefaultButton(buttonStart);
         return buttonsPanel;
-    }
-
-    @Override
-    public void onConnectionStarted ()
-    {   
-    }
-
-    @Override
-    public void onConnectionEnded ()
-    {   
-    }
-
-    @Override
-    public void onDataReceived (JSONObject json)
-    {
-        String cmd = String.valueOf(json.get("cmd"));
-        if (cmd.equals("response"))
-        {
-            JSONObject params = (JSONObject)json.get("params");
-            String sentCmd = String.valueOf(params.get("cmd"));
-            if (sentCmd.equals("createUser") || sentCmd.equals("updateUser"))
-            {
-                if (params.get("status").equals("success"))
-                {
-                    if (user != null)
-                    {
-                        user.setFirstName(firstnameTextField.getText());
-                        user.setLastName(lastnameTextField.getText());
-                        user.setUserName(usernameTextField.getText());
-                        user.setNickName(nicknameTextField.getText());
-                        user.setPassword(String.valueOf(userpasswordField.getPassword()));
-                        user.setImageUrl("{" + avatarComboBox.getSelectedIndex() + "}");
-                    }
-                    JOptionPane.showMessageDialog(UserFrame.this, "User created/edited successfully !!");
-                    close();
-                }
-                else
-                {
-                    JOptionPane.showMessageDialog(UserFrame.this, "User creation/edition failure: " + String.valueOf(params.get("errorMessage")));
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onDataSent (JSONObject json)
-    {
-        
     }
     
     private class ComboBoxRenderer extends JLabel implements ListCellRenderer

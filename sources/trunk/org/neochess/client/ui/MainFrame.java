@@ -119,12 +119,20 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     
     public void update ()
     {
-        updateMenuBar ();
-        updateStatusBar ();
+        SwingUtilities.invokeLater(new Runnable() 
+        {
+            @Override
+            public void run ()
+            {
+                updateMenuBar ();
+                updateStatusBar ();
+            }
+        });
     }
     
     private void updateMenuBar ()
     {
+        boolean isConnected = Application.getInstance().getConnection().isConnected();
         List<JMenuItem> menuItems = getMenuItems();
         for (JMenuItem menuItem : menuItems)
         {
@@ -133,20 +141,30 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
             {
                 if (command.startsWith("skin-"))
                     ((JRadioButtonMenuItem)menuItem).setSelected(getSkin().equals(command.substring("skin-".length())));
-                if (command.equals("file"))
-                    menuItem.setEnabled(true);
-                else if (command.equals("exit"))
-                    menuItem.setEnabled(true);
-                else if (command.equals("users"))
-                    menuItem.setEnabled(true);
-                else if (command.equals("createUser"))
-                    menuItem.setEnabled(true);
-                else if (command.equals("help"))
-                    menuItem.setEnabled(true);
-                else if (command.equals("login"))
-                    menuItem.setEnabled(!Application.getInstance().getSession().isStarted());
-                else
-                    menuItem.setEnabled(Application.getInstance().getSession().isStarted());
+                switch (command)
+                {
+                    case "file":
+                        menuItem.setEnabled(true);
+                        break;
+                    case "exit":
+                        menuItem.setEnabled(true);
+                        break;
+                    case "users":
+                        menuItem.setEnabled(isConnected);
+                        break;
+                    case "createUser":
+                        menuItem.setEnabled(isConnected);
+                        break;
+                    case "help":
+                        menuItem.setEnabled(true);
+                        break;
+                    case "login":
+                        menuItem.setEnabled(isConnected && !Application.getInstance().getSession().isStarted());
+                        break;
+                    default:
+                        menuItem.setEnabled(isConnected && Application.getInstance().getSession().isStarted());
+                        break;
+                }
             }
         }
     }
@@ -363,9 +381,6 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
             @Override
             public void actionPerformed(ActionEvent e) 
             {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("cmd", "logoutUser");
-                Application.getInstance().getConnection().sendData(jsonObject);
                 Application.getInstance().getSession().destroySession();
             }
         });
@@ -476,7 +491,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     @Override
     public void onSessionStarted (Session session)
     {
-        updateMenuBar();   
+        update();   
     }
     
     @Override
@@ -488,7 +503,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     @Override
     public void onSessionDestroyed (Session session)
     {
-        updateMenuBar();
+        update();
     }
 
     @Override

@@ -7,15 +7,12 @@ import java.util.Random;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import org.json.simple.JSONObject;
 import org.neochess.client.Application;
-import org.neochess.client.Connection.ConnectionListener;
-import org.neochess.engine.User;
 import org.neochess.util.GraphicsUtils;
 import org.neochess.util.ResourceUtils;
 import org.neochess.util.UserInterfaceUtils;
 
-public class LoginFrame extends InternalFrame implements ConnectionListener
+public class LoginFrame extends InternalFrame
 {
     private JTextField usernameField;
     private JPasswordField passwordField;
@@ -30,13 +27,11 @@ public class LoginFrame extends InternalFrame implements ConnectionListener
         add(createControlsPanel(), BorderLayout.SOUTH);
         setVisible(true);
         pack();
-        Application.getInstance().getConnection().addConnectionListener(this);
     }
 
     @Override
     public void dispose ()
     {
-        Application.getInstance().getConnection().removeConnectionListener(this);
         usernameField = null;
         passwordField = null;
         removeAll();
@@ -102,17 +97,12 @@ public class LoginFrame extends InternalFrame implements ConnectionListener
             {
                 try
                 {
-                    JSONObject jsonObject = new JSONObject();
-                    JSONObject paramsObject = new JSONObject();
-                    jsonObject.put("cmd", "loginUser");
-                    jsonObject.put("params", paramsObject);
-                    paramsObject.put("userName", usernameField.getText());
-                    paramsObject.put("password", String.valueOf(passwordField.getPassword()));
-                    Application.getInstance().getConnection().sendData(jsonObject);
+                    Application.getInstance().getSession().startSession(usernameField.getText(), String.valueOf(passwordField.getPassword()));
+                    close();
                 }
                 catch (Exception ex)
                 {
-                    JOptionPane.showMessageDialog (LoginFrame.this, "Login Failure: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(LoginFrame.this, "User login failure: " + ex.getMessage());
                 }
             }
         });
@@ -132,64 +122,5 @@ public class LoginFrame extends InternalFrame implements ConnectionListener
         buttonsPanel.add(buttonCancel);
 
         return buttonsPanel;
-    }
-
-    @Override
-    public void onConnectionStarted ()
-    {
-        
-    }
-
-    @Override
-    public void onConnectionEnded ()
-    {
-        
-    }
-
-    @Override
-    public void onDataReceived (JSONObject json)
-    {
-        String cmd = String.valueOf(json.get("cmd"));
-        if (cmd.equals("response"))
-        {
-            JSONObject params = (JSONObject)json.get("params");
-            String sentCmd = String.valueOf(params.get("cmd"));
-            if (sentCmd.equals("loginUser"))
-            {
-                if (params.get("status").equals("success"))
-                {
-                    JSONObject userObject = (JSONObject)params.get("user");
-                    User user = new User ();
-                    if (userObject.get("id") != null)
-                        user.setId(((Long)userObject.get("id")).intValue());
-                    if (userObject.get("firstName") != null)
-                        user.setFirstName(String.valueOf(userObject.get("firstName")));
-                    if (userObject.get("lastName") != null)
-                        user.setLastName(String.valueOf(userObject.get("lastName")));
-                    if (userObject.get("userName") != null)
-                        user.setUserName(String.valueOf(userObject.get("userName")));
-                    if (userObject.get("nickName") != null)
-                        user.setNickName(String.valueOf(userObject.get("nickName")));
-                    if (userObject.get("password") != null)
-                        user.setPassword(String.valueOf(userObject.get("password")));
-                    if (userObject.get("imageUrl") != null)
-                        user.setImageUrl(String.valueOf(userObject.get("imageUrl")));
-                    if (userObject.get("elo") != null)
-                        user.setElo(((Long)userObject.get("elo")).intValue());
-                    Application.getInstance().getSession().startSession(user);
-                    close();
-                }
-                else
-                {
-                    JOptionPane.showMessageDialog(LoginFrame.this, "User login failure: " + String.valueOf(params.get("errorMessage")));
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onDataSent (JSONObject json)
-    {
-        
     }
 }

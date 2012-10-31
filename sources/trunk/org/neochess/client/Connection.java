@@ -3,9 +3,9 @@ package org.neochess.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.*;
 import java.util.EventListener;
-import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -129,8 +129,9 @@ public class Connection
         } 
     }
     
-    public synchronized void sendData (JSONObject json)
+    public synchronized boolean sendData (JSONObject json) throws IOException
     {
+        boolean dataSent = false;
         if (output != null)
         {
             String dataToSend = json.toJSONString();
@@ -138,12 +139,60 @@ public class Connection
             {
                 output.writeUTF(dataToSend);
                 fireDataSentEvent(json);
+                dataSent = true;
             }
-            catch (Exception exception)
+            catch (IOException exception)
             {
                 closeConnection();
+                throw exception;
             }
         }
+        return dataSent;
+    }
+    
+    public JSONObject sendDataAndWaitForResponse (final JSONObject json) throws IOException
+    {
+        return sendDataAndWaitForResponse(json, 10000);
+    }
+    
+    public JSONObject sendDataAndWaitForResponse (final JSONObject json, int waitMilliseconds) throws IOException
+    {
+        final JSONObject responseJson = new JSONObject();
+        ConnectionListener listener = new ConnectionListener()
+        {
+            @Override public void onConnectionStarted (){}
+            @Override public void onConnectionEnded (){}
+            @Override public void onDataSent (JSONObject json){}
+            @Override
+            public void onDataReceived (JSONObject json)
+            {
+                if (json.get("cmd").equals("response"))
+                {
+                    JSONObject paramsObject = (JSONObject)json.get("params");
+                    if (paramsObject.get("cmd").equals(paramsObject.get("cmd")))
+                    {
+                        responseJson.put("cmd", json.get("cmd"));
+                        responseJson.put("params", json.get("params"));
+                        synchronized (Connection.this) { Connection.this.notify(); }
+                    }
+                }
+            }
+        };
+        this.addConnectionListener(listener);
+        try
+        {
+            if (sendData(json))
+                try { synchronized (this) {this.wait(10000);} } catch (Exception ex) {}
+        }
+        catch (IOException ex)
+        {
+            throw ex;
+        }
+        finally
+        {
+            this.removeConnectionListener(listener);
+        }
+        return responseJson.get("cmd") != null? responseJson : null;
     }
     
     public void addConnectionListener(ConnectionListener listener)
@@ -158,90 +207,62 @@ public class Connection
 
     public void fireConnectionStartedEvent ()
     {
-        SwingUtilities.invokeLater(new Runnable()
+        for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
         {
-            @Override
-            public void run ()
+            try
             {
-                for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
-                {
-                    try
-                    {
-                        listener.onConnectionStarted();
-                    }
-                    catch (Exception exception)
-                    {
-                        System.err.append("Error in processing ConnectioStartedEvent. Ex: " + exception.getMessage());
-                    }
-                }
+                listener.onConnectionStarted();
             }
-        });
+            catch (Exception exception)
+            {
+                System.err.append("Error in processing ConnectioStartedEvent. Ex: " + exception.getMessage());
+            }
+        }
     }
     
     public void fireConnectionEndedEvent ()
     {
-        SwingUtilities.invokeLater(new Runnable()
+        for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
         {
-            @Override
-            public void run ()
+            try
             {
-                for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
-                {
-                    try
-                    {
-                        listener.onConnectionEnded();
-                    }
-                    catch (Exception exception)
-                    {
-                        System.err.append("Error in processing ConnectioEndedEvent. Ex: " + exception.getMessage());
-                    }
-                }
+                listener.onConnectionEnded();
             }
-        });
+            catch (Exception exception)
+            {
+                System.err.append("Error in processing ConnectioEndedEvent. Ex: " + exception.getMessage());
+            }
+        }
     }
     
     public void fireDataReceivedEvent (final JSONObject json)
     {
-        SwingUtilities.invokeLater(new Runnable()
+        for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
         {
-            @Override
-            public void run ()
+            try
             {
-                for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
-                {
-                    try
-                    {
-                        listener.onDataReceived(json);
-                    }
-                    catch (Exception exception)
-                    {
-                        System.err.append("Error receiving data: " + json.toJSONString() + " Ex: " + exception.getMessage());
-                    }
-                }
+                listener.onDataReceived(json);
             }
-        });
+            catch (Exception exception)
+            {
+                System.err.append("Error receiving data: " + json.toJSONString() + " Ex: " + exception.getMessage());
+            }
+        }       
     }
     
     public void fireDataSentEvent (final JSONObject json)
     {
-        SwingUtilities.invokeLater(new Runnable()
+        for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
         {
-            @Override
-            public void run ()
+            try
             {
-                for (ConnectionListener listener : listeners.getListeners(ConnectionListener.class))
-                {
-                    try
-                    {
-                        listener.onDataSent(json);
-                    }
-                    catch (Exception exception)
-                    {
-                        System.err.append("Error sending data: " + json.toJSONString() + " Ex: " + exception.getMessage());
-                    }
-                }
+                listener.onDataSent(json);
             }
-        });
+            catch (Exception exception)
+            {
+                System.err.append("Error sending data: " + json.toJSONString() + " Ex: " + exception.getMessage());
+            }
+        }
     }
     
     public interface ConnectionListener extends EventListener
