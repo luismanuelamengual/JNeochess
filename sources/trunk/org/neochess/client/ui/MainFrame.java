@@ -171,16 +171,8 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     
     private void updateStatusBar ()
     {
-        if (Application.getInstance().getConnection().isConnected())
-        {
-            statusBar.setIcon(ResourceUtils.getImageIcon(Application.getInstance().getResourceImagesPath() + "icons/activated.png"));
-            statusBar.setText("Connected to \"" + Application.getInstance().getConnection().getSocket().getInetAddress().getHostName() + "\"");
-        }
-        else
-        {
-            statusBar.setIcon(ResourceUtils.getImageIcon(Application.getInstance().getResourceImagesPath() + "icons/deactivated.png"));
-            statusBar.setText("Disconnected");
-        }
+        statusBar.setIcon(ResourceUtils.getImageIcon(Application.getInstance().getResourceImagesPath() + ((Application.getInstance().getConnection().isConnected())?"icons/activated.png":"icons/deactivated.png")));
+        statusBar.setText("User: " + (Application.getInstance().getSession().isStarted()? ("\"" + Application.getInstance().getSession().getUser().getFirstName() + " " + Application.getInstance().getSession().getUser().getLastName() + "\"") : ""));
     }
     
     private List<InternalFrame> getInternalFrames()
