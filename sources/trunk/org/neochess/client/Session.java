@@ -6,11 +6,20 @@ import org.neochess.engine.User;
 import java.util.EventListener;
 import javax.swing.event.EventListenerList;
 import org.json.simple.JSONObject;
+import org.neochess.general.Disposable;
 
-public class Session
+public class Session implements Disposable
 {
     protected EventListenerList listeners = new EventListenerList();
     private static User user;
+    
+    public void dispose()
+    {
+        while (listeners.getListenerCount() > 0)
+            removeSessionListener(listeners.getListeners(SessionListener.class)[0]);
+        listeners = null;
+        destroySession ();
+    }
     
     public boolean startSession (String userName, String password) throws Exception
     {

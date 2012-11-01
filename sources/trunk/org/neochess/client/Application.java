@@ -73,19 +73,21 @@ public final class Application
     
     public void destroy ()
     {
-        if (!session.destroySession())
+        if (mainFrame.close())
         {
-            if (mainFrame.close())
+            mainFrame.dispose();
+            mainFrame = null;
+            if (session != null)
             {
-                mainFrame.dispose();
-                mainFrame = null;
-                if (connection != null)
-                {
-                    connection.dispose();
-                    connection = null;
-                }
-                System.exit(0);
+                session.dispose();
+                session = null;
             }
+            if (connection != null)
+            {
+                connection.dispose();
+                connection = null;
+            }
+            System.exit(0);
         }
     }
     
