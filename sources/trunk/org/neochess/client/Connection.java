@@ -10,8 +10,9 @@ import javax.swing.event.EventListenerList;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.neochess.general.Disposable;
 
-public class Connection
+public class Connection implements Disposable
 {
     protected EventListenerList listeners = new EventListenerList();
     private static final String SERVER_ADDRESS = "localhost";
@@ -23,6 +24,7 @@ public class Connection
     private Socket socket;
     private DataOutputStream output;
     private DataInputStream input;
+    private Thread connectionThread;
     
     public Connection ()
     {
@@ -30,7 +32,16 @@ public class Connection
         open = false;
     }
     
-    public synchronized void open ()
+    public void dispose ()
+    {
+        close ();
+        while (listeners.getListenerCount() > 0)
+            removeConnectionListener(listeners.getListeners(ConnectionListener.class)[0]);
+        listeners = null;
+        parser = null;
+    }
+    
+    public void open ()
     {
         if (!this.open)
         {
@@ -39,12 +50,12 @@ public class Connection
         }
     }
     
-    public synchronized void close ()
+    public void close ()
     {
         if (this.open)
         {
             this.open = false;
-            closeConnection ();
+            stopConnectionThread ();
         }
     }
     
@@ -67,9 +78,9 @@ public class Connection
         }
     }
         
-    private synchronized void startConnectionThread ()
+    private void startConnectionThread ()
     {
-        new Thread()
+        connectionThread = new Thread()
         {
             @Override
             public void run()
@@ -102,7 +113,18 @@ public class Connection
                         try { Thread.sleep(5000); } catch (Exception connectionException) {}
                 }
             }
-        }.start();
+        };
+        connectionThread.start();
+    }
+    
+    private void stopConnectionThread ()
+    {
+        closeConnection ();
+        if (connectionThread != null)
+        {
+            try { connectionThread.join(); } catch (InterruptedException ex){}
+            connectionThread = null;
+        }
     }
     
     public boolean isConnected ()

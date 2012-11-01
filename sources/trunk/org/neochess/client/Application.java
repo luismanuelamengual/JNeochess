@@ -81,7 +81,7 @@ public final class Application
                 mainFrame = null;
                 if (connection != null)
                 {
-                    connection.close();
+                    connection.dispose();
                     connection = null;
                 }
                 System.exit(0);
