@@ -3,8 +3,6 @@ package org.neochess.engine;
 
 public class Clock
 {
-    private static final int TIMEUP_BUFFER = 5000;
-    
     protected long time;
     protected long increment;
     protected long remainingTime;
@@ -71,7 +69,7 @@ public class Clock
         if (startMilliseconds > 0)
             timeRemaining -= (System.currentTimeMillis() - startMilliseconds);
         if (timeRemaining <= 0)
-            timeRemaining = (timeRemaining > -TIMEUP_BUFFER)? 1 : 0;
+            timeRemaining = 0;
         return timeRemaining;
     }
     
