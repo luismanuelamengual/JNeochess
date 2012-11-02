@@ -508,6 +508,19 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     public void onConnectionEnded ()
     {
         update();
+        if (Application.getInstance().getSession().isStarted())
+        {
+            SwingUtilities.invokeLater(new Runnable ()
+            {
+                @Override
+                public void run ()
+                {
+                    ReconnectDialog dialog = new ReconnectDialog(MainFrame.this);
+                    dialog.setLocationRelativeTo(desktopPane);
+                    dialog.setVisible(true);
+                }   
+            });
+        }
     }
 
     @Override
