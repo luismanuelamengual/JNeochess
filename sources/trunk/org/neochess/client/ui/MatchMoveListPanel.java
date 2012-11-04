@@ -12,12 +12,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import org.neochess.client.ui.MatchFrame.MatchFrameListener;
 import org.neochess.engine.Board.Move;
-import org.neochess.engine.Match;
-import org.neochess.engine.Match.MatchListener;
 import org.neochess.general.Disposable;
 import org.neochess.util.UserInterfaceUtils;
 
-public class MatchMoveListPanel extends JPanel implements Disposable, MatchListener, MatchFrameListener
+public class MatchMoveListPanel extends JPanel implements Disposable, MatchFrameListener
 {
     private MatchFrame matchFrame;
     private JTable moveListTable = new JTable();
@@ -28,7 +26,6 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchListe
     {
         this.matchFrame = matchFrame;
         this.matchFrame.addMatchFrameListener(this);
-        this.matchFrame.getMatch().addMatchListener(this);
         moveListTable.setModel(moveListTableModel);
         moveListTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         moveListTable.setColumnSelectionAllowed(false);
@@ -74,6 +71,7 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchListe
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     }
 
+    @Override
     public void dispose()
     {
         moveListTableModel = null;
@@ -84,7 +82,6 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchListe
             moveListScrollBar.removeAdjustmentListener(moveListScrollBar.getAdjustmentListeners()[0]);
         moveListScrollBar = null;
         this.matchFrame.removeMatchFrameListener(this);
-        this.matchFrame.getMatch().removeMatchListener(this);
         this.matchFrame = null;
         removeAll();
     }
@@ -96,7 +93,7 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchListe
         updateScrollBarValues();
     }
 
-    public void addMove(Match match, Move move)
+    public void addMove(MatchFrame match, Move move)
     {
         String moveString = move.getSANString(match.getBoard(match.getPly()-1));
         if ((match.getPly()-1) % 2 == 0)
@@ -111,7 +108,7 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchListe
         updateScrollBarValues();
     }
 
-    public void removeMove(Match match)
+    public void removeMove(MatchFrame match)
     {
         if (match.getPly() % 2 == 0)
         {
@@ -125,25 +122,25 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchListe
         updateScrollBarValues();
     }
 
-    public void onMatchMove(Match match, Move move)
+    public void onMatchMove(MatchFrame match, Move move)
     {
         addMove(match, move);   
     }
     
-    public void onMatchTakeback(Match match, Move move)
+    public void onMatchTakeback(MatchFrame match, Move move)
     {
         removeMove(match);
     }
     
-    public void onMatchFinished(Match match){}
-    public void onMatchPositionChanged(Match match){}
-    public void onMatchStarted(Match match){}
-    public void onMatchStateChanged(Match match, byte state){}
-    public void onMatchTurnStarted (Match match, byte side){}
-    public void onMatchTurnEnded (Match match, byte side){}
-    public void onMatchBoardFlipped (Match match, boolean flipped) {}
+    public void onMatchFinished(MatchFrame match){}
+    public void onMatchPositionChanged(MatchFrame match){}
+    public void onMatchStarted(MatchFrame match){}
+    public void onMatchStateChanged(MatchFrame match, byte state){}
+    public void onMatchTurnStarted (MatchFrame match, byte side){}
+    public void onMatchTurnEnded (MatchFrame match, byte side){}
+    public void onMatchBoardFlipped (MatchFrame match, boolean flipped) {}
     
-    public void onMatchDisplayPlyChanged (Match match, int ply)
+    public void onMatchDisplayPlyChanged (MatchFrame match, int ply)
     {
         update();
     }
@@ -157,7 +154,7 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchListe
     private void updateScrollBarValues()
     {
         moveListScrollBar.setMinimum(0);
-        moveListScrollBar.setMaximum(matchFrame.getMatch().getPly()+1);
+        moveListScrollBar.setMaximum(matchFrame.getPly()+1);
         moveListScrollBar.setVisibleAmount(1);
         moveListScrollBar.setValue(Math.max(matchFrame.getDisplayPly(),0));
         repaint();

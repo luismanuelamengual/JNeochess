@@ -12,17 +12,14 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.swing.JPanel;
 import org.neochess.client.Application;
-import org.neochess.engine.Match;
-import org.neochess.engine.Match.MatchListener;
 import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
-import org.neochess.engine.Player;
 import org.neochess.general.Disposable;
 import org.neochess.util.ColorUtils;
 import org.neochess.util.GraphicsUtils;
 import org.neochess.util.ResourceUtils;
 
-public class BoardPanel extends JPanel implements Disposable, MouseListener, MouseMotionListener, MatchListener, MatchFrame.MatchFrameListener
+public class BoardPanel extends JPanel implements Disposable, MouseListener, MouseMotionListener, MatchFrame.MatchFrameListener
 {
     public static final int SQUARESTYLE_PLAIN = 0;
     public static final int SQUARESTYLE_HORIZONTAL = 1;
@@ -64,7 +61,6 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     public BoardPanel (MatchFrame matchFrame)
     { 
         this.matchFrame = matchFrame;
-        this.matchFrame.getMatch().addMatchListener(this);
         this.matchFrame.addMatchFrameListener(this);
         int panelWidth = boardDimension.width + Math.min ((boardPosition.x*2), 120);
         int panelHeight = boardDimension.height + Math.min ((boardPosition.y*2), 120);  
@@ -74,13 +70,13 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         addMouseMotionListener (this);
     }
 
+    @Override
     public void dispose()
     {
         removeMouseListener (this);
         removeMouseMotionListener (this);
         removeAll();
         matchFrame.removeMatchFrameListener(this);
-        matchFrame.getMatch().removeMatchListener(this);
         matchFrame = null;
     }
 
@@ -160,7 +156,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     {    
         if (matchFrame.getDisplayPly() >= 0)
         {
-            Board board = matchFrame.getMatch().getBoard(matchFrame.getDisplayPly());
+            Board board = matchFrame.getBoard(matchFrame.getDisplayPly());
             for (byte square = 0; square < 64; square++) 
             {
                 drawSquare (screen, square);
@@ -345,7 +341,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     
     private void drawMovingFigure (Graphics screen)
     {
-        Board board = matchFrame.getMatch().getBoard();
+        Board board = matchFrame.getBoard();
         if (draggingSquare == Board.EMPTY) { return; }
         Dimension squareDimension = getBoardSquareDimension();
         int x = draggingPoint.x - (squareDimension.width/2);
@@ -367,7 +363,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
             int moveIndex = matchFrame.getDisplayPly() - 1;
             if (moveIndex >= 0)
             {
-                Move lastMove = matchFrame.getMatch().getMove(moveIndex);
+                Move lastMove = matchFrame.getMove(moveIndex);
                 drawMoveArrow(screen, lastMove);
             }
         }
@@ -445,15 +441,15 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     private boolean isSquareActionEnabled (byte square)
     {
         if (square == Board.EMPTY ) { return false; }
-        if (matchFrame.getState() == Match.STATE_PLAYING && humanMoveEnabled && matchFrame.getDisplayPly() == matchFrame.getPly())
+        if (matchFrame.getState() == MatchFrame.STATE_PLAYING && humanMoveEnabled && matchFrame.getDisplayPly() == matchFrame.getPly())
         {
-            Board board = matchFrame.getMatch().getBoard();
+            Board board = matchFrame.getBoard();
             byte side = board.getSquareSide(square);
             if (side != Board.NOSIDE)
             {
-                if (side == Board.WHITE && matchFrame.getMatch().getTurnPlayer().equals(matchFrame.getMatch().getWhitePlayer()))
+                if (side == Board.WHITE && matchFrame.getTurnPlayer().equals(matchFrame.getWhitePlayer()))
                     return true;
-                else if (side == Board.BLACK && matchFrame.getMatch().getTurnPlayer().equals(matchFrame.getMatch().getBlackPlayer()))
+                else if (side == Board.BLACK && matchFrame.getTurnPlayer().equals(matchFrame.getBlackPlayer()))
                     return true;
             }
         }
@@ -466,28 +462,28 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
             setCursor(new Cursor(cursortype));
     }
 
-    public void onMatchFinished(Match match){}
-    public void onMatchMove(Match match, Move move){}
-    public void onMatchPositionChanged(Match match){}
-    public void onMatchStarted(Match match){}
-    public void onMatchStateChanged(Match match, byte state){}
-    public void onMatchTakeback(Match match, Move move){}
-    public void onMatchTurnStarted (Match match, byte side){}
-    public void onMatchTurnEnded (Match match, byte side){}
+    public void onMatchFinished(MatchFrame match){}
+    public void onMatchMove(MatchFrame match, Move move){}
+    public void onMatchPositionChanged(MatchFrame match){}
+    public void onMatchStarted(MatchFrame match){}
+    public void onMatchStateChanged(MatchFrame match, byte state){}
+    public void onMatchTakeback(MatchFrame match, Move move){}
+    public void onMatchTurnStarted (MatchFrame match, byte side){}
+    public void onMatchTurnEnded (MatchFrame match, byte side){}
     
-    public void onMatchDisplayPlyChanged (Match match, int ply)
+    public void onMatchDisplayPlyChanged (MatchFrame match, int ply)
     {
         update();
     }
 
-    public void onMatchBoardFlipped (Match match, boolean flipped)
+    public void onMatchBoardFlipped (MatchFrame match, boolean flipped)
     {
         update();
     }
     
     public void mousePressed (MouseEvent event)
     {
-        if (matchFrame.getState() == Match.STATE_PLAYING && humanMoveEnabled)
+        if (matchFrame.getState() == MatchFrame.STATE_PLAYING && humanMoveEnabled)
         {
             draggingPoint = event.getPoint();
             if (isPointOverBoard(draggingPoint))
@@ -522,7 +518,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     { 
         if (draggingSquare != Board.EMPTY) 
         {
-            if (matchFrame.getState() == Match.STATE_PLAYING && humanMoveEnabled)
+            if (matchFrame.getState() == MatchFrame.STATE_PLAYING && humanMoveEnabled)
                 matchFrame.makeMove(new Move(draggingSquare, getSquareAtPoint(draggingPoint)));
             draggingSquare = Board.EMPTY;
             mouseMoved (event);

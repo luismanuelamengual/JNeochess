@@ -5,40 +5,53 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.io.File;
 import java.util.EventListener;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.event.EventListenerList;
 import org.neochess.client.Application;
+import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
-import org.neochess.engine.Match;
-import org.neochess.engine.Match.MatchListener;
-import org.neochess.engine.Player;
+import org.neochess.engine.Clock;
+import org.neochess.engine.User;
 import org.neochess.util.ResourceUtils;
 
-public class MatchFrame extends InternalFrame implements MatchListener
+public class MatchFrame extends InternalFrame
 {
+    public static final byte STATE_NOTSTARTED = 0;
+    public static final byte STATE_PLAYING = 1;
+    public static final byte STATE_FINISHED_DRAW = 2;
+    public static final byte STATE_FINISHED_WHITEWIN = 3;
+    public static final byte STATE_FINISHED_BLACKWIN = 4;
+    
     protected EventListenerList listeners = new EventListenerList();
-    private Match match;
+    
+    private List<Board> historyBoards;
+    private List<Move> historyMoves;
+    private Board board;
+    private User whitePlayer;
+    private User blackPlayer;
+    private Clock whiteClock;
+    private Clock blackClock;
+    private byte sideToMove;
+    private byte state;
     private int displayPly = -1;
     private boolean boardFlipped = false;
+    
     private BoardPanel boardPanel;
     private MatchMoveListPanel moveListPanel;
     private MatchOutputPanel outputPanel;
     private PlayerPanel topPlayerPanel;
     private PlayerPanel bottomPlayerPanel;
     
-    public MatchFrame (Player whitePlayer, Player blackPlayer)
+    public MatchFrame ()
     {
         super();
         setMinimumSize(new Dimension (300, 300));
         setSize(new java.awt.Dimension(500, 400));
         
-        this.match = new Match ();
-        this.match.addMatchListener(this);
-        this.match.setWhitePlayer(whitePlayer);
-        this.match.setBlackPlayer(blackPlayer);
         boardPanel = new BoardPanel(this);
         moveListPanel = new MatchMoveListPanel(this);
         outputPanel = new MatchOutputPanel(this);
@@ -68,8 +81,7 @@ public class MatchFrame extends InternalFrame implements MatchListener
         add(splitPanel);        
         setVisible(true);
         pack();
-        initializeMatch ();
-        startMatch();
+        initializeOpeningBookFile();
     }
 
     @Override
@@ -85,9 +97,6 @@ public class MatchFrame extends InternalFrame implements MatchListener
         moveListPanel = null;
         outputPanel.dispose();
         outputPanel = null;
-        this.match.removeMatchListener(this);
-        match.dispose();
-        match = null;
         removeAll();
         super.dispose();
     }
@@ -96,7 +105,7 @@ public class MatchFrame extends InternalFrame implements MatchListener
     public boolean close (boolean forced)
     {
         boolean closeFrame = true;
-        if (match.getState() == Match.STATE_PLAYING)
+        if (getState() == STATE_PLAYING)
         {
             if (forced || JOptionPane.showConfirmDialog(this, "Match in progress !!, Are you sure to close match ?", Application.getInstance().getTitle(), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
             {
@@ -109,31 +118,260 @@ public class MatchFrame extends InternalFrame implements MatchListener
         return closeFrame? super.close(forced) : false;
     }
 
-    public boolean makeMove (Move move)
+    public User getBlackPlayer ()
     {
-        return match.makeMove(move);
+        return blackPlayer;
+    }
+
+    public void setBlackPlayer (User blackPlayer)
+    {
+        this.blackPlayer = blackPlayer;
+    }
+
+    public User getWhitePlayer ()
+    {
+        return whitePlayer;
+    }
+
+    public void setWhitePlayer (User whitePlayer)
+    {
+        this.whitePlayer = whitePlayer;
+    }
+    
+    public User getPlayer (byte side)
+    {
+        return (side == Board.WHITE)? whitePlayer : blackPlayer;
+    }
+    
+    public User getTurnPlayer ()
+    {
+        return (sideToMove == Board.WHITE)? whitePlayer : ((sideToMove == Board.BLACK)?blackPlayer : null);
+    }
+    
+    public byte getSideToMove ()
+    {
+        return sideToMove;
+    }
+    
+    public int getPly ()
+    {
+        return historyBoards.size();
+    }
+    
+    public void setState (byte state)
+    {
+        byte oldState = this.state;
+        this.state = state;
+        if (this.state != oldState)
+            fireMatchStateChangedEvent (this.state);
     }
 
     public byte getState ()
     {
-        return match.getState();
+        return state;
     }
-
-    public int getPly ()
+    
+    public Board getBoard()
     {
-        return match.getPly();
+        return board;
     }
 
-    public void startMatch ()
+    public Board getBoard (int ply)
     {
-        match.start();
+        return (ply == getPly())? getBoard() : historyBoards.get(ply);
     }
 
-    public Match getMatch()
+    public Move getMove (int ply)
     {
-        return match;
+        return historyMoves.get(ply);
     }
 
+    public List<Move> getMoves()
+    {
+        return historyMoves;
+    }
+
+    public Clock getBlackClock ()
+    {
+        return blackClock;
+    }
+
+    public void setBlackClock (Clock blackClock)
+    {
+        this.blackClock = blackClock;
+    }
+
+    public Clock getWhiteClock ()
+    {
+        return whiteClock;
+    }
+
+    public void setWhiteClock (Clock whiteClock)
+    {
+        this.whiteClock = whiteClock;
+    }
+    
+    public Clock getTurnClock ()
+    {
+        return (sideToMove == Board.WHITE)? whiteClock : ((sideToMove == Board.BLACK)?blackClock : null);
+    }
+
+    public void start ()
+    {
+        if (state == STATE_NOTSTARTED)
+            initializeMatch ();
+    }
+    
+    public void restart ()
+    {
+        state = STATE_NOTSTARTED;
+        start();
+    }
+
+    protected void initializeMatch ()
+    {
+        fireMatchStartedEvent ();
+        clearHistory ();
+        setStartupBoard();
+        setState(STATE_PLAYING);
+        processState ();
+    }
+
+    protected void finalizeMatch ()
+    {
+        fireMatchFinishedEvent ();
+    }
+    
+    protected void clearHistory ()
+    {
+        historyBoards.clear();
+        historyMoves.clear();
+    }
+    
+    protected void setStartupBoard ()
+    {
+        board.setStartupPosition();
+        fireMatchPositionChangedEvent ();
+    }
+
+    protected void processState ()
+    {
+        switch (state)
+        {
+            case STATE_NOTSTARTED:
+                break;
+            case STATE_PLAYING:
+                if (board.getSideToMove() != sideToMove)
+                    finalizeTurn(sideToMove);
+                initializeTurn(board.getSideToMove());
+                break;
+            case STATE_FINISHED_DRAW:
+            case STATE_FINISHED_BLACKWIN:
+            case STATE_FINISHED_WHITEWIN:
+                if (sideToMove != Board.NOSIDE)
+                    finalizeTurn(sideToMove);
+                finalizeMatch ();
+        }
+    }
+  
+    protected void initializeTurn (byte side)
+    {
+        sideToMove = side;
+        Clock turnClock = getTurnClock();
+        if (turnClock != null)
+            turnClock.start();
+        fireMatchTurnStartedEvent (side);
+    }
+    
+    protected void finalizeTurn (byte side)
+    {
+        Clock turnClock = getTurnClock();
+        sideToMove = Board.NOSIDE;
+        if (turnClock != null)
+            turnClock.stop();
+        fireMatchTurnEndedEvent (side);
+    }
+    
+    public long getRemainingTime (byte side)
+    {
+        Clock clock = (side == Board.WHITE)? whiteClock : blackClock;
+        return (clock != null)? clock.getRemainingTime() : -1;
+    }
+    
+    public boolean isTimeUp (byte side)
+    {
+        return (getRemainingTime(side) == 0);
+    }
+    
+    public boolean checkTime ()
+    {
+        boolean isTimeOk = true;
+        if (state == STATE_PLAYING && sideToMove != Board.NOSIDE && isTimeUp(sideToMove))
+        {
+            setState(sideToMove == Board.WHITE? STATE_FINISHED_BLACKWIN : STATE_FINISHED_WHITEWIN);
+            processState();
+            isTimeOk = false;
+        }
+        return isTimeOk;
+    }
+    
+    public boolean makeMove (Move move)
+    {
+        boolean moveMade = false;
+        if (state == STATE_PLAYING)
+        {
+            if (checkTime() && move != null && board.isMoveValid(move))
+            {
+                historyMoves.add(move);
+                historyBoards.add(board.clone());
+                board.makeMove(move);
+                setDisplayPly(getPly());
+                fireMatchMoveEvent (move);                
+                fireMatchPositionChangedEvent ();
+                updateState();
+                processState();
+                moveMade = true;
+            }
+        }
+        return moveMade;
+    }
+
+    protected void unmakeMove ()
+    {
+        if (state == STATE_PLAYING)
+        {
+            if (checkTime() && historyBoards.size() > 0)
+            {
+                Board lastHistoryBoard = historyBoards.get(historyBoards.size() - 1);
+                Move lastMove = historyMoves.get(historyMoves.size() - 1);
+                board.copy(lastHistoryBoard);
+                lastHistoryBoard.dispose();
+                historyBoards.remove(lastHistoryBoard);
+                historyMoves.remove(lastMove);
+                setDisplayPly(getPly());
+                fireMatchTakebackEvent (lastMove);
+                fireMatchPositionChangedEvent ();
+                updateState ();
+                processState ();
+            }
+        }
+    }
+    
+    protected void updateState ()
+    {
+        if (state == STATE_PLAYING)
+        {
+            if (board.inCheckMate())
+            {
+                setState((board.getSideToMove() == Board.WHITE)? STATE_FINISHED_BLACKWIN : STATE_FINISHED_WHITEWIN); 
+            }
+            else if (board.inStaleMate())
+            {
+                setState(STATE_FINISHED_DRAW);
+            }
+        }
+    }
+    
     public BoardPanel getBoardPanel()
     {
         return boardPanel;
@@ -149,11 +387,6 @@ public class MatchFrame extends InternalFrame implements MatchListener
         return outputPanel;
     }
     
-    private void initializeMatch ()
-    {
-        initializeOpeningBookFile();
-    }
-    
     private void initializeOpeningBookFile ()
     {
         ResourceUtils.copyResourceToFile(Application.getInstance().getResourceGeneralPath() + "OpeningBook.bin", Application.getHomePath() + File.separatorChar + "OpeningBook.bin");
@@ -166,12 +399,12 @@ public class MatchFrame extends InternalFrame implements MatchListener
     
     public void setDisplayPly(int ply)
     {
-        if (ply >= 0 && ply <= match.getPly())
+        if (ply >= 0 && ply <= getPly())
         {
             int oldDisplayPly = this.displayPly;
             this.displayPly = ply;
             if (this.displayPly != oldDisplayPly)
-                fireMatchDisplayPlyChangedEvent (match, this.displayPly);
+                fireMatchDisplayPlyChangedEvent (this.displayPly);
         }
     }
 
@@ -185,7 +418,7 @@ public class MatchFrame extends InternalFrame implements MatchListener
         boolean oldBoardFlipped = this.boardFlipped;
         this.boardFlipped = boardFlipped;
         if (this.boardFlipped != oldBoardFlipped)
-            fireMatchBoardFlippedEvent (match, this.boardFlipped);
+            fireMatchBoardFlippedEvent (this.boardFlipped);
     }
     
     public void addMatchFrameListener(MatchFrameListener listener)
@@ -198,47 +431,77 @@ public class MatchFrame extends InternalFrame implements MatchListener
         listeners.remove(MatchFrameListener.class, listener);
     }
     
-    public void onMatchMove (Match match, Move move)
-    {
-        setDisplayPly(match.getPly());
-    }
-    
-    public void onMatchTakeback (Match match, Move move)
-    {
-        setDisplayPly(match.getPly());
-    }
-    
-    public void onMatchTurnStarted (Match match, byte side)
-    {
-        if (match.getTurnPlayer().equals(Application.getInstance().getSession().getUser()))
-            boardPanel.setHumanMoveEnabled(true);
-    }
-    
-    public void onMatchTurnEnded (Match match, byte side)
-    {
-        boardPanel.setHumanMoveEnabled(false);
-    }
-    
-    public void onMatchStarted (Match match){}
-    public void onMatchFinished (Match match){}
-    public void onMatchPositionChanged (Match match){}
-    public void onMatchStateChanged (Match match, byte state){}
-    
-    private void fireMatchDisplayPlyChangedEvent (Match match, int ply)
+    private void fireMatchStartedEvent ()
     {
         for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
-            listener.onMatchDisplayPlyChanged(match, ply);
+            listener.onMatchStarted(this);
     }
     
-    private void fireMatchBoardFlippedEvent (Match match, boolean flipped)
+    private void fireMatchFinishedEvent ()
     {
         for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
-            listener.onMatchBoardFlipped(match, flipped);
+            listener.onMatchFinished(this);
+    }
+    
+    private void fireMatchPositionChangedEvent ()
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchPositionChanged(this);
+    }
+    
+    private void fireMatchTurnStartedEvent (byte side)
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchTurnStarted(this, side);
+    }
+    
+    private void fireMatchTurnEndedEvent (byte side)
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchTurnEnded(this, side);
+    }
+    
+    private void fireMatchMoveEvent (Move move)
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchMove(this, move);
+    }
+    
+    private void fireMatchTakebackEvent (Move move)
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchTakeback(this, move);
+    }
+    
+    private void fireMatchStateChangedEvent (byte state)
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchStateChanged(this, state);
+    }
+    
+    private void fireMatchDisplayPlyChangedEvent (int ply)
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchDisplayPlyChanged(this, ply);
+    }
+    
+    private void fireMatchBoardFlippedEvent (boolean flipped)
+    {
+        for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
+            listener.onMatchBoardFlipped(this, flipped);
     }
     
     public interface MatchFrameListener extends EventListener
     {
-        public void onMatchDisplayPlyChanged (Match match, int ply);
-        public void onMatchBoardFlipped (Match match, boolean flipped);
+        public void onMatchStarted (MatchFrame match);
+        public void onMatchFinished (MatchFrame match);
+        public void onMatchPositionChanged (MatchFrame match);
+        public void onMatchTurnStarted (MatchFrame match, byte side);
+        public void onMatchTurnEnded (MatchFrame match, byte side);
+        public void onMatchMove (MatchFrame match, Move move);
+        public void onMatchTakeback (MatchFrame match, Move move);
+        public void onMatchStateChanged (MatchFrame match, byte state);
+        public void onMatchDisplayPlyChanged (MatchFrame match, int ply);
+        public void onMatchBoardFlipped (MatchFrame match, boolean flipped);
     }
 }

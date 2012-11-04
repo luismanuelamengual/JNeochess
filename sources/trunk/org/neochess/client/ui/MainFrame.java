@@ -15,7 +15,6 @@ import org.neochess.client.Application;
 import org.neochess.client.Connection.ConnectionListener;
 import org.neochess.client.Session;
 import org.neochess.client.Session.SessionListener;
-import org.neochess.engine.Player;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
 
@@ -276,7 +275,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
         JMenu menu = new JMenu("Play");
         menu.setActionCommand("play");
         menu.add(createPracticeMatchMenuItem());
-        menu.add(createCPUMatchMenuItem());
+        menu.add(createLocalMatchMenuItem());
         return menu;
     }
     
@@ -385,6 +384,7 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
+            @Override
             public void actionPerformed(ActionEvent e) 
             {
                 List<InternalFrame> frames = getInternalFrames(UserFrame.class);
@@ -443,9 +443,6 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
             @Override
             public void actionPerformed(ActionEvent e) 
             {
-                Player whitePlayer = new Player("Practice Player 1", 0);
-                Player blackPlayer = new Player("Practice Player 2", 0);
-                addInternalFrame(new MatchFrame(whitePlayer, blackPlayer));
             }
         });
         menuItem.setActionCommand("practicematch");
@@ -453,20 +450,17 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
         return menuItem;
     }
     
-    private JMenuItem createCPUMatchMenuItem ()
+    private JMenuItem createLocalMatchMenuItem ()
     {
         JMenuItem menuItem = new JMenuItem(new AbstractAction()
         {
             @Override
             public void actionPerformed(ActionEvent e) 
             {
-                Player whitePlayer = new Player("Practice Player", 0);
-                Player blackPlayer = new Player("CPU Player", 0);
-                addInternalFrame(new MatchFrame(whitePlayer, blackPlayer));
             }
         });
         menuItem.setActionCommand("practicematch");
-        menuItem.setText("CPU Match");
+        menuItem.setText("Local Match");
         return menuItem;
     }
 

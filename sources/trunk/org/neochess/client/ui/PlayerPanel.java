@@ -8,14 +8,12 @@ import javax.swing.*;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
-import org.neochess.engine.Match;
-import org.neochess.engine.Match.MatchListener;
-import org.neochess.engine.Player;
+import org.neochess.engine.User;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
 import org.neochess.util.UserInterfaceUtils;
 
-public class PlayerPanel extends JPanel implements Disposable, MatchListener, MatchFrame.MatchFrameListener
+public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchFrameListener
 {
     private MatchFrame matchFrame;
     private boolean isBottomPlayer;
@@ -29,7 +27,6 @@ public class PlayerPanel extends JPanel implements Disposable, MatchListener, Ma
         super();
         this.matchFrame = matchFrame;
         this.matchFrame.addMatchFrameListener(this);
-        this.matchFrame.getMatch().addMatchListener(this);
         this.isBottomPlayer = isBottomPlayer;
         playerInfoLabel = createPlayerInfoLabel();
         playerRemainingTimeLabel = createPlayerRemainingTimeLabel();
@@ -46,7 +43,6 @@ public class PlayerPanel extends JPanel implements Disposable, MatchListener, Ma
         playerInfoLabel = null;
         playerRemainingTimeLabel = null;
         matchFrame.removeMatchFrameListener(this);
-        matchFrame.getMatch().removeMatchListener(this);
         matchFrame = null;
     }
     
@@ -79,7 +75,7 @@ public class PlayerPanel extends JPanel implements Disposable, MatchListener, Ma
     
     public boolean isActivated ()
     {
-        return this.matchFrame.getMatch().getState() == Match.STATE_PLAYING && this.matchFrame.getMatch().getSideToMove() == getPlayerSide();
+        return this.matchFrame.getState() == MatchFrame.STATE_PLAYING && this.matchFrame.getSideToMove() == getPlayerSide();
     }
     
     @Override
@@ -109,7 +105,7 @@ public class PlayerPanel extends JPanel implements Disposable, MatchListener, Ma
     {
         byte playerSide = getPlayerSide();
         Color foregroundColor = UserInterfaceUtils.getColor (isActivated()?"Table.selectionForeground":"Panel.foreground");
-        Player player = matchFrame.getMatch().getPlayer(playerSide);
+        User player = matchFrame.getPlayer(playerSide);
         if (savedImageUrl == null || !savedImageUrl.equals(player.getImageUrl()))
         {
             ImageIcon icon = null;
@@ -128,7 +124,7 @@ public class PlayerPanel extends JPanel implements Disposable, MatchListener, Ma
         playerInfoLabel.setText(player.getNickName() + " (" + player.getElo() + ")");
         playerInfoLabel.setForeground(foregroundColor);
         
-        long remainingTime = matchFrame.getMatch().getRemainingTime(playerSide);
+        long remainingTime = matchFrame.getRemainingTime(playerSide);
         StringBuilder remainingTimeString = new StringBuilder();
         if (remainingTime >= 0)
         {
@@ -183,32 +179,32 @@ public class PlayerPanel extends JPanel implements Disposable, MatchListener, Ma
         return label;
     }
 
-    public void onMatchTurnStarted (Match match, byte side)
+    public void onMatchTurnStarted (MatchFrame match, byte side)
     {
         startUpdateTimer();
         update();
     }
 
-    public void onMatchTurnEnded (Match match, byte side)
+    public void onMatchTurnEnded (MatchFrame match, byte side)
     {
         stopUpdateTimer();
         update();
     }
     
-    public void onMatchDisplayPlyChanged (Match match, int ply)
+    public void onMatchDisplayPlyChanged (MatchFrame match, int ply)
     {
         update();
     }
 
-    public void onMatchBoardFlipped (Match match, boolean flipped)
+    public void onMatchBoardFlipped (MatchFrame match, boolean flipped)
     {
         update();
     }
     
-    public void onMatchStarted (Match match) {}
-    public void onMatchFinished (Match match) {}
-    public void onMatchPositionChanged (Match match) {}
-    public void onMatchMove (Match match, Move move) {}
-    public void onMatchTakeback (Match match, Move move) {}
-    public void onMatchStateChanged (Match match, byte state) {}
+    public void onMatchStarted (MatchFrame match) {}
+    public void onMatchFinished (MatchFrame match) {}
+    public void onMatchPositionChanged (MatchFrame match) {}
+    public void onMatchMove (MatchFrame match, Move move) {}
+    public void onMatchTakeback (MatchFrame match, Move move) {}
+    public void onMatchStateChanged (MatchFrame match, byte state) {}
 }
