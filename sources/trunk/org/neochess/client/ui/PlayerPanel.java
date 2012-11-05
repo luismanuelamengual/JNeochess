@@ -8,7 +8,7 @@ import javax.swing.*;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
-import org.neochess.engine.User;
+import org.neochess.engine.Player;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
 import org.neochess.util.UserInterfaceUtils;
@@ -105,7 +105,7 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
     {
         byte playerSide = getPlayerSide();
         Color foregroundColor = UserInterfaceUtils.getColor (isActivated()?"Table.selectionForeground":"Panel.foreground");
-        User player = matchFrame.getPlayer(playerSide);
+        Player player = matchFrame.getPlayer(playerSide);
         if (savedImageUrl == null || !savedImageUrl.equals(player.getImageUrl()))
         {
             ImageIcon icon = null;

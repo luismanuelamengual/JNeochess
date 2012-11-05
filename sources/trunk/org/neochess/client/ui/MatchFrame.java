@@ -16,6 +16,7 @@ import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
 import org.neochess.engine.Clock;
 import org.neochess.engine.User;
+import org.neochess.engine.Player;
 import org.neochess.util.ResourceUtils;
 
 public class MatchFrame extends InternalFrame
@@ -31,8 +32,8 @@ public class MatchFrame extends InternalFrame
     private List<Board> historyBoards;
     private List<Move> historyMoves;
     private Board board;
-    private User whitePlayer;
-    private User blackPlayer;
+    private Player whitePlayer;
+    private Player blackPlayer;
     private Clock whiteClock;
     private Clock blackClock;
     private byte sideToMove;
@@ -118,32 +119,32 @@ public class MatchFrame extends InternalFrame
         return closeFrame? super.close(forced) : false;
     }
 
-    public User getBlackPlayer ()
+    public Player getBlackPlayer ()
     {
         return blackPlayer;
     }
 
-    public void setBlackPlayer (User blackPlayer)
+    public void setBlackPlayer (Player blackPlayer)
     {
         this.blackPlayer = blackPlayer;
     }
 
-    public User getWhitePlayer ()
+    public Player getWhitePlayer ()
     {
         return whitePlayer;
     }
 
-    public void setWhitePlayer (User whitePlayer)
+    public void setWhitePlayer (Player whitePlayer)
     {
         this.whitePlayer = whitePlayer;
     }
     
-    public User getPlayer (byte side)
+    public Player getPlayer (byte side)
     {
         return (side == Board.WHITE)? whitePlayer : blackPlayer;
     }
     
-    public User getTurnPlayer ()
+    public Player getTurnPlayer ()
     {
         return (sideToMove == Board.WHITE)? whitePlayer : ((sideToMove == Board.BLACK)?blackPlayer : null);
     }
