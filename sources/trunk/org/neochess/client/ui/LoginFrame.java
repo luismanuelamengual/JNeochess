@@ -23,10 +23,8 @@ public class LoginFrame extends InternalFrame
         setTitle(Application.getInstance().getShortTitle() + " - User Login");
         setLayout(new BorderLayout(4, 4));
         setResizable(false);
-//        add(createScreenerPanel(), BorderLayout.CENTER);
-//        add(createControlsPanel(), BorderLayout.SOUTH);
-        
-        add(createControlsPanel(), BorderLayout.CENTER);
+        add(createScreenerPanel(), BorderLayout.CENTER);
+        add(createControlsPanel(), BorderLayout.SOUTH);
         setVisible(true);
         pack();
     }

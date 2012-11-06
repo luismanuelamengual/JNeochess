@@ -15,44 +15,32 @@ import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
 import org.neochess.engine.Clock;
-import org.neochess.engine.User;
+import org.neochess.engine.Match;
 import org.neochess.engine.Player;
 import org.neochess.util.ResourceUtils;
 
 public class MatchFrame extends InternalFrame
 {
-    public static final byte STATE_NOTSTARTED = 0;
-    public static final byte STATE_PLAYING = 1;
-    public static final byte STATE_FINISHED_DRAW = 2;
-    public static final byte STATE_FINISHED_WHITEWIN = 3;
-    public static final byte STATE_FINISHED_BLACKWIN = 4;
-    
     protected EventListenerList listeners = new EventListenerList();
     
-    private List<Board> historyBoards;
-    private List<Move> historyMoves;
-    private Board board;
-    private Player whitePlayer;
-    private Player blackPlayer;
-    private Clock whiteClock;
-    private Clock blackClock;
+    private Match match;
     private byte sideToMove;
     private byte state;
     private int displayPly = -1;
     private boolean boardFlipped = false;
-    
     private BoardPanel boardPanel;
     private MatchMoveListPanel moveListPanel;
     private MatchOutputPanel outputPanel;
     private PlayerPanel topPlayerPanel;
     private PlayerPanel bottomPlayerPanel;
     
-    public MatchFrame ()
+    public MatchFrame (Match match)
     {
         super();
         setMinimumSize(new Dimension (300, 300));
         setSize(new java.awt.Dimension(500, 400));
         
+        this.match = match;
         boardPanel = new BoardPanel(this);
         moveListPanel = new MatchMoveListPanel(this);
         outputPanel = new MatchOutputPanel(this);
@@ -88,6 +76,7 @@ public class MatchFrame extends InternalFrame
     @Override
     public void dispose()
     {
+        match.dispose();
         topPlayerPanel.dispose();
         topPlayerPanel = null;
         bottomPlayerPanel.dispose();
@@ -106,7 +95,7 @@ public class MatchFrame extends InternalFrame
     public boolean close (boolean forced)
     {
         boolean closeFrame = true;
-        if (getState() == STATE_PLAYING)
+        if (getState() == Match.STATE_PLAYING)
         {
             if (forced || JOptionPane.showConfirmDialog(this, "Match in progress !!, Are you sure to close match ?", Application.getInstance().getTitle(), JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
             {
@@ -119,46 +108,16 @@ public class MatchFrame extends InternalFrame
         return closeFrame? super.close(forced) : false;
     }
 
-    public Player getBlackPlayer ()
-    {
-        return blackPlayer;
-    }
-
-    public void setBlackPlayer (Player blackPlayer)
-    {
-        this.blackPlayer = blackPlayer;
-    }
-
-    public Player getWhitePlayer ()
-    {
-        return whitePlayer;
-    }
-
     public void setWhitePlayer (Player whitePlayer)
     {
-        this.whitePlayer = whitePlayer;
+        match.setWhitePlayer(whitePlayer);
     }
-    
-    public Player getPlayer (byte side)
+
+    public void setWhiteClock (Clock whiteClock)
     {
-        return (side == Board.WHITE)? whitePlayer : blackPlayer;
+        match.setWhiteClock(whiteClock);
     }
-    
-    public Player getTurnPlayer ()
-    {
-        return (sideToMove == Board.WHITE)? whitePlayer : ((sideToMove == Board.BLACK)?blackPlayer : null);
-    }
-    
-    public byte getSideToMove ()
-    {
-        return sideToMove;
-    }
-    
-    public int getPly ()
-    {
-        return historyBoards.size();
-    }
-    
+
     public void setState (byte state)
     {
         byte oldState = this.state;
@@ -167,74 +126,170 @@ public class MatchFrame extends InternalFrame
             fireMatchStateChangedEvent (this.state);
     }
 
-    public byte getState ()
+    public void setBlackPlayer (Player blackPlayer)
     {
-        return state;
-    }
-    
-    public Board getBoard()
-    {
-        return board;
-    }
-
-    public Board getBoard (int ply)
-    {
-        return (ply == getPly())? getBoard() : historyBoards.get(ply);
-    }
-
-    public Move getMove (int ply)
-    {
-        return historyMoves.get(ply);
-    }
-
-    public List<Move> getMoves()
-    {
-        return historyMoves;
-    }
-
-    public Clock getBlackClock ()
-    {
-        return blackClock;
+        match.setBlackPlayer(blackPlayer);
     }
 
     public void setBlackClock (Clock blackClock)
     {
-        this.blackClock = blackClock;
+        match.setBlackClock(blackClock);
+    }
+
+    public boolean isTimeUp (byte side)
+    {
+        return match.isTimeUp(side);
+    }
+
+    public Player getWhitePlayer ()
+    {
+        return match.getWhitePlayer();
     }
 
     public Clock getWhiteClock ()
     {
-        return whiteClock;
+        return match.getWhiteClock();
     }
 
-    public void setWhiteClock (Clock whiteClock)
+    public Player getTurnPlayer ()
     {
-        this.whiteClock = whiteClock;
+        return match.getTurnPlayer();
     }
-    
+
     public Clock getTurnClock ()
     {
-        return (sideToMove == Board.WHITE)? whiteClock : ((sideToMove == Board.BLACK)?blackClock : null);
+        return match.getTurnClock();
     }
 
-    public void start ()
+    public byte getState ()
     {
-        if (state == STATE_NOTSTARTED)
-            initializeMatch ();
+        return state;
+    }
+
+    public byte getSideToMove ()
+    {
+        return sideToMove;
+    }
+
+    public long getRemainingTime (byte side)
+    {
+        return match.getRemainingTime(side);
+    }
+
+    public int getPly ()
+    {
+        return match.getPly();
+    }
+
+    public Player getPlayer (byte side)
+    {
+        return match.getPlayer(side);
+    }
+
+    public List<Move> getMoves ()
+    {
+        return match.getMoves();
+    }
+
+    public Move getMove (int ply)
+    {
+        return match.getMove(ply);
+    }
+
+    public Clock getClock (byte side)
+    {
+        return match.getClock(side);
+    }
+
+    public Board getBoard (int ply)
+    {
+        return match.getBoard(ply);
+    }
+
+    public Board getBoard ()
+    {
+        return match.getBoard();
+    }
+
+    public Player getBlackPlayer ()
+    {
+        return match.getBlackPlayer();
+    }
+
+    public Clock getBlackClock ()
+    {
+        return match.getBlackClock();
     }
     
-    public void restart ()
+    public synchronized void reset ()
     {
-        state = STATE_NOTSTARTED;
-        start();
+        match.reset();
     }
-
+    
+    public synchronized void start ()
+    {
+        initializeMatch ();
+    }
+    
+    public synchronized boolean makeMove (Move move)
+    {
+        boolean moveMade = match.makeMove(move);
+        if (moveMade)
+        {
+            fireMatchMoveEvent(move);
+            fireMatchPositionChangedEvent();
+            setDisplayPly(getPly());
+        }
+        processState();
+        return moveMade;
+    }
+    
+    public synchronized boolean unmakeMove ()
+    {
+        Move lastMove = match.getMoves().get(match.getMoves().size()-1);
+        boolean moveUnmade = match.unmakeMove();
+        if (moveUnmade)
+        {
+            fireMatchTakebackEvent(lastMove);
+            fireMatchPositionChangedEvent();
+            setDisplayPly(getPly());
+        }
+        processState();
+        return moveUnmade;
+    }
+    
+    public void updateState ()
+    {
+        setState (match.updateState());
+    }
+    
+    protected void processState ()
+    {
+        updateState ();
+        switch (state)
+        {
+            case Match.STATE_NOTSTARTED:
+                break;
+            case Match.STATE_PLAYING:
+                if (match.getSideToMove() != sideToMove)
+                    finalizeTurn(sideToMove);
+                initializeTurn(match.getSideToMove());
+                break;
+            case Match.STATE_FINISHED_DRAW:
+            case Match.STATE_FINISHED_BLACKWIN:
+            case Match.STATE_FINISHED_WHITEWIN:
+                if (sideToMove != Board.NOSIDE)
+                    finalizeTurn(sideToMove);
+                finalizeMatch ();
+        }
+    }
+    
     protected void initializeMatch ()
     {
+        match.start();
+        updateState ();
         fireMatchStartedEvent ();
-        clearHistory ();
-        setStartupBoard();
-        setState(STATE_PLAYING);
+        fireMatchPositionChangedEvent();
         processState ();
     }
 
@@ -243,136 +298,18 @@ public class MatchFrame extends InternalFrame
         fireMatchFinishedEvent ();
     }
     
-    protected void clearHistory ()
-    {
-        historyBoards.clear();
-        historyMoves.clear();
-    }
-    
-    protected void setStartupBoard ()
-    {
-        board.setStartupPosition();
-        fireMatchPositionChangedEvent ();
-    }
-
-    protected void processState ()
-    {
-        switch (state)
-        {
-            case STATE_NOTSTARTED:
-                break;
-            case STATE_PLAYING:
-                if (board.getSideToMove() != sideToMove)
-                    finalizeTurn(sideToMove);
-                initializeTurn(board.getSideToMove());
-                break;
-            case STATE_FINISHED_DRAW:
-            case STATE_FINISHED_BLACKWIN:
-            case STATE_FINISHED_WHITEWIN:
-                if (sideToMove != Board.NOSIDE)
-                    finalizeTurn(sideToMove);
-                finalizeMatch ();
-        }
-    }
-  
     protected void initializeTurn (byte side)
     {
         sideToMove = side;
-        Clock turnClock = getTurnClock();
-        if (turnClock != null)
-            turnClock.start();
         fireMatchTurnStartedEvent (side);
     }
     
     protected void finalizeTurn (byte side)
     {
-        Clock turnClock = getTurnClock();
         sideToMove = Board.NOSIDE;
-        if (turnClock != null)
-            turnClock.stop();
         fireMatchTurnEndedEvent (side);
     }
-    
-    public long getRemainingTime (byte side)
-    {
-        Clock clock = (side == Board.WHITE)? whiteClock : blackClock;
-        return (clock != null)? clock.getRemainingTime() : -1;
-    }
-    
-    public boolean isTimeUp (byte side)
-    {
-        return (getRemainingTime(side) == 0);
-    }
-    
-    public boolean checkTime ()
-    {
-        boolean isTimeOk = true;
-        if (state == STATE_PLAYING && sideToMove != Board.NOSIDE && isTimeUp(sideToMove))
-        {
-            setState(sideToMove == Board.WHITE? STATE_FINISHED_BLACKWIN : STATE_FINISHED_WHITEWIN);
-            processState();
-            isTimeOk = false;
-        }
-        return isTimeOk;
-    }
-    
-    public boolean makeMove (Move move)
-    {
-        boolean moveMade = false;
-        if (state == STATE_PLAYING)
-        {
-            if (checkTime() && move != null && board.isMoveValid(move))
-            {
-                historyMoves.add(move);
-                historyBoards.add(board.clone());
-                board.makeMove(move);
-                setDisplayPly(getPly());
-                fireMatchMoveEvent (move);                
-                fireMatchPositionChangedEvent ();
-                updateState();
-                processState();
-                moveMade = true;
-            }
-        }
-        return moveMade;
-    }
 
-    protected void unmakeMove ()
-    {
-        if (state == STATE_PLAYING)
-        {
-            if (checkTime() && historyBoards.size() > 0)
-            {
-                Board lastHistoryBoard = historyBoards.get(historyBoards.size() - 1);
-                Move lastMove = historyMoves.get(historyMoves.size() - 1);
-                board.copy(lastHistoryBoard);
-                lastHistoryBoard.dispose();
-                historyBoards.remove(lastHistoryBoard);
-                historyMoves.remove(lastMove);
-                setDisplayPly(getPly());
-                fireMatchTakebackEvent (lastMove);
-                fireMatchPositionChangedEvent ();
-                updateState ();
-                processState ();
-            }
-        }
-    }
-    
-    protected void updateState ()
-    {
-        if (state == STATE_PLAYING)
-        {
-            if (board.inCheckMate())
-            {
-                setState((board.getSideToMove() == Board.WHITE)? STATE_FINISHED_BLACKWIN : STATE_FINISHED_WHITEWIN); 
-            }
-            else if (board.inStaleMate())
-            {
-                setState(STATE_FINISHED_DRAW);
-            }
-        }
-    }
-    
     public BoardPanel getBoardPanel()
     {
         return boardPanel;

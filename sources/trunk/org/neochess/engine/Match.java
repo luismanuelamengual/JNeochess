@@ -223,7 +223,7 @@ public class Match implements Disposable
             whiteClock.start();
     }
     
-    public boolean isDrawByRepetition ()
+    protected boolean isDrawByRepetition ()
     {
         boolean isDrawn = false;
         int counter = 1;
@@ -306,7 +306,7 @@ public class Match implements Disposable
         return moveUnmade;
     }
     
-    public void updateState ()
+    public byte updateState ()
     {
         if (state == STATE_PLAYING)
         {
@@ -315,12 +315,7 @@ public class Match implements Disposable
                 setState((getSideToMove() == Board.WHITE)? STATE_FINISHED_BLACKWIN : STATE_FINISHED_WHITEWIN); 
                 stopClocks ();
             }
-            else if (board.inStaleMate())
-            {
-                setState(STATE_FINISHED_DRAW);
-                stopClocks ();
-            }
-            else if (isDrawByRepetition())
+            else if (board.inStaleMate() || isDrawByRepetition())
             {
                 setState(STATE_FINISHED_DRAW);
                 stopClocks ();
@@ -331,5 +326,6 @@ public class Match implements Disposable
                 stopClocks ();
             }
         }
+        return state;
     }
 }

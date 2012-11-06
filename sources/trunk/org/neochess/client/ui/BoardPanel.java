@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
+import org.neochess.engine.Match;
 import org.neochess.general.Disposable;
 import org.neochess.util.ColorUtils;
 import org.neochess.util.GraphicsUtils;
@@ -441,7 +442,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     private boolean isSquareActionEnabled (byte square)
     {
         if (square == Board.EMPTY ) { return false; }
-        if (matchFrame.getState() == MatchFrame.STATE_PLAYING && humanMoveEnabled && matchFrame.getDisplayPly() == matchFrame.getPly())
+        if (matchFrame.getState() == Match.STATE_PLAYING && humanMoveEnabled && matchFrame.getDisplayPly() == matchFrame.getPly())
         {
             Board board = matchFrame.getBoard();
             byte side = board.getSquareSide(square);
@@ -483,7 +484,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     
     public void mousePressed (MouseEvent event)
     {
-        if (matchFrame.getState() == MatchFrame.STATE_PLAYING && humanMoveEnabled)
+        if (matchFrame.getState() == Match.STATE_PLAYING && humanMoveEnabled)
         {
             draggingPoint = event.getPoint();
             if (isPointOverBoard(draggingPoint))
@@ -518,7 +519,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     { 
         if (draggingSquare != Board.EMPTY) 
         {
-            if (matchFrame.getState() == MatchFrame.STATE_PLAYING && humanMoveEnabled)
+            if (matchFrame.getState() == Match.STATE_PLAYING && humanMoveEnabled)
                 matchFrame.makeMove(new Move(draggingSquare, getSquareAtPoint(draggingPoint)));
             draggingSquare = Board.EMPTY;
             mouseMoved (event);

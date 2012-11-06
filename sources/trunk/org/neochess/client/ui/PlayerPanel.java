@@ -8,6 +8,7 @@ import javax.swing.*;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Board.Move;
+import org.neochess.engine.Match;
 import org.neochess.engine.Player;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
@@ -75,7 +76,7 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
     
     public boolean isActivated ()
     {
-        return this.matchFrame.getState() == MatchFrame.STATE_PLAYING && this.matchFrame.getSideToMove() == getPlayerSide();
+        return this.matchFrame.getState() == Match.STATE_PLAYING && this.matchFrame.getSideToMove() == getPlayerSide();
     }
     
     @Override
