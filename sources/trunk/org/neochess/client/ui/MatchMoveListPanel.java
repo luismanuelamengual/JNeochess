@@ -11,7 +11,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import org.neochess.client.ui.MatchFrame.MatchFrameListener;
-import org.neochess.engine.Board.Move;
+import org.neochess.engine.Move;
 import org.neochess.general.Disposable;
 import org.neochess.util.UserInterfaceUtils;
 

@@ -3,7 +3,6 @@ package org.neochess.engine;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.neochess.engine.Board.Move;
 import org.neochess.general.Disposable;
 
 public class Match implements Disposable

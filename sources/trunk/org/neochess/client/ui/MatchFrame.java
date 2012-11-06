@@ -13,9 +13,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.EventListenerList;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
-import org.neochess.engine.Board.Move;
 import org.neochess.engine.Clock;
 import org.neochess.engine.Match;
+import org.neochess.engine.Move;
 import org.neochess.engine.Player;
 import org.neochess.util.ResourceUtils;
 

@@ -2,7 +2,7 @@
 package org.neochess.engine.searchagents;
 
 import org.neochess.engine.Board;
-import org.neochess.engine.Board.Move;
+import org.neochess.engine.Move;
 import org.neochess.general.Disposable;
 
 public abstract class SearchAgent implements Disposable

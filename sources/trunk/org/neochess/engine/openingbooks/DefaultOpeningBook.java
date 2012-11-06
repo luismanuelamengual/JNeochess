@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.neochess.engine.Board;
-import org.neochess.engine.Board.Move;
+import org.neochess.engine.Move;
 
 public class DefaultOpeningBook extends OpeningBook
 {

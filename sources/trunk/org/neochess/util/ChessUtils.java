@@ -3,7 +3,7 @@ package org.neochess.util;
 
 import java.util.List;
 import org.neochess.engine.Board;
-import org.neochess.engine.Board.Move;
+import org.neochess.engine.Move;
 import org.neochess.engine.evaluators.DefaultEvaluator;
 import org.neochess.engine.evaluators.Evaluator;
 import org.neochess.engine.openingbooks.DefaultOpeningBook;
