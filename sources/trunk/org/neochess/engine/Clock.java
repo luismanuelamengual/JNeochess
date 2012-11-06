@@ -1,7 +1,9 @@
 
 package org.neochess.engine;
 
-public class Clock
+import org.neochess.general.Disposable;
+
+public class Clock implements Disposable
 {
     protected long time;
     protected long increment;
@@ -18,6 +20,10 @@ public class Clock
         this.time = time;
         this.increment = increment;
         reset();
+    }
+    
+    public void dispose ()
+    {
     }
 
     public long getIncrement ()
@@ -57,10 +63,14 @@ public class Clock
         if (startMilliseconds > 0)
         {
             remainingTime -= (System.currentTimeMillis() - startMilliseconds);
-            if (remainingTime > 0)
-                remainingTime += increment;
             startMilliseconds = -1;
         }
+    }
+    
+    public void addIncrement ()
+    {
+        if (remainingTime > 0)
+            remainingTime += increment;
     }
     
     public long getRemainingTime ()
