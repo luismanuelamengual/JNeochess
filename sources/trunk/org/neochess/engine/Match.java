@@ -223,6 +223,30 @@ public class Match implements Disposable
             whiteClock.start();
     }
     
+    public boolean isDrawByRepetition ()
+    {
+        boolean isDrawn = false;
+        int counter = 1;
+        long actualHash = board.getHash();
+        if (historyBoards.size() > 1)
+        {
+            for(int i = historyBoards.size() - 2; i >= Math.max(0, historyBoards.size() - 50); i--)
+            {
+                Board boardToTest = historyBoards.get(i);
+                if (boardToTest.getHash() == actualHash)
+                {
+                    counter++;
+                    if (counter == 3)
+                    {
+                        isDrawn = true;
+                        break;
+                    }   
+                }
+            }
+        }
+        return isDrawn;
+    }
+    
     public synchronized boolean makeMove (Move move)
     {
         boolean moveMade = false;
@@ -292,6 +316,11 @@ public class Match implements Disposable
                 stopClocks ();
             }
             else if (board.inStaleMate())
+            {
+                setState(STATE_FINISHED_DRAW);
+                stopClocks ();
+            }
+            else if (isDrawByRepetition())
             {
                 setState(STATE_FINISHED_DRAW);
                 stopClocks ();
