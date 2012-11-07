@@ -105,61 +105,69 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
     public void update ()
     {
         byte playerSide = getPlayerSide();
-        Color foregroundColor = UserInterfaceUtils.getColor (isActivated()?"Table.selectionForeground":"Panel.foreground");
         Player player = matchFrame.getPlayer(playerSide);
-        if (savedImageUrl == null || !savedImageUrl.equals(player.getImageUrl()))
+        if (player != null)
         {
-            ImageIcon icon = null;
-            if (player.getImageUrl() != null && !player.getImageUrl().equals(""))
+            Color foregroundColor = UserInterfaceUtils.getColor (isActivated()?"Table.selectionForeground":"Panel.foreground");
+            if (savedImageUrl == null || !savedImageUrl.equals(player.getImageUrl()))
             {
-                int avatarIndex = 0;
-                if (player.getImageUrl().startsWith("{"))
+                ImageIcon icon = null;
+                if (player.getImageUrl() != null && !player.getImageUrl().equals(""))
                 {
-                    avatarIndex = Integer.parseInt(player.getImageUrl().substring(1,2));
-                    icon = new ImageIcon(ResourceUtils.getImage(Application.getInstance().getResourceImagesPath() + "avatars/avatar" + avatarIndex + ".gif").getScaledInstance(25, 25, Image.SCALE_SMOOTH));
+                    int avatarIndex = 0;
+                    if (player.getImageUrl().startsWith("{"))
+                    {
+                        avatarIndex = Integer.parseInt(player.getImageUrl().substring(1,2));
+                        icon = new ImageIcon(ResourceUtils.getImage(Application.getInstance().getResourceImagesPath() + "avatars/avatar" + avatarIndex + ".gif").getScaledInstance(25, 25, Image.SCALE_SMOOTH));
+                    }
                 }
+                playerInfoLabel.setIcon(icon);
+                savedImageUrl = player.getImageUrl();
             }
-            playerInfoLabel.setIcon(icon);
-            savedImageUrl = player.getImageUrl();
-        }
-        playerInfoLabel.setText(player.getNickName() + " (" + player.getElo() + ")");
-        playerInfoLabel.setForeground(foregroundColor);
-        
-        long remainingTime = matchFrame.getRemainingTime(playerSide);
-        StringBuilder remainingTimeString = new StringBuilder();
-        if (remainingTime >= 0)
-        {
-            int remainingSeconds = (int)(remainingTime / 1000);
-            playerRemainingTimeLabel.setForeground((remainingSeconds > 10)? Color.BLACK : new Color( 170, 50, 50 ));
             
-            int hours = remainingSeconds / 3600;
-            remainingSeconds -= hours * 3600;
-            int minutes = remainingSeconds / 60;
-            remainingSeconds -= minutes * 60;
+            String playerText = player.getNickName();
+            if (player.getElo() > 0)
+                playerText += " (" + player.getElo() + ")";
+            playerInfoLabel.setText(playerText);
             
-            if (hours > 0)
+            playerInfoLabel.setForeground(foregroundColor);
+
+            long remainingTime = matchFrame.getRemainingTime(playerSide);
+            StringBuilder remainingTimeString = new StringBuilder();
+            if (remainingTime >= 0)
             {
-                if (hours < 10)
+                int remainingSeconds = (int)(remainingTime / 1000);
+                playerRemainingTimeLabel.setForeground((remainingSeconds > 10)? Color.BLACK : new Color( 170, 50, 50 ));
+
+                int hours = remainingSeconds / 3600;
+                remainingSeconds -= hours * 3600;
+                int minutes = remainingSeconds / 60;
+                remainingSeconds -= minutes * 60;
+
+                if (hours > 0)
+                {
+                    if (hours < 10)
+                        remainingTimeString.append('0');
+                    remainingTimeString.append(hours);
+                    remainingTimeString.append(':');
+                }
+
+                if (hours > 0 || minutes > 0)
+                {
+                    if (minutes < 10)
+                        remainingTimeString.append('0');
+                    remainingTimeString.append(minutes);
+                    remainingTimeString.append(':');
+                }
+
+                if (remainingSeconds < 10)
                     remainingTimeString.append('0');
-                remainingTimeString.append(hours);
-                remainingTimeString.append(':');
+                remainingTimeString.append(remainingSeconds);
             }
-            
-            if (hours > 0 || minutes > 0)
-            {
-                if (minutes < 10)
-                    remainingTimeString.append('0');
-                remainingTimeString.append(minutes);
-                remainingTimeString.append(':');
-            }
-            
-            if (remainingSeconds < 10)
-                remainingTimeString.append('0');
-            remainingTimeString.append(remainingSeconds);
+            playerRemainingTimeLabel.setText(remainingTimeString.toString());
+            playerRemainingTimeLabel.setForeground(foregroundColor);   
+            repaint();
         }
-        playerRemainingTimeLabel.setText(remainingTimeString.toString());
-        playerRemainingTimeLabel.setForeground(foregroundColor);   
-        repaint();
     }
     
     private JLabel createPlayerInfoLabel ()

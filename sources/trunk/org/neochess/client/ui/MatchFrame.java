@@ -14,9 +14,11 @@ import javax.swing.event.EventListenerList;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Clock;
+import org.neochess.engine.HumanPlayer;
 import org.neochess.engine.Match;
 import org.neochess.engine.Move;
 import org.neochess.engine.Player;
+import org.neochess.engine.User;
 import org.neochess.util.ResourceUtils;
 
 public class MatchFrame extends InternalFrame
@@ -34,13 +36,13 @@ public class MatchFrame extends InternalFrame
     private PlayerPanel topPlayerPanel;
     private PlayerPanel bottomPlayerPanel;
     
-    public MatchFrame (Match match)
+    public MatchFrame ()
     {
         super();
         setMinimumSize(new Dimension (300, 300));
         setSize(new java.awt.Dimension(500, 400));
         
-        this.match = match;
+        match = new Match();
         boardPanel = new BoardPanel(this);
         moveListPanel = new MatchMoveListPanel(this);
         outputPanel = new MatchOutputPanel(this);
@@ -301,13 +303,32 @@ public class MatchFrame extends InternalFrame
     protected void initializeTurn (byte side)
     {
         sideToMove = side;
+        onInitializeTurn (side);
         fireMatchTurnStartedEvent (side);
     }
     
     protected void finalizeTurn (byte side)
     {
         sideToMove = Board.NOSIDE;
+        onFinalizeTurn (side);
         fireMatchTurnEndedEvent (side);
+    }
+    
+    protected void onInitializeTurn (byte side)
+    {
+        Player turnPlayer = getPlayer(side);
+        if (turnPlayer != null)
+        {
+            if (turnPlayer instanceof HumanPlayer || (turnPlayer instanceof User && turnPlayer.equals(Application.getInstance().getSession().getUser())))
+            {
+                boardPanel.setHumanMoveEnabled(true);
+            }
+        }
+    }
+    
+    protected void onFinalizeTurn (byte side)
+    {
+        boardPanel.setHumanMoveEnabled(false);
     }
 
     public BoardPanel getBoardPanel()
