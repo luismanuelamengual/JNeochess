@@ -129,16 +129,13 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
             if (player.getElo() > 0)
                 playerText += " (" + player.getElo() + ")";
             playerInfoLabel.setText(playerText);
-            
             playerInfoLabel.setForeground(foregroundColor);
 
             long remainingTime = matchFrame.getRemainingTime(playerSide);
+            int remainingSeconds = (int)(remainingTime / 1000);
             StringBuilder remainingTimeString = new StringBuilder();
             if (remainingTime >= 0)
             {
-                int remainingSeconds = (int)(remainingTime / 1000);
-                playerRemainingTimeLabel.setForeground((remainingSeconds > 10)? Color.BLACK : new Color( 170, 50, 50 ));
-
                 int hours = remainingSeconds / 3600;
                 remainingSeconds -= hours * 3600;
                 int minutes = remainingSeconds / 60;
@@ -163,10 +160,20 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
                 if (remainingSeconds < 10)
                     remainingTimeString.append('0');
                 remainingTimeString.append(remainingSeconds);
+                
+                if (remainingTime == 0)
+                    matchFrame.updateState();
             }
             playerRemainingTimeLabel.setText(remainingTimeString.toString());
-            playerRemainingTimeLabel.setForeground(foregroundColor);   
+            playerRemainingTimeLabel.setForeground((remainingSeconds > 10)? foregroundColor : Color.RED);
             repaint();
+        }
+        else
+        {
+            savedImageUrl = "";
+            playerInfoLabel.setIcon(null);
+            playerInfoLabel.setText("");
+            playerRemainingTimeLabel.setText("");
         }
     }
     
