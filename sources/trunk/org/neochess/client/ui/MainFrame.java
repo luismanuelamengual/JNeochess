@@ -15,7 +15,10 @@ import org.neochess.client.Application;
 import org.neochess.client.Connection.ConnectionListener;
 import org.neochess.client.Session;
 import org.neochess.client.Session.SessionListener;
+import org.neochess.engine.Clock;
+import org.neochess.engine.ComputerPlayer;
 import org.neochess.engine.HumanPlayer;
+import org.neochess.engine.searchagents.DefaultSearchAgent;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
 
@@ -469,6 +472,19 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
             @Override
             public void actionPerformed(ActionEvent e) 
             {
+                HumanPlayer whitePlayer = new HumanPlayer ();
+                whitePlayer.setNickName("Human Player");
+                ComputerPlayer blackPlayer = new ComputerPlayer (new DefaultSearchAgent());
+                blackPlayer.setNickName("CPU Player");
+                
+                MatchFrame matchFrame = new MatchFrame ();
+                matchFrame.setWhitePlayer(whitePlayer);
+                matchFrame.setBlackPlayer(blackPlayer);
+                matchFrame.setWhiteClock(new Clock(300000));
+                matchFrame.setBlackClock(new Clock(300000));
+                addInternalFrame(matchFrame);
+                
+                matchFrame.start();
             }
         });
         menuItem.setActionCommand("practicematch");

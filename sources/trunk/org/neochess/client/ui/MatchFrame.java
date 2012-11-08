@@ -10,10 +10,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Clock;
+import org.neochess.engine.ComputerPlayer;
 import org.neochess.engine.HumanPlayer;
 import org.neochess.engine.Match;
 import org.neochess.engine.Move;
@@ -322,6 +324,26 @@ public class MatchFrame extends InternalFrame
             if (turnPlayer instanceof HumanPlayer || (turnPlayer instanceof User && turnPlayer.equals(Application.getInstance().getSession().getUser())))
             {
                 boardPanel.setHumanMoveEnabled(true);
+            }
+            else if (turnPlayer instanceof ComputerPlayer)
+            {
+                final ComputerPlayer computerPlayer = (ComputerPlayer)turnPlayer;
+                new Thread ()
+                {
+                    @Override
+                    public void run ()
+                    {
+                        final Move moveSearched = computerPlayer.startMoveSearch(match);
+                        SwingUtilities.invokeLater(new Runnable() 
+                        {
+                            @Override
+                            public void run ()
+                            {
+                                makeMove(moveSearched);
+                            }
+                        });
+                    }
+                }.start();
             }
         }
     }
