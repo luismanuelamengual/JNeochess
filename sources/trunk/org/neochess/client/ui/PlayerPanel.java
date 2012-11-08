@@ -132,7 +132,8 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
             playerInfoLabel.setForeground(foregroundColor);
 
             long remainingTime = matchFrame.getRemainingTime(playerSide);
-            int remainingSeconds = (int)(remainingTime / 1000);
+            int remainingTimeInSeconds = (int)(remainingTime / 1000);
+            int remainingSeconds = remainingTimeInSeconds;
             StringBuilder remainingTimeString = new StringBuilder();
             if (remainingTime >= 0)
             {
@@ -165,7 +166,7 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
                     matchFrame.updateState();
             }
             playerRemainingTimeLabel.setText(remainingTimeString.toString());
-            playerRemainingTimeLabel.setForeground((remainingSeconds > 10)? foregroundColor : Color.RED);
+            playerRemainingTimeLabel.setForeground((remainingTimeInSeconds > 10)? foregroundColor : Color.RED);
             repaint();
         }
         else
