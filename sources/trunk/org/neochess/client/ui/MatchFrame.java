@@ -81,6 +81,7 @@ public class MatchFrame extends InternalFrame
     public void dispose()
     {
         match.dispose();
+        match = null;
         topPlayerPanel.dispose();
         topPlayerPanel = null;
         bottomPlayerPanel.dispose();
@@ -339,7 +340,8 @@ public class MatchFrame extends InternalFrame
                             @Override
                             public void run ()
                             {
-                                makeMove(moveSearched);
+                                if (match != null)
+                                    makeMove(moveSearched);
                             }
                         });
                     }
