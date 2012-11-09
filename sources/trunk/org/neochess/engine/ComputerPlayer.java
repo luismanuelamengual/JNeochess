@@ -54,11 +54,11 @@ public class ComputerPlayer extends Player
                 long remainingTime = clock.getRemainingTime();
                 if (remainingTime > 60000)
                 {
-                    remainingTime = (85 * remainingTime / 100);
                     if (movesMade < 30)
                     {
+                        long availiableTime = 80 * remainingTime / 100;
                         int movesLimit = 30 - movesMade;
-                        searchTime = remainingTime / movesLimit;
+                        searchTime = availiableTime / movesLimit;
                     }
                     else
                     {
@@ -72,7 +72,13 @@ public class ComputerPlayer extends Player
                 
                 Clock oppositeClock = match.getClock(Board.getOppositeSide(match.getSideToMove()));
                 if (oppositeClock != null)
-                    searchTime += 20 * (remainingTime - oppositeClock.getRemainingTime()) / 100;
+                {
+                    long timeDifference = remainingTime - oppositeClock.getRemainingTime();
+                    if (timeDifference > 0)
+                        searchTime += 20 * timeDifference / 100;
+                    else if (timeDifference < -30000)
+                        searchTime = 80 * searchTime / 100;
+                }
                 if (clock.getIncrement() > 0 && clock.getIncrement() < (remainingTime-searchTime))
                     searchTime += clock.getIncrement();
                 
