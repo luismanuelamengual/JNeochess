@@ -175,7 +175,7 @@ public class DefaultSearchAgent extends SearchAgent
 
     protected int alphaBetaSearch (Board board, int alpha, int beta, int depth, int ply)
     {
-        if (isTimeUp()) return Integer.MIN_VALUE;
+        if (isTimeUp()) return board.getSideToMove() == Board.WHITE? Integer.MIN_VALUE : Integer.MAX_VALUE;
 
         int searchResult;
         boolean foundPV = false;
@@ -237,7 +237,7 @@ public class DefaultSearchAgent extends SearchAgent
     
     protected int quiescentSearch (Board board, int alpha, int beta, int ply)
     {
-        if (isTimeUp()) return Integer.MIN_VALUE;
+        if (isTimeUp()) return board.getSideToMove() == Board.WHITE? Integer.MIN_VALUE : Integer.MAX_VALUE;
         
         int quiescResult;
         byte sideToMove = board.getSideToMove();
