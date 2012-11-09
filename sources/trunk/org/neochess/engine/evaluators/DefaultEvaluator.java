@@ -44,7 +44,7 @@ public class DefaultEvaluator extends Evaluator
     private static final int bishopSquareValue[] = 
     {
         -10, -10, -10, -10, -10, -10, -10, -10,
-        -10,   5,   0,   0,   0,   0,   5, -10,
+        -10,   0,   0,   0,   0,   0,   0, -10,
         -10,   0,   5,   5,   5,   5,   0, -10,
         -10,   0,   5,  10,  10,   5,   0, -10,
         -10,   0,   5,  10,  10,   5,   0, -10,
@@ -225,10 +225,10 @@ public class DefaultEvaluator extends Evaluator
                 }
             }
         }
-        byte numerOfPhases = 8;
+        byte numberOfPhases = 8;
         int originalMaterial = (figureValue[Board.PAWN] * 16) + (figureValue[Board.KNIGHT] * 4) + (figureValue[Board.BISHOP] * 4) + (figureValue[Board.ROOK] * 4) + (figureValue[Board.QUEEN] * 2);
         int actualMaterial = evaluationWhitePawnMaterial + evaluationWhitePieceMaterial + evaluationBlackPawnMaterial + evaluationBlackPieceMaterial;
-        evaluationPhase = (byte)(numerOfPhases - Math.floor((actualMaterial * numerOfPhases) / originalMaterial));
+        evaluationPhase = (byte)(numberOfPhases - Math.floor((actualMaterial * numberOfPhases) / originalMaterial));
     }
     
     protected int evaluatePawn (byte square, byte side)
