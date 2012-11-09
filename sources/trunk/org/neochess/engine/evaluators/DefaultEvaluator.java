@@ -44,7 +44,7 @@ public class DefaultEvaluator extends Evaluator
     private static final int bishopSquareValue[] = 
     {
         -10, -10, -10, -10, -10, -10, -10, -10,
-        -10,   0,   0,   0,   0,   0,   0, -10,
+        -10,   5,   0,   0,   0,   0,   5, -10,
         -10,   0,   5,   5,   5,   5,   0, -10,
         -10,   0,   5,  10,  10,   5,   0, -10,
         -10,   0,   5,  10,  10,   5,   0, -10,
