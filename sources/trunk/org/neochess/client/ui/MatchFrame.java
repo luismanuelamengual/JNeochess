@@ -3,11 +3,17 @@ package org.neochess.client.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.EventListener;
 import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
@@ -71,7 +77,8 @@ public class MatchFrame extends InternalFrame
         splitPanel.setOneTouchExpandable(true);
         splitPanel.setResizeWeight(1);
         
-        add(splitPanel);        
+        add(splitPanel);
+        setJMenuBar (createMenuBar());
         setVisible(true);
         pack();
         initializeOpeningBookFile();
@@ -94,6 +101,359 @@ public class MatchFrame extends InternalFrame
         outputPanel = null;
         removeAll();
         super.dispose();
+    }
+    
+    private JMenuBar createMenuBar ()
+    {
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(createFileMenu());
+        menuBar.add(createMatchMenu());
+        menuBar.add(createSettingsMenu());
+        return menuBar;
+    }
+    
+    private JMenu createFileMenu ()
+    {
+        JMenu menu = new JMenu("File");
+        menu.setActionCommand("file");
+        menu.add(createExitMenuItem());
+        return menu;
+    }
+    
+    private JMenu createMatchMenu ()
+    {
+        JMenu menu = new JMenu("Match");
+        menu.setActionCommand("match");
+        menu.add(createRepeatMenuItem());
+        menu.add(createRematchMenuItem());
+        menu.add(createResignMenuItem());
+        menu.add(createDrawMenuItem());
+        menu.addSeparator();
+        menu.add(createForceMoveMenuItem());
+        menu.add(createSuggestMoveMenuItem());
+        menu.add(createTakebackMenuItem());
+        return menu;
+    }
+    
+    private JMenu createSettingsMenu ()
+    {
+        JMenu menu = new JMenu("Settings");
+        menu.setActionCommand("settings");
+        menu.add (createChangeChesssetMenu());
+        menu.add (createChangeBoardTypeMenu());
+        menu.add (createChangeBoardSizeMenuItem ());
+        menu.add (createLightSquareColorMenuItem());
+        menu.add (createDarkSquareColorMenuItem());
+        menu.add (createShowMoveIndicatorMenuItem());
+        menu.add (createShowLastMoveIndicatorMenuItem());
+        menu.add (createChangeMoveIndicatorColorMenuItem());
+        menu.addSeparator();
+        menu.add (createBoardFlippedMenuItem());
+        menu.add (createSoundsEnabledMenuItem());
+        return menu;
+    }
+    
+    private JMenu createChangeChesssetMenu ()
+    {
+        JRadioButtonMenuItem defaultMenuItem = new JRadioButtonMenuItem("Default");
+        defaultMenuItem.setActionCommand ("defaultChessset");
+        defaultMenuItem.setSelected(true);
+        JRadioButtonMenuItem woodenMenuItem = new JRadioButtonMenuItem("Wooden");
+        woodenMenuItem.setActionCommand ("woodenChessset");
+        woodenMenuItem.setSelected(false);
+        JRadioButtonMenuItem stauntonMenuItem = new JRadioButtonMenuItem("Staunton");
+        stauntonMenuItem.setActionCommand ("stauntonChessset");
+        stauntonMenuItem.setSelected(false);
+        JRadioButtonMenuItem magneticMenuItem = new JRadioButtonMenuItem("Magnetic");
+        magneticMenuItem.setActionCommand ("magneticChessset");
+        magneticMenuItem.setSelected(false);
+        
+        JMenu menu = new JMenu("Change chess set");
+        menu.setActionCommand("chessset");
+        menu.add(defaultMenuItem);
+        menu.add(woodenMenuItem);
+        menu.add(stauntonMenuItem);
+        menu.add(magneticMenuItem);
+        return menu;
+    }
+    
+    private JMenu createChangeBoardTypeMenu ()
+    {
+        JRadioButtonMenuItem solidBoardTypeMenuItem = new JRadioButtonMenuItem("Solid");
+        solidBoardTypeMenuItem.setActionCommand ("solidBoardType");
+        solidBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem horizontalStripesBoardTypeMenuItem = new JRadioButtonMenuItem("Horizontal Stripes");
+        horizontalStripesBoardTypeMenuItem.setActionCommand ("horizontalStripesBoardType");
+        horizontalStripesBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem verticalStripesBoardTypeMenuItem = new JRadioButtonMenuItem("Vertical Stripes");
+        verticalStripesBoardTypeMenuItem.setActionCommand ("verticalStripesBoardType");
+        verticalStripesBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem horizontalVerticalStripesBoardTypeMenuItem = new JRadioButtonMenuItem("Horizontal/Vertical Stripes");
+        horizontalVerticalStripesBoardTypeMenuItem.setActionCommand ("horizontalVerticalStripesBoardType");
+        horizontalVerticalStripesBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem diagonalDownBoardTypeMenuItem = new JRadioButtonMenuItem("Diagonal Down Stripes");
+        diagonalDownBoardTypeMenuItem.setActionCommand ("diagonalDownBoardType");
+        diagonalDownBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem diagonalUpBoardTypeMenuItem = new JRadioButtonMenuItem("Diagonal Up Stripes");
+        diagonalUpBoardTypeMenuItem.setActionCommand ("diagonalUpBoardType");
+        diagonalUpBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem squaredBoardTypeMenuItem = new JRadioButtonMenuItem("Squared");
+        squaredBoardTypeMenuItem.setActionCommand ("squaredBoardType");
+        squaredBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem crossedBoardTypeMenuItem = new JRadioButtonMenuItem("Crossed");
+        crossedBoardTypeMenuItem.setActionCommand ("crossedBoardType");
+        crossedBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem horizontalGradientBoardTypeMenuItem = new JRadioButtonMenuItem("Horizontal Gradient");
+        horizontalGradientBoardTypeMenuItem.setActionCommand ("horizontalGradientBoardType");
+        horizontalGradientBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem verticalGradientBoardTypeMenuItem = new JRadioButtonMenuItem("Vertical Gradient");
+        verticalGradientBoardTypeMenuItem.setActionCommand ("verticalGradientBoardType");
+        verticalGradientBoardTypeMenuItem.setSelected(false);
+        JRadioButtonMenuItem diagonalGradientBoardTypeMenuItem = new JRadioButtonMenuItem("Diagonal Gradient");
+        diagonalGradientBoardTypeMenuItem.setActionCommand ("diagonalGradientBoardType");
+        diagonalGradientBoardTypeMenuItem.setSelected(true);
+        
+        JMenu menu = new JMenu("Change board type");
+        menu.setActionCommand("chessset");
+        menu.add (solidBoardTypeMenuItem);
+        menu.add (horizontalStripesBoardTypeMenuItem);
+        menu.add (verticalStripesBoardTypeMenuItem);
+        menu.add (horizontalVerticalStripesBoardTypeMenuItem);
+        menu.add (diagonalDownBoardTypeMenuItem);
+        menu.add (diagonalUpBoardTypeMenuItem);
+        menu.add (squaredBoardTypeMenuItem);
+        menu.add (crossedBoardTypeMenuItem);
+        menu.add (horizontalGradientBoardTypeMenuItem);
+        menu.add (verticalGradientBoardTypeMenuItem);
+        menu.add (diagonalGradientBoardTypeMenuItem);
+        return menu;
+    }
+    
+    private JMenuItem createChangeBoardSizeMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("boardsize");
+        menuItem.setText("Change board size");
+        return menuItem;
+    }
+    
+    private JMenuItem createShowMoveIndicatorMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("moveindicator");
+        menuItem.setText("Show move indicator");
+        return menuItem;
+    }
+    
+    private JMenuItem createShowLastMoveIndicatorMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("lastmoveindicator");
+        menuItem.setText("Show last move indicator");
+        return menuItem;
+    }
+    
+    private JMenuItem createChangeMoveIndicatorColorMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("moveindicatorcolor");
+        menuItem.setText("Change move indicator color");
+        return menuItem;
+    }
+    
+    private JMenuItem createSoundsEnabledMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("soundenabled");
+        menuItem.setText("Sounds enabled");
+        return menuItem;
+    }
+    
+    private JMenuItem createBoardFlippedMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("boardflipped");
+        menuItem.setText("Board flipped");
+        return menuItem;
+    }
+    
+    private JMenuItem createLightSquareColorMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+                close();
+            }   
+        });
+        menuItem.setActionCommand("lightSquareColor");
+        menuItem.setText("Set light squares color");
+        return menuItem;
+    }
+    
+    private JMenuItem createDarkSquareColorMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+                close();
+            }   
+        });
+        menuItem.setActionCommand("darkSquareColor");
+        menuItem.setText("Set dark squares color");
+        return menuItem;
+    }
+    
+    private JMenuItem createExitMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+                close();
+            }   
+        });
+        menuItem.setActionCommand("exit");
+        menuItem.setText("Exit");
+        return menuItem;
+    }
+    
+    private JMenuItem createRepeatMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("repeat");
+        menuItem.setText("Repeat Match");
+        return menuItem;
+    }
+    
+    private JMenuItem createRematchMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("rematch");
+        menuItem.setText("Rematch");
+        return menuItem;
+    }
+    
+    private JMenuItem createResignMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("resign");
+        menuItem.setText("Resign");
+        return menuItem;
+    }
+    
+    private JMenuItem createForceMoveMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("force");
+        menuItem.setText("Force Move");
+        return menuItem;
+    }
+    
+    private JMenuItem createSuggestMoveMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("suggest");
+        menuItem.setText("Suggest Move");
+        return menuItem;
+    }
+    
+    private JMenuItem createTakebackMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("takeback");
+        menuItem.setText("Takeback");
+        return menuItem;
+    }
+    
+    private JMenuItem createDrawMenuItem ()
+    {
+        JMenuItem menuItem = new JMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+            }   
+        });
+        menuItem.setActionCommand("draw");
+        menuItem.setText("Offer draw");
+        return menuItem;
     }
     
     @Override
