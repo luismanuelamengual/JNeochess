@@ -56,13 +56,13 @@ public class ComputerPlayer extends Player
                 {
                     if (movesMade < 30)
                     {
-                        long availiableTime = 80 * remainingTime / 100;
+                        long availiableTime = 75 * remainingTime / 100;
                         int movesLimit = 30 - movesMade;
                         searchTime = availiableTime / movesLimit;
                     }
                     else
                     {
-                        searchTime = remainingTime / 10;
+                        searchTime = remainingTime / 15;
                     }
                 }
                 else

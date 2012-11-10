@@ -25,6 +25,7 @@ public class DefaultSearchAgent extends SearchAgent
     private Board searchBoard;
     private int searchHistory[][];
     private List<Move> searchMoves;
+    private int searchIteration;
     private Move searchMove;
     private boolean verbose;
 
@@ -71,6 +72,7 @@ public class DefaultSearchAgent extends SearchAgent
         this.searchMilliseconds = searchMilliseconds;
         this.searchStopped = false;
         this.searchMoves = board.getLegalMoves();
+        this.searchIteration = 0;
         for (byte source = 0; source < 64; source++)
             for (byte destination = 0; destination < 64; destination++)
                 searchHistory[source][destination] = 0;
@@ -135,11 +137,11 @@ public class DefaultSearchAgent extends SearchAgent
         int rootAlpha = Integer.MIN_VALUE;
         int rootBeta = Integer.MAX_VALUE;
         int rootSearchResult = evaluateBoard(searchBoard);
-        int depth = 0;
+        searchIteration = 0;
 
-        while (!isTimeUp())
+        do
         {
-            depth++;
+            searchIteration++;
             
             if (rootSearchResult > (MATE-ASPIRATIONWINDOW_TOLERANCE))
             {
@@ -157,26 +159,27 @@ public class DefaultSearchAgent extends SearchAgent
                 rootBeta = Math.min (rootSearchResult + ASPIRATIONWINDOW_SIZE, MATE);
             }
 
-            rootSearchResult = alphaBetaSearch (searchBoard, rootAlpha, rootBeta, depth, 0);
-            if (rootSearchResult >= rootBeta && rootSearchResult < MATE)
+            rootSearchResult = alphaBetaSearch (searchBoard, rootAlpha, rootBeta, searchIteration, 0);
+            if (!isTimeUp())
             {
-                rootAlpha = rootBeta;
-                rootBeta = Integer.MAX_VALUE;
-                rootSearchResult = alphaBetaSearch (searchBoard, rootAlpha, rootBeta, depth, 0);
+                if (rootSearchResult >= rootBeta && rootSearchResult < MATE)
+                {
+                    rootAlpha = rootBeta;
+                    rootBeta = Integer.MAX_VALUE;
+                    rootSearchResult = alphaBetaSearch (searchBoard, rootAlpha, rootBeta, searchIteration, 0);
+                }
+                else if (rootSearchResult <= rootAlpha)
+                {
+                    rootBeta = rootAlpha;
+                    rootAlpha = Integer.MIN_VALUE;
+                    rootSearchResult = alphaBetaSearch (searchBoard, rootAlpha, rootBeta, searchIteration, 0);
+                }
             }
-            else if (rootSearchResult <= rootAlpha)
-            {
-                rootBeta = rootAlpha;
-                rootAlpha = Integer.MIN_VALUE;
-                rootSearchResult = alphaBetaSearch (searchBoard, rootAlpha, rootBeta, depth, 0);
-            }
-        }
+        } while (!isTimeUp());
     }
 
     protected int alphaBetaSearch (Board board, int alpha, int beta, int depth, int ply)
     {
-        if (isTimeUp()) return board.getSideToMove() == Board.WHITE? Integer.MIN_VALUE : Integer.MAX_VALUE;
-
         int searchResult;
         boolean foundPV = false;
 
@@ -218,6 +221,9 @@ public class DefaultSearchAgent extends SearchAgent
             }
             testMove.setScore(searchResult);
             testBoard.copy(board);
+            
+            if (searchIteration > 1 && isTimeUp())
+                return -MATE;
 
             if (searchResult > alpha)
             {
@@ -237,8 +243,6 @@ public class DefaultSearchAgent extends SearchAgent
     
     protected int quiescentSearch (Board board, int alpha, int beta, int ply)
     {
-        if (isTimeUp()) return board.getSideToMove() == Board.WHITE? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        
         int quiescResult;
         byte sideToMove = board.getSideToMove();
         boolean foundPV = false;
