@@ -5,11 +5,11 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -18,7 +18,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
-import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 import org.neochess.client.Application;
@@ -32,7 +31,7 @@ import org.neochess.engine.Player;
 import org.neochess.engine.User;
 import org.neochess.util.ResourceUtils;
 
-public class MatchFrame extends InternalFrame
+public class MatchFrame extends InternalFrame implements ActionListener
 {
     protected EventListenerList listeners = new EventListenerList();
     
@@ -121,6 +120,23 @@ public class MatchFrame extends InternalFrame
         }
     }
     
+    @Override
+    public void actionPerformed(ActionEvent e) 
+    {
+        String action = e.getActionCommand();
+        if (action.startsWith("chessset-"))
+        {
+            boardPanel.setChessSet(action.substring("chessset-".length()));
+            updateMenuBar ();
+        }
+        switch (action)
+        {
+            case "exit":
+                close();
+                break;
+        }
+    }
+    
     private List<JMenuItem> getMenuItems()
     {
         List<JMenuItem> menuItems = new ArrayList<JMenuItem>();
@@ -151,28 +167,20 @@ public class MatchFrame extends InternalFrame
         return menuItems;
     }   
     
-    private MenuElement getMenuElement (String action)
+    private JMenuItem createMenuItem (String text, String actionCommand) 
     {
-        return getMenuElement (action, this.getJMenuBar());
+        JMenuItem miNew = new JMenuItem(text);
+        miNew.setActionCommand (actionCommand);
+        miNew.addActionListener(this);
+        return miNew;
     }
     
-    private MenuElement getMenuElement (String action, MenuElement menuElement)
+    private JRadioButtonMenuItem createRadioButtonMenuItem (String text, String ActionCommand) 
     {
-        MenuElement item = null;
-        if (menuElement instanceof JMenuItem)
-            if (((JMenuItem)menuElement).getActionCommand().equals(action))
-                item = menuElement;
-        if (item == null)
-        {
-            MenuElement[] childElements = menuElement.getSubElements();
-            for (MenuElement childElement : childElements)
-            {
-                item = getMenuElement(action, childElement);
-                if (item != null)
-                    break;
-            }
-        }
-        return item;
+        JRadioButtonMenuItem miNew = new JRadioButtonMenuItem(text);
+        miNew.setActionCommand ( ActionCommand );
+        miNew.addActionListener(this);
+        return miNew;
     }
     
     private JMenuBar createMenuBar ()
@@ -188,7 +196,7 @@ public class MatchFrame extends InternalFrame
     {
         JMenu menu = new JMenu("File");
         menu.setActionCommand("file");
-        menu.add(createExitMenuItem());
+        menu.add(createMenuItem("Exit", "exit"));
         return menu;
     }
     
@@ -196,14 +204,14 @@ public class MatchFrame extends InternalFrame
     {
         JMenu menu = new JMenu("Match");
         menu.setActionCommand("match");
-        menu.add(createRepeatMenuItem());
-        menu.add(createRematchMenuItem());
-        menu.add(createResignMenuItem());
-        menu.add(createDrawMenuItem());
+        menu.add(createMenuItem("Repeat Match", "repeat"));
+        menu.add(createMenuItem("Rematch", "rematch"));
+        menu.add(createMenuItem("Resign", "resign"));
+        menu.add(createMenuItem("Offer Draw", "offerDraw"));
         menu.addSeparator();
-        menu.add(createForceMoveMenuItem());
-        menu.add(createSuggestMoveMenuItem());
-        menu.add(createTakebackMenuItem());
+        menu.add(createMenuItem("Force Move", "forceMove"));
+        menu.add(createMenuItem("Suggest Move", "suggestMove"));
+        menu.add(createMenuItem("Takeback", "tackbackMove"));
         return menu;
     }
     
@@ -213,355 +221,45 @@ public class MatchFrame extends InternalFrame
         menu.setActionCommand("settings");
         menu.add (createChangeChesssetMenu());
         menu.add (createChangeBoardTypeMenu());
-        menu.add (createChangeBoardSizeMenuItem ());
-        menu.add (createLightSquareColorMenuItem());
-        menu.add (createDarkSquareColorMenuItem());
-        menu.add (createShowMoveIndicatorMenuItem());
-        menu.add (createShowLastMoveIndicatorMenuItem());
-        menu.add (createChangeMoveIndicatorColorMenuItem());
+        menu.add (createMenuItem("Change Board Size", "changeBoardSize"));
+        menu.add (createMenuItem("Set light square color", "lightSquares"));
+        menu.add (createMenuItem("Set dark square color", "darkSquares"));
+        menu.add (createMenuItem("Show move indicator", "showMoveIndicator"));
+        menu.add (createMenuItem("Show last move indicator", "showLastMoveIndicator"));
+        menu.add (createMenuItem("Set move indicator color", "moveIndicatorColor"));
         menu.addSeparator();
-        menu.add (createBoardFlippedMenuItem());
-        menu.add (createSoundsEnabledMenuItem());
+        menu.add (createMenuItem("Board flipped", "boardFlipped"));
+        menu.add (createMenuItem("Sounds enabled", "soundsEnabled"));
         return menu;
     }
     
     private JMenu createChangeChesssetMenu ()
     {
-        JRadioButtonMenuItem defaultMenuItem = new JRadioButtonMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                boardPanel.setChessSet("comic");
-                updateMenuBar ();
-            }   
-        });
-        defaultMenuItem.setActionCommand ("chessset-comic");
-        defaultMenuItem.setText("Default");
-        defaultMenuItem.setSelected(true);
-        JRadioButtonMenuItem woodenMenuItem = new JRadioButtonMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                boardPanel.setChessSet("wooden");
-                updateMenuBar ();
-            }   
-        });
-        woodenMenuItem.setText("Wooden");
-        woodenMenuItem.setActionCommand ("chessset-wooden");
-        woodenMenuItem.setSelected(false);
-        JRadioButtonMenuItem stauntonMenuItem = new JRadioButtonMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                boardPanel.setChessSet("staunton");
-                updateMenuBar ();
-            }   
-        });
-        stauntonMenuItem.setText("Staunton");
-        stauntonMenuItem.setActionCommand ("chessset-staunton");
-        stauntonMenuItem.setSelected(false);
-        JRadioButtonMenuItem magneticMenuItem = new JRadioButtonMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                boardPanel.setChessSet("magnetic");
-                updateMenuBar ();
-            }   
-        });
-        magneticMenuItem.setText("Magnetic");
-        magneticMenuItem.setActionCommand ("chessset-magnetic");
-        magneticMenuItem.setSelected(false);
-        
         JMenu menu = new JMenu("Change chess set");
         menu.setActionCommand("chessset");
-        menu.add(defaultMenuItem);
-        menu.add(woodenMenuItem);
-        menu.add(stauntonMenuItem);
-        menu.add(magneticMenuItem);
+        menu.add(createRadioButtonMenuItem("Default", "chessset-comic"));
+        menu.add(createRadioButtonMenuItem("Wooden", "chessset-wooden"));
+        menu.add(createRadioButtonMenuItem("Staunton", "chessset-staunton"));
+        menu.add(createRadioButtonMenuItem("Magnetic", "chessset-magnetic"));
         return menu;
     }
     
     private JMenu createChangeBoardTypeMenu ()
-    {
-        JRadioButtonMenuItem solidBoardTypeMenuItem = new JRadioButtonMenuItem("Solid");
-        solidBoardTypeMenuItem.setActionCommand ("solidBoardType");
-        solidBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem horizontalStripesBoardTypeMenuItem = new JRadioButtonMenuItem("Horizontal Stripes");
-        horizontalStripesBoardTypeMenuItem.setActionCommand ("horizontalStripesBoardType");
-        horizontalStripesBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem verticalStripesBoardTypeMenuItem = new JRadioButtonMenuItem("Vertical Stripes");
-        verticalStripesBoardTypeMenuItem.setActionCommand ("verticalStripesBoardType");
-        verticalStripesBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem horizontalVerticalStripesBoardTypeMenuItem = new JRadioButtonMenuItem("Horizontal/Vertical Stripes");
-        horizontalVerticalStripesBoardTypeMenuItem.setActionCommand ("horizontalVerticalStripesBoardType");
-        horizontalVerticalStripesBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem diagonalDownBoardTypeMenuItem = new JRadioButtonMenuItem("Diagonal Down Stripes");
-        diagonalDownBoardTypeMenuItem.setActionCommand ("diagonalDownBoardType");
-        diagonalDownBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem diagonalUpBoardTypeMenuItem = new JRadioButtonMenuItem("Diagonal Up Stripes");
-        diagonalUpBoardTypeMenuItem.setActionCommand ("diagonalUpBoardType");
-        diagonalUpBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem squaredBoardTypeMenuItem = new JRadioButtonMenuItem("Squared");
-        squaredBoardTypeMenuItem.setActionCommand ("squaredBoardType");
-        squaredBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem crossedBoardTypeMenuItem = new JRadioButtonMenuItem("Crossed");
-        crossedBoardTypeMenuItem.setActionCommand ("crossedBoardType");
-        crossedBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem horizontalGradientBoardTypeMenuItem = new JRadioButtonMenuItem("Horizontal Gradient");
-        horizontalGradientBoardTypeMenuItem.setActionCommand ("horizontalGradientBoardType");
-        horizontalGradientBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem verticalGradientBoardTypeMenuItem = new JRadioButtonMenuItem("Vertical Gradient");
-        verticalGradientBoardTypeMenuItem.setActionCommand ("verticalGradientBoardType");
-        verticalGradientBoardTypeMenuItem.setSelected(false);
-        JRadioButtonMenuItem diagonalGradientBoardTypeMenuItem = new JRadioButtonMenuItem("Diagonal Gradient");
-        diagonalGradientBoardTypeMenuItem.setActionCommand ("diagonalGradientBoardType");
-        diagonalGradientBoardTypeMenuItem.setSelected(true);
-        
+    {        
         JMenu menu = new JMenu("Change board type");
         menu.setActionCommand("chessset");
-        menu.add (solidBoardTypeMenuItem);
-        menu.add (horizontalStripesBoardTypeMenuItem);
-        menu.add (verticalStripesBoardTypeMenuItem);
-        menu.add (horizontalVerticalStripesBoardTypeMenuItem);
-        menu.add (diagonalDownBoardTypeMenuItem);
-        menu.add (diagonalUpBoardTypeMenuItem);
-        menu.add (squaredBoardTypeMenuItem);
-        menu.add (crossedBoardTypeMenuItem);
-        menu.add (horizontalGradientBoardTypeMenuItem);
-        menu.add (verticalGradientBoardTypeMenuItem);
-        menu.add (diagonalGradientBoardTypeMenuItem);
+        menu.add (createRadioButtonMenuItem("Solid", "boardtype-solid"));
+        menu.add (createRadioButtonMenuItem("horizontal Stripes", "boardtype-horizontalStripes"));
+        menu.add (createRadioButtonMenuItem("Vertical Stripes", "boardtype-verticalStripes"));
+        menu.add (createRadioButtonMenuItem("Horizontal Vertical Stripes", "boardtype-horizontalVerticalStripes"));
+        menu.add (createRadioButtonMenuItem("Diagonal Down", "boardtype-diagonalDown"));
+        menu.add (createRadioButtonMenuItem("Diagonal Up", "boardtype-diagonalUp"));
+        menu.add (createRadioButtonMenuItem("Squared", "boardtype-squared"));
+        menu.add (createRadioButtonMenuItem("Crossed", "boardtype-crossed"));
+        menu.add (createRadioButtonMenuItem("Horizontal Gradient", "boardtype-horizontalGradient"));
+        menu.add (createRadioButtonMenuItem("Vertica Gradient", "boardtype-verticalGradient"));
+        menu.add (createRadioButtonMenuItem("Diagonal Gradient", "boardtype-diagonalGradient"));
         return menu;
-    }
-    
-    private JMenuItem createChangeBoardSizeMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("boardsize");
-        menuItem.setText("Change board size");
-        return menuItem;
-    }
-    
-    private JMenuItem createShowMoveIndicatorMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("moveindicator");
-        menuItem.setText("Show move indicator");
-        return menuItem;
-    }
-    
-    private JMenuItem createShowLastMoveIndicatorMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("lastmoveindicator");
-        menuItem.setText("Show last move indicator");
-        return menuItem;
-    }
-    
-    private JMenuItem createChangeMoveIndicatorColorMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("moveindicatorcolor");
-        menuItem.setText("Change move indicator color");
-        return menuItem;
-    }
-    
-    private JMenuItem createSoundsEnabledMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("soundenabled");
-        menuItem.setText("Sounds enabled");
-        return menuItem;
-    }
-    
-    private JMenuItem createBoardFlippedMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("boardflipped");
-        menuItem.setText("Board flipped");
-        return menuItem;
-    }
-    
-    private JMenuItem createLightSquareColorMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                close();
-            }   
-        });
-        menuItem.setActionCommand("lightSquareColor");
-        menuItem.setText("Set light squares color");
-        return menuItem;
-    }
-    
-    private JMenuItem createDarkSquareColorMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                close();
-            }   
-        });
-        menuItem.setActionCommand("darkSquareColor");
-        menuItem.setText("Set dark squares color");
-        return menuItem;
-    }
-    
-    private JMenuItem createExitMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                close();
-            }   
-        });
-        menuItem.setActionCommand("exit");
-        menuItem.setText("Exit");
-        return menuItem;
-    }
-    
-    private JMenuItem createRepeatMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("repeat");
-        menuItem.setText("Repeat Match");
-        return menuItem;
-    }
-    
-    private JMenuItem createRematchMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("rematch");
-        menuItem.setText("Rematch");
-        return menuItem;
-    }
-    
-    private JMenuItem createResignMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("resign");
-        menuItem.setText("Resign");
-        return menuItem;
-    }
-    
-    private JMenuItem createForceMoveMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("force");
-        menuItem.setText("Force Move");
-        return menuItem;
-    }
-    
-    private JMenuItem createSuggestMoveMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("suggest");
-        menuItem.setText("Suggest Move");
-        return menuItem;
-    }
-    
-    private JMenuItem createTakebackMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("takeback");
-        menuItem.setText("Takeback");
-        return menuItem;
-    }
-    
-    private JMenuItem createDrawMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-            }   
-        });
-        menuItem.setActionCommand("draw");
-        menuItem.setText("Offer draw");
-        return menuItem;
     }
     
     @Override
