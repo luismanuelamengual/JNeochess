@@ -8,10 +8,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.swing.*;
 import org.json.simple.JSONObject;
-import org.jvnet.substance.SubstanceLookAndFeel;
 import org.neochess.client.Application;
 import org.neochess.client.Connection.ConnectionListener;
 import org.neochess.client.Session;
@@ -22,16 +23,19 @@ import org.neochess.engine.HumanPlayer;
 import org.neochess.engine.searchagents.DefaultSearchAgent;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
+import org.pushingpixels.substance.api.SubstanceLookAndFeel;
+import org.pushingpixels.substance.api.SubstanceSkin;
+import org.pushingpixels.substance.api.skin.NebulaBrickWallSkin;
+import org.pushingpixels.substance.api.skin.SkinInfo;
 
 public final class MainFrame extends JFrame implements ActionListener, Disposable, SessionListener, WindowListener, ConnectionListener
 {
     private DesktopPane desktopPane;
     private StatusBar statusBar;
-    private String skin;
     
     public MainFrame()
     {
-        setSkin ("NebulaBrickWallSkin");
+        setSkin (new NebulaBrickWallSkin());
         setTitle (Application.getInstance().getTitle());
         setIconImage (ResourceUtils.getImage(Application.getInstance().getResourceImagesPath() + "main.png"));
         setSize(new java.awt.Dimension(800, 600));
@@ -99,15 +103,19 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
         destroyApplication ();
     }
     
+    public void setSkin (SubstanceSkin skin)
+    {
+        SubstanceLookAndFeel.setSkin(skin);
+    }
+    
     public void setSkin (String skin)
     {
-        this.skin = skin;
-        SubstanceLookAndFeel.setSkin("org.jvnet.substance.skin." + skin);
+        SubstanceLookAndFeel.setSkin(skin);
     }
 
-    public String getSkin ()
+    public SubstanceSkin getSkin ()
     {
-        return skin;
+        return SubstanceLookAndFeel.getCurrentSkin();
     }
     
     private JMenuBar createMenuBar ()
@@ -144,7 +152,11 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
             if (command != null)
             {
                 if (command.startsWith("skin-"))
-                    ((JRadioButtonMenuItem)menuItem).setSelected(getSkin().equals(command.substring("skin-".length())));
+                {
+                    String currentSkin = getSkin().getClass().getName();
+                    String menuItemSkin = command.substring("skin-".length());
+                    ((JRadioButtonMenuItem)menuItem).setSelected(currentSkin.equals(menuItemSkin));
+                }
                 switch (command)
                 {
                     case "file":
@@ -421,28 +433,10 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
     {
         JMenu menu = new JMenu("Skins");
         menu.setActionCommand("skins");
-        menu.add(createRadioButtonMenuItem("AutumnSkin", "skin-AutumnSkin")); 
-        menu.add(createRadioButtonMenuItem("BusinessBlackSteelSkin", "skin-BusinessBlackSteelSkin")); 
-        menu.add(createRadioButtonMenuItem("BusinessBlueSteelSkin", "skin-BusinessBlueSteelSkin")); 
-        menu.add(createRadioButtonMenuItem("BusinessSkin", "skin-BusinessSkin"));
-        menu.add(createRadioButtonMenuItem("ChallengerDeepSkin", "skin-ChallengerDeepSkin"));
-        menu.add(createRadioButtonMenuItem("CremeCoffeeSkin", "skin-CremeCoffeeSkin"));
-        menu.add(createRadioButtonMenuItem("CremeSkin", "skin-CremeSkin"));
-        menu.add(createRadioButtonMenuItem("DustCoffeeSkin", "skin-DustCoffeeSkin"));
-        menu.add(createRadioButtonMenuItem("DustSkin", "skin-DustSkin"));
-        menu.add(createRadioButtonMenuItem("EmeraldDuskSkin", "skin-EmeraldDuskSkin"));
-        menu.add(createRadioButtonMenuItem("MagmaSkin", "skin-MagmaSkin"));
-        menu.add(createRadioButtonMenuItem("MistAquaSkin", "skin-MistAquaSkin"));
-        menu.add(createRadioButtonMenuItem("MistSilverSkin", "skin-MistSilverSkin"));
-        menu.add(createRadioButtonMenuItem("ModerateSkin", "skin-ModerateSkin"));
-        menu.add(createRadioButtonMenuItem("NebulaBrickWallSkin", "skin-NebulaBrickWallSkin"));
-        menu.add(createRadioButtonMenuItem("NebulaSkin", "skin-NebulaSkin"));
-        menu.add(createRadioButtonMenuItem("OfficeBlue2007Skin", "skin-OfficeBlue2007Skin"));
-        menu.add(createRadioButtonMenuItem("OfficeSilver2007Skin", "skin-OfficeSilver2007Skin"));
-        menu.add(createRadioButtonMenuItem("RavenGraphiteGlassSkin", "skin-RavenGraphiteGlassSkin"));
-        menu.add(createRadioButtonMenuItem("RavenGraphiteSkin", "skin-RavenGraphiteSkin"));
-        menu.add(createRadioButtonMenuItem("RavenSkin", "skin-RavenSkin"));
-        menu.add(createRadioButtonMenuItem("SaharaSkin", "skin-SaharaSkin")); 
+        Map<String, SkinInfo> skinsInfo = SubstanceLookAndFeel.getAllSkins();
+        Collection<SkinInfo> skins = skinsInfo.values();
+        for (SkinInfo skin : skins)
+            menu.add(createRadioButtonMenuItem(skin.getDisplayName(), "skin-" + skin.getClassName()));
         return menu;
     }
     
