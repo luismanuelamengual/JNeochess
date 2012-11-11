@@ -4,6 +4,7 @@ package org.neochess.client.ui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ import org.neochess.engine.searchagents.DefaultSearchAgent;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
 
-public final class MainFrame extends JFrame implements Disposable, SessionListener, WindowListener, ConnectionListener
+public final class MainFrame extends JFrame implements ActionListener, Disposable, SessionListener, WindowListener, ConnectionListener
 {
     private DesktopPane desktopPane;
     private StatusBar statusBar;
@@ -172,6 +173,89 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
         }
     }
     
+    @Override
+    public void actionPerformed(ActionEvent e) 
+    {
+        String action = e.getActionCommand();
+        if (action.startsWith("skin-"))
+        {
+            setSkin(action.substring("skin-".length()));
+            updateMenuBar();
+        }
+        switch (action)
+        {
+            case "exit":
+                destroyApplication ();
+                break;
+            case "login":
+                InternalFrame loginFrame = getInternalFrame(LoginFrame.class);
+                if (loginFrame != null)
+                    try { loginFrame.setSelected (true); } catch (Exception ex) {}
+                else
+                    addInternalFrame(new LoginFrame());
+                break;
+            case "logout":
+                Application.getInstance().getSession().destroySession();
+                break;
+            case "editUser":
+                List<InternalFrame> frames = getInternalFrames(UserFrame.class);
+                UserFrame userModificationFrame = null;
+                for (InternalFrame frame : frames)
+                {
+                    if (((UserFrame)frame).isUserModificationFrame())
+                    {
+                        userModificationFrame = ((UserFrame)frame);
+                        break;
+                    }
+                }
+                if (userModificationFrame != null)
+                    try { userModificationFrame.setSelected (true); } catch (Exception ex) {}
+                else
+                    addInternalFrame(new UserFrame(Application.getInstance().getSession().getUser()));
+                break;
+            case "createUser":
+                List<InternalFrame> addedframes = getInternalFrames(UserFrame.class);
+                UserFrame userCreationFrame = null;
+                for (InternalFrame frame : addedframes)
+                {
+                    if (((UserFrame)frame).isUserCreationFrame())
+                    {
+                        userCreationFrame = ((UserFrame)frame);
+                        break;
+                    }
+                }
+                if (userCreationFrame != null)
+                    try { userCreationFrame.setSelected (true); } catch (Exception ex) {}
+                else
+                    addInternalFrame(new UserFrame());
+                break;
+            case "practicematch":
+                HumanPlayer whitePlayer = new HumanPlayer ();
+                whitePlayer.setNickName("Player #1");
+                HumanPlayer blackPlayer = new HumanPlayer ();
+                blackPlayer.setNickName("Player #2");
+                MatchFrame matchFrame = new MatchFrame ();
+                matchFrame.setWhitePlayer(whitePlayer);
+                matchFrame.setBlackPlayer(blackPlayer);
+                addInternalFrame(matchFrame);
+                matchFrame.start();
+                break;
+            case "localmatch":
+                HumanPlayer localWhitePlayer = new HumanPlayer ();
+                localWhitePlayer.setNickName("Human Player");
+                ComputerPlayer localBlackPlayer = new ComputerPlayer (new DefaultSearchAgent());
+                localBlackPlayer.setNickName("CPU Player");
+                MatchFrame localMatchFrame = new MatchFrame ();
+                localMatchFrame.setWhitePlayer(localWhitePlayer);
+                localMatchFrame.setBlackPlayer(localBlackPlayer);
+                localMatchFrame.setWhiteClock(new Clock(300000));
+                localMatchFrame.setBlackClock(new Clock(300000));
+                addInternalFrame(localMatchFrame);
+                localMatchFrame.start();
+                break;
+        }
+    }
+    
     private void updateStatusBar ()
     {
         statusBar.setIcon(ResourceUtils.getImageIcon(Application.getInstance().getResourceImagesPath() + ((Application.getInstance().getConnection().isConnected())?"icons/activated.png":"icons/deactivated.png")));
@@ -252,13 +336,29 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
             }
         }
         return menuItems;
-    }       
+    }      
+    
+    private JMenuItem createMenuItem (String text, String actionCommand) 
+    {
+        JMenuItem miNew = new JMenuItem(text);
+        miNew.setActionCommand (actionCommand);
+        miNew.addActionListener(this);
+        return miNew;
+    }
+    
+    private JRadioButtonMenuItem createRadioButtonMenuItem (String text, String ActionCommand) 
+    {
+        JRadioButtonMenuItem miNew = new JRadioButtonMenuItem(text);
+        miNew.setActionCommand ( ActionCommand );
+        miNew.addActionListener(this);
+        return miNew;
+    }
     
     private JMenu createFileMenu ()
     {
         JMenu menu = new JMenu("File");
         menu.setActionCommand("file");
-        menu.add(createExitMenuItem());
+        menu.add(createMenuItem("Exit", "exit"));
         return menu;
     }
     
@@ -266,11 +366,11 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenu menu = new JMenu("Users");
         menu.setActionCommand("users");
-        menu.add(createUserLoginMenuItem());
-        menu.add(createUserLogoutMenuItem());
+        menu.add(createMenuItem("Login User", "login"));
+        menu.add(createMenuItem("Logout User", "logout"));
         menu.addSeparator();
-        menu.add(createUserEditionMenuItem());
-        menu.add(createUserCreationMenuItem());
+        menu.add(createMenuItem("Edit User Account", "editUser"));
+        menu.add(createMenuItem("Create User Account", "createUser"));
         return menu;
     }
     
@@ -278,15 +378,15 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenu menu = new JMenu("Play");
         menu.setActionCommand("play");
-        menu.add(createPracticeMatchMenuItem());
-        menu.add(createLocalMatchMenuItem());
+        menu.add(createMenuItem("Practice Match", "practicematch"));
+        menu.add(createMenuItem("Local Match", "localmatch"));
         return menu;
     }
     
     private JMenu createHelpMenu ()
     {
         JMenu menu = new JMenu("Help");
-        menu.setActionCommand("help");
+        menu.add (createMenuItem("About ...", "about"));
         return menu;
     }
     
@@ -294,204 +394,31 @@ public final class MainFrame extends JFrame implements Disposable, SessionListen
     {
         JMenu menu = new JMenu("Skins");
         menu.setActionCommand("skins");
-        menu.add(createSkinMenuItem("AutumnSkin")); 
-        menu.add(createSkinMenuItem("BusinessBlackSteelSkin")); 
-        menu.add(createSkinMenuItem("BusinessBlueSteelSkin")); 
-        menu.add(createSkinMenuItem("BusinessSkin"));
-        menu.add(createSkinMenuItem("ChallengerDeepSkin"));
-        menu.add(createSkinMenuItem("CremeCoffeeSkin"));
-        menu.add(createSkinMenuItem("CremeSkin"));
-        menu.add(createSkinMenuItem("DustCoffeeSkin"));
-        menu.add(createSkinMenuItem("DustSkin"));
-        menu.add(createSkinMenuItem("EmeraldDuskSkin"));
-        menu.add(createSkinMenuItem("MagmaSkin"));
-        menu.add(createSkinMenuItem("MistAquaSkin"));
-        menu.add(createSkinMenuItem("MistSilverSkin"));
-        menu.add(createSkinMenuItem("ModerateSkin"));
-        menu.add(createSkinMenuItem("NebulaBrickWallSkin"));
-        menu.add(createSkinMenuItem("NebulaSkin"));
-        menu.add(createSkinMenuItem("OfficeBlue2007Skin"));
-        menu.add(createSkinMenuItem("OfficeSilver2007Skin"));
-        menu.add(createSkinMenuItem("RavenGraphiteGlassSkin"));
-        menu.add(createSkinMenuItem("RavenGraphiteSkin"));
-        menu.add(createSkinMenuItem("RavenSkin"));
-        menu.add(createSkinMenuItem("SaharaSkin")); 
+        menu.add(createRadioButtonMenuItem("AutumnSkin", "skin-AutumnSkin")); 
+        menu.add(createRadioButtonMenuItem("BusinessBlackSteelSkin", "skin-BusinessBlackSteelSkin")); 
+        menu.add(createRadioButtonMenuItem("BusinessBlueSteelSkin", "skin-BusinessBlueSteelSkin")); 
+        menu.add(createRadioButtonMenuItem("BusinessSkin", "skin-BusinessSkin"));
+        menu.add(createRadioButtonMenuItem("ChallengerDeepSkin", "skin-ChallengerDeepSkin"));
+        menu.add(createRadioButtonMenuItem("CremeCoffeeSkin", "skin-CremeCoffeeSkin"));
+        menu.add(createRadioButtonMenuItem("CremeSkin", "skin-CremeSkin"));
+        menu.add(createRadioButtonMenuItem("DustCoffeeSkin", "skin-DustCoffeeSkin"));
+        menu.add(createRadioButtonMenuItem("DustSkin", "skin-DustSkin"));
+        menu.add(createRadioButtonMenuItem("EmeraldDuskSkin", "skin-EmeraldDuskSkin"));
+        menu.add(createRadioButtonMenuItem("MagmaSkin", "skin-MagmaSkin"));
+        menu.add(createRadioButtonMenuItem("MistAquaSkin", "skin-MistAquaSkin"));
+        menu.add(createRadioButtonMenuItem("MistSilverSkin", "skin-MistSilverSkin"));
+        menu.add(createRadioButtonMenuItem("ModerateSkin", "skin-ModerateSkin"));
+        menu.add(createRadioButtonMenuItem("NebulaBrickWallSkin", "skin-NebulaBrickWallSkin"));
+        menu.add(createRadioButtonMenuItem("NebulaSkin", "skin-NebulaSkin"));
+        menu.add(createRadioButtonMenuItem("OfficeBlue2007Skin", "skin-OfficeBlue2007Skin"));
+        menu.add(createRadioButtonMenuItem("OfficeSilver2007Skin", "skin-OfficeSilver2007Skin"));
+        menu.add(createRadioButtonMenuItem("RavenGraphiteGlassSkin", "skin-RavenGraphiteGlassSkin"));
+        menu.add(createRadioButtonMenuItem("RavenGraphiteSkin", "skin-RavenGraphiteSkin"));
+        menu.add(createRadioButtonMenuItem("RavenSkin", "skin-RavenSkin"));
+        menu.add(createRadioButtonMenuItem("SaharaSkin", "skin-SaharaSkin")); 
         return menu;
     }
     
-    private JRadioButtonMenuItem createSkinMenuItem (final String skin)
-    {
-        JRadioButtonMenuItem menuItem = new JRadioButtonMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                setSkin(skin);
-                updateMenuBar();
-            }   
-        });
-        menuItem.setActionCommand("skin-" + skin);
-        menuItem.setText(skin);
-        return menuItem;
-    }
-    
-    private JMenuItem createExitMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed (ActionEvent ae)
-            {
-                destroyApplication ();
-            }   
-        });
-        menuItem.setActionCommand("exit");
-        menuItem.setText("Exit");
-        return menuItem;
-    }
-    
-    private JMenuItem createUserLoginMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                InternalFrame loginFrame = getInternalFrame(LoginFrame.class);
-                if (loginFrame != null)
-                    try { loginFrame.setSelected (true); } catch (Exception ex) {}
-                else
-                    addInternalFrame(new LoginFrame());
-            }
-        });
-        menuItem.setActionCommand("login");
-        menuItem.setText("Login User");
-        return menuItem;
-    }
-    
-    private JMenuItem createUserLogoutMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                Application.getInstance().getSession().destroySession();
-            }
-        });
-        menuItem.setActionCommand("logout");
-        menuItem.setText("Logout User");
-        return menuItem;
-    }
-    
-    private JMenuItem createUserCreationMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                List<InternalFrame> frames = getInternalFrames(UserFrame.class);
-                UserFrame userCreationFrame = null;
-                for (InternalFrame frame : frames)
-                {
-                    if (((UserFrame)frame).isUserCreationFrame())
-                    {
-                        userCreationFrame = ((UserFrame)frame);
-                        break;
-                    }
-                }
-                if (userCreationFrame != null)
-                    try { userCreationFrame.setSelected (true); } catch (Exception ex) {}
-                else
-                    addInternalFrame(new UserFrame());
-            }
-        });
-        menuItem.setActionCommand("createUser");
-        menuItem.setText("Create User Account");
-        return menuItem;
-    }
-    
-    private JMenuItem createUserEditionMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                List<InternalFrame> frames = getInternalFrames(UserFrame.class);
-                UserFrame userModificationFrame = null;
-                for (InternalFrame frame : frames)
-                {
-                    if (((UserFrame)frame).isUserModificationFrame())
-                    {
-                        userModificationFrame = ((UserFrame)frame);
-                        break;
-                    }
-                }
-                if (userModificationFrame != null)
-                    try { userModificationFrame.setSelected (true); } catch (Exception ex) {}
-                else
-                    addInternalFrame(new UserFrame(Application.getInstance().getSession().getUser()));
-            }
-        });
-        menuItem.setActionCommand("editUser");
-        menuItem.setText("Edit User Account");
-        return menuItem;
-    }
-    
-    private JMenuItem createPracticeMatchMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                HumanPlayer whitePlayer = new HumanPlayer ();
-                whitePlayer.setNickName("Player #1");
-                HumanPlayer blackPlayer = new HumanPlayer ();
-                blackPlayer.setNickName("Player #2");
-                
-                MatchFrame matchFrame = new MatchFrame ();
-                matchFrame.setWhitePlayer(whitePlayer);
-                matchFrame.setBlackPlayer(blackPlayer);
-                addInternalFrame(matchFrame);
-                
-                matchFrame.start();
-            }
-        });
-        menuItem.setActionCommand("practicematch");
-        menuItem.setText("Practice Match");
-        return menuItem;
-    }
-    
-    private JMenuItem createLocalMatchMenuItem ()
-    {
-        JMenuItem menuItem = new JMenuItem(new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e) 
-            {
-                HumanPlayer whitePlayer = new HumanPlayer ();
-                whitePlayer.setNickName("Human Player");
-                ComputerPlayer blackPlayer = new ComputerPlayer (new DefaultSearchAgent());
-                blackPlayer.setNickName("CPU Player");
-                
-                MatchFrame matchFrame = new MatchFrame ();
-                matchFrame.setWhitePlayer(whitePlayer);
-                matchFrame.setBlackPlayer(blackPlayer);
-                matchFrame.setWhiteClock(new Clock(300000));
-                matchFrame.setBlackClock(new Clock(300000));
-                addInternalFrame(matchFrame);
-                
-                matchFrame.start();
-            }
-        });
-        menuItem.setActionCommand("practicematch");
-        menuItem.setText("Local Match");
-        return menuItem;
-    }
-
     private DesktopPane createDesktopPane ()
     {
         return new DesktopPane();
