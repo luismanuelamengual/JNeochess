@@ -190,9 +190,17 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
             case "login":
                 InternalFrame loginFrame = getInternalFrame(LoginFrame.class);
                 if (loginFrame != null)
-                    try { loginFrame.setSelected (true); } catch (Exception ex) {}
+                {
+                    try 
+                    { 
+                        loginFrame.setSelected (true); 
+                        loginFrame.toFront();
+                    } catch (Exception ex) {}
+                }
                 else
+                {
                     addInternalFrame(new LoginFrame());
+                }
                 break;
             case "logout":
                 Application.getInstance().getSession().destroySession();
@@ -209,9 +217,17 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
                     }
                 }
                 if (userModificationFrame != null)
-                    try { userModificationFrame.setSelected (true); } catch (Exception ex) {}
+                {
+                    try 
+                    { 
+                        userModificationFrame.setSelected (true); 
+                        userModificationFrame.toFront();
+                    } catch (Exception ex) {}
+                }
                 else
+                {
                     addInternalFrame(new UserFrame(Application.getInstance().getSession().getUser()));
+                }
                 break;
             case "createUser":
                 List<InternalFrame> addedframes = getInternalFrames(UserFrame.class);
@@ -225,9 +241,17 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
                     }
                 }
                 if (userCreationFrame != null)
-                    try { userCreationFrame.setSelected (true); } catch (Exception ex) {}
+                {
+                    try 
+                    { 
+                        userCreationFrame.setSelected (true); 
+                        userCreationFrame.toFront();
+                    } catch (Exception ex) {}
+                }
                 else
+                {
                     addInternalFrame(new UserFrame());
+                }
                 break;
             case "practicematch":
                 HumanPlayer whitePlayer = new HumanPlayer ();
@@ -275,6 +299,7 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
     {
         frame.setLocation (desktopPane.getBounds().width/2 - frame.getWidth()/2, desktopPane.getBounds().height/2 - frame.getHeight()/2);
         desktopPane.add (frame);
+        frame.toFront();
     }
     
     private InternalFrame getInternalFrame (Class<? extends InternalFrame> frameClass)
@@ -295,8 +320,9 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
     private List<InternalFrame> getInternalFrames (Class<? extends InternalFrame> frameClass)
     {
         List <InternalFrame> frames = getInternalFrames();
-        for (InternalFrame frame : frames)
+        for (int i = frames.size() - 1; i >= 0; i--)
         {
+            InternalFrame frame = frames.get(i);
             if (!frame.getClass().isAssignableFrom(frameClass))
                 frames.remove(frame);
         }
@@ -386,6 +412,7 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
     private JMenu createHelpMenu ()
     {
         JMenu menu = new JMenu("Help");
+        menu.setActionCommand("help");
         menu.add (createMenuItem("About ...", "about"));
         return menu;
     }
