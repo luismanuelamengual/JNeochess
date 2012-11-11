@@ -2,9 +2,11 @@
 package org.neochess.client.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
 import javax.swing.AbstractAction;
@@ -16,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 import org.neochess.client.Application;
@@ -82,6 +85,7 @@ public class MatchFrame extends InternalFrame
         setVisible(true);
         pack();
         initializeOpeningBookFile();
+        updateMenuBar();
     }
 
     @Override
@@ -101,6 +105,74 @@ public class MatchFrame extends InternalFrame
         outputPanel = null;
         removeAll();
         super.dispose();
+    }
+    
+    private void updateMenuBar ()
+    {
+        List<JMenuItem> menuItems = getMenuItems();
+        for (JMenuItem menuItem : menuItems)
+        {
+            String command = menuItem.getActionCommand(); 
+            if (command != null)
+            {
+                if (command.startsWith("chessset-"))
+                    ((JRadioButtonMenuItem)menuItem).setSelected(boardPanel.getChessSet().equals(command.substring("chessset-".length())));
+            }
+        }
+    }
+    
+    private List<JMenuItem> getMenuItems()
+    {
+        List<JMenuItem> menuItems = new ArrayList<JMenuItem>();
+        JMenuBar menuBar = getJMenuBar();
+        for (Component component : menuBar.getComponents())
+        {
+            if (component instanceof JMenu)
+            {
+                menuItems.add((JMenuItem)component);
+                menuItems.addAll(getMenuItems((JMenu)component));
+            }
+        }
+        return menuItems;
+    }
+    
+    private List<JMenuItem> getMenuItems(JMenu menu)
+    {
+        List<JMenuItem> menuItems = new ArrayList<JMenuItem>();
+        for (Component component : menu.getMenuComponents())
+        {
+            if (component instanceof JMenuItem)
+            {
+                menuItems.add((JMenuItem)component);
+                if (component instanceof JMenu)
+                    menuItems.addAll(getMenuItems((JMenu)component));
+            }
+        }
+        return menuItems;
+    }   
+    
+    private MenuElement getMenuElement (String action)
+    {
+        return getMenuElement (action, this.getJMenuBar());
+    }
+    
+    private MenuElement getMenuElement (String action, MenuElement menuElement)
+    {
+        MenuElement item = null;
+        if (menuElement instanceof JMenuItem)
+            if (((JMenuItem)menuElement).getActionCommand().equals(action))
+                item = menuElement;
+        if (item == null)
+        {
+            MenuElement[] childElements = menuElement.getSubElements();
+            for (MenuElement childElement : childElements)
+            {
+                item = getMenuElement(action, childElement);
+                if (item != null)
+                    break;
+            }
+        }
+        return item;
     }
     
     private JMenuBar createMenuBar ()
@@ -155,17 +227,53 @@ public class MatchFrame extends InternalFrame
     
     private JMenu createChangeChesssetMenu ()
     {
-        JRadioButtonMenuItem defaultMenuItem = new JRadioButtonMenuItem("Default");
-        defaultMenuItem.setActionCommand ("defaultChessset");
+        JRadioButtonMenuItem defaultMenuItem = new JRadioButtonMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+                boardPanel.setChessSet("comic");
+                updateMenuBar ();
+            }   
+        });
+        defaultMenuItem.setActionCommand ("chessset-comic");
+        defaultMenuItem.setText("Default");
         defaultMenuItem.setSelected(true);
-        JRadioButtonMenuItem woodenMenuItem = new JRadioButtonMenuItem("Wooden");
-        woodenMenuItem.setActionCommand ("woodenChessset");
+        JRadioButtonMenuItem woodenMenuItem = new JRadioButtonMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+                boardPanel.setChessSet("wooden");
+                updateMenuBar ();
+            }   
+        });
+        woodenMenuItem.setText("Wooden");
+        woodenMenuItem.setActionCommand ("chessset-wooden");
         woodenMenuItem.setSelected(false);
-        JRadioButtonMenuItem stauntonMenuItem = new JRadioButtonMenuItem("Staunton");
-        stauntonMenuItem.setActionCommand ("stauntonChessset");
+        JRadioButtonMenuItem stauntonMenuItem = new JRadioButtonMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+                boardPanel.setChessSet("staunton");
+                updateMenuBar ();
+            }   
+        });
+        stauntonMenuItem.setText("Staunton");
+        stauntonMenuItem.setActionCommand ("chessset-staunton");
         stauntonMenuItem.setSelected(false);
-        JRadioButtonMenuItem magneticMenuItem = new JRadioButtonMenuItem("Magnetic");
-        magneticMenuItem.setActionCommand ("magneticChessset");
+        JRadioButtonMenuItem magneticMenuItem = new JRadioButtonMenuItem(new AbstractAction()
+        {
+            @Override
+            public void actionPerformed (ActionEvent ae)
+            {
+                boardPanel.setChessSet("magnetic");
+                updateMenuBar ();
+            }   
+        });
+        magneticMenuItem.setText("Magnetic");
+        magneticMenuItem.setActionCommand ("chessset-magnetic");
         magneticMenuItem.setSelected(false);
         
         JMenu menu = new JMenu("Change chess set");

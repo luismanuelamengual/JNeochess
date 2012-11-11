@@ -51,7 +51,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     private Color squareHighlightColor = ColorUtils.getDarkerColor(lightColor, 40);
     private Color currentMoveArrowColor = ColorUtils.getAlphaColor(Color.RED, 50);
     private boolean boardFlipped = false;
-    private BoardChessSet chessSet = new BoardChessSet();
+    private ChessSetManager chessSetManager = new ChessSetManager();
     private boolean useShadowedImages = true;
     private boolean showBackgroundImage = true;
     private Image backgroundImage = ResourceUtils.getImage(Application.getInstance().getResourceImagesPath() + "chessboardBackground.jpg");
@@ -113,6 +113,17 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         for (int square = 0; square < 64; square++) 
             squareHighlighted[square] = false;
         repaint();
+    }
+    
+    public void setChessSet (String chessSet)
+    {
+        this.chessSetManager.setChessSet(chessSet);
+        update ();
+    }
+    
+    public String getChessSet ()
+    {
+        return this.chessSetManager.getChessSet();
     }
     
     public void update ()
@@ -336,7 +347,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     { 
         if (piece == Board.EMPTY) { return; }
         Dimension squareDimension = getBoardSquareDimension();
-        BufferedImage pieceImage = chessSet.getPieceImage ( piece, squareDimension, shadowed);
+        BufferedImage pieceImage = chessSetManager.getPieceImage ( piece, squareDimension, shadowed);
         screen.drawImage (pieceImage, x, y, this);
     }
     
@@ -531,67 +542,34 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     public void mouseEntered (MouseEvent evt) {}
     public void mouseExited (MouseEvent evt) {}
 
-    public class BoardChessSet 
+    public class ChessSetManager 
     {
         public static final int SHADOWSIZE = 6;
-        public static final int CHESSSET_STAUNTON = 1;
-        public static final int CHESSSET_WOODEN = 2;
-        public static final int CHESSSET_DEFAULT = 6;
-        public static final int CHESSSET_MAGNETIC = 7;
-        public static final int CHESSSET_CUSTOM = 99;
         
         private BufferedImage pieceImage[] = new BufferedImage[12];
         private BufferedImage pieceImageShadow[] = new BufferedImage[12];
         private String[] imageString = { "WPawn.gif", "WKnight.gif", "WBishop.gif", "WRook.gif", "WQueen.gif", "WKing.gif", "BPawn.gif", "BKnight.gif", "BBishop.gif", "BRook.gif", "BQueen.gif", "BKing.gif" };
-        private int chessSet;
-        private String chessSetCustomPath = "";
+        private String chessSet;
 
-        public BoardChessSet (int chessSet) 
+        public ChessSetManager() 
         {
-            setChessSet ( chessSet );
+            this ("comic");
+        }
+        
+        public ChessSetManager (String chessSet) 
+        {
+            setChessSet (chessSet);
         }
 
-        public BoardChessSet (String chessSetImagePath) 
+        public void setChessSet (String chessSet) 
         {
-            setCustomChessSet (chessSetImagePath);
-        }
-
-        public BoardChessSet() 
-        {
-            setChessSet (CHESSSET_DEFAULT);
-        }
-
-        public void setChessSet (int chessSet) 
-        {
-            String chessSetName;
-            this.chessSet = chessSet;
-            switch (chessSet) {
-                case CHESSSET_WOODEN:
-                    chessSetName = "wooden";
-                    break;
-                case CHESSSET_STAUNTON:
-                    chessSetName = "staunton";
-                    break;
-                case CHESSSET_DEFAULT:
-                    chessSetName = "comic";
-                    break;
-                case CHESSSET_MAGNETIC:
-                    chessSetName = "magnetic";
-                    break;
-                default:
-                    chessSetName = "comic";
-                    this.chessSet = CHESSSET_DEFAULT;
-                    break;
-            }
-            chessSetCustomPath = Application.getInstance().getResourceImagesPath() + "pieces/" + chessSetName + "/";
+            this.chessSet = chessSet;   
             updateChessSetImages ();
         }
-
-        public void setCustomChessSet (String chessSetImagePath)
+        
+        public String getChessSet ()
         {
-            chessSet = CHESSSET_CUSTOM;
-            chessSetCustomPath = chessSetImagePath;
-            updateChessSetImages ();
+            return chessSet;
         }
 
         public BufferedImage getPieceImage (byte piece)
@@ -617,29 +595,26 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
             pieceImageShadow[piece] = GraphicsUtils.getShadowedImage (pieceImage, SHADOWSIZE, 1).getSubimage (SHADOWSIZE, SHADOWSIZE, pieceImage.getWidth(), pieceImage.getHeight());
         }
 
-        public int getChessSet ()
-        {
-            return chessSet;
-        }
-
         private void updateChessSetImages ()
         {
+            String chessSetPath = Application.getInstance().getResourceImagesPath() + "pieces/" + this.chessSet + "/";
             try 
             {
                 for (byte piece = Board.WHITEPAWN; piece <= Board.BLACKKING; piece++) 
-                    setPieceImage(piece, ResourceUtils.getBufferedImage(chessSetCustomPath + imageString[piece]));
+                    setPieceImage(piece, ResourceUtils.getBufferedImage(chessSetPath + imageString[piece]));
             }
             catch(IOException e) {}
         }
 
         private void updateChessSetImages (Dimension pieceDimension)
         {
+            String chessSetPath = Application.getInstance().getResourceImagesPath() + "pieces/" + this.chessSet + "/";
             try 
             {
                 for (byte piece = Board.WHITEPAWN; piece <= Board.BLACKKING; piece++) 
                 {
-                    BufferedImage pieceImage = ResourceUtils.getBufferedImage(chessSetCustomPath + imageString[piece]);
-                    pieceImage = GraphicsUtils.toBufferedImage (pieceImage.getScaledInstance ( pieceDimension.width, pieceDimension.height, Image.SCALE_SMOOTH));
+                    BufferedImage pieceImage = ResourceUtils.getBufferedImage(chessSetPath + imageString[piece]);
+                    pieceImage = GraphicsUtils.toBufferedImage (pieceImage.getScaledInstance (pieceDimension.width, pieceDimension.height, Image.SCALE_SMOOTH));
                     setPieceImage (piece, pieceImage);
                 }
             }
