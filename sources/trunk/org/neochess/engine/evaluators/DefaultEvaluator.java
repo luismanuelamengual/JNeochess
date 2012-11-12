@@ -89,6 +89,61 @@ public class DefaultEvaluator extends Evaluator
           0,   1,   2,   3,   4,   5,   6,   7
     };
     
+    private static byte[][][] linearPaths = new byte[64][64][8];
+    private static byte[][][] diagonalPaths = new byte[64][64][8];
+    
+    static
+    {
+        for (byte initialSquare = Board.A8; initialSquare <= Board.H1; initialSquare++)
+        {
+            for (byte finalSquare = Board.A8; finalSquare <= Board.H1; finalSquare++)
+            {
+                for (byte z = 0; z < 8; z++)
+                {
+                    linearPaths[initialSquare][finalSquare][z] = -1;
+                    diagonalPaths[initialSquare][finalSquare][z] = -1;
+                }
+                
+                if (initialSquare == finalSquare)
+                    continue;
+            
+                if ((Board.getSquareFile(initialSquare) == Board.getSquareFile(finalSquare)) || (Board.getSquareRank(initialSquare) == Board.getSquareRank(finalSquare)))
+                {
+                    byte fileIndex = Board.getSquareFile(initialSquare);
+                    byte rankIndex = Board.getSquareRank(initialSquare);
+                    byte finalSquareFileIndex = Board.getSquareFile(finalSquare);
+                    byte finalSquareRankIndex = Board.getSquareRank(finalSquare);
+                    byte index = 0;
+                    while (fileIndex != finalSquareFileIndex || rankIndex != finalSquareRankIndex)
+                    {
+                        if (finalSquareFileIndex != fileIndex)
+                            fileIndex = (byte)((fileIndex < finalSquareFileIndex)? (fileIndex+1) : (fileIndex-1));
+                        if (finalSquareRankIndex != rankIndex)
+                            rankIndex = (byte)((rankIndex < finalSquareRankIndex)? (rankIndex+1) : (rankIndex-1));
+                        linearPaths[initialSquare][finalSquare][index++] = Board.getSquare(fileIndex, rankIndex);
+                    }
+                }
+                
+                int fileDiff = Board.getSquareFile(finalSquare) - Board.getSquareFile(initialSquare);
+                int rankDiff = Board.getSquareRank(finalSquare) - Board.getSquareRank(initialSquare);
+                if (Math.abs(fileDiff) == Math.abs(rankDiff))
+                {
+                    byte fileIndex = Board.getSquareFile(initialSquare);
+                    byte rankIndex = Board.getSquareRank(initialSquare);
+                    byte finalSquareFileIndex = Board.getSquareFile(finalSquare);
+                    byte finalSquareRankIndex = Board.getSquareRank(finalSquare);
+                    byte index = 0;
+                    while (fileIndex != finalSquareFileIndex || rankIndex != finalSquareRankIndex)
+                    {
+                        fileIndex = (byte)((fileIndex < finalSquareFileIndex)? (fileIndex+1) : (fileIndex-1));
+                        rankIndex = (byte)((rankIndex < finalSquareRankIndex)? (rankIndex+1) : (rankIndex-1));
+                        diagonalPaths[initialSquare][finalSquare][index++] = Board.getSquare(fileIndex, rankIndex);
+                    }
+                }
+            }
+        }   
+    }
+    
     public DefaultEvaluator()
     {
         properties = new Hashtable<String, Integer>();
