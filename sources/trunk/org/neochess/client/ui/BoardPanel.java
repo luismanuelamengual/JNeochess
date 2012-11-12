@@ -548,28 +548,41 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         
         private BufferedImage pieceImage[] = new BufferedImage[12];
         private BufferedImage pieceImageShadow[] = new BufferedImage[12];
-        private String[] imageString = { "WPawn.gif", "WKnight.gif", "WBishop.gif", "WRook.gif", "WQueen.gif", "WKing.gif", "BPawn.gif", "BKnight.gif", "BBishop.gif", "BRook.gif", "BQueen.gif", "BKing.gif" };
+        private String[] imageString = { "WPawn", "WKnight", "WBishop", "WRook", "WQueen", "WKing", "BPawn", "BKnight", "BBishop", "BRook", "BQueen", "BKing" };
         private String chessSet;
-
+        private Dimension chessPiecesDimension;
+        private String actualChessSet;
+        private Dimension actualChessPiecesDimension;
+        
         public ChessSetManager() 
         {
-            this ("comic");
+            this ("comic", new Dimension(50, 50));
         }
         
-        public ChessSetManager (String chessSet) 
+        public ChessSetManager (String chessSet, Dimension chessPiecesDimension) 
         {
-            setChessSet (chessSet);
+            setChessSet(chessSet);
+            setChessPiecesDimension(chessPiecesDimension);
         }
 
         public void setChessSet (String chessSet) 
         {
             this.chessSet = chessSet;   
-            updateChessSetImages ();
         }
         
         public String getChessSet ()
         {
             return chessSet;
+        }
+
+        public Dimension getChessPiecesDimension ()
+        {
+            return chessPiecesDimension;
+        }
+
+        public void setChessPiecesDimension (Dimension chessPiecesDimension)
+        {
+            this.chessPiecesDimension = chessPiecesDimension;
         }
 
         public BufferedImage getPieceImage (byte piece)
@@ -579,46 +592,43 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
 
         public BufferedImage getPieceImage (byte piece, boolean shadowed)
         {
-            return getPieceImage (piece, new Dimension(50,50), shadowed);
+            return getPieceImage (piece, chessPiecesDimension, shadowed);
         }
 
         public BufferedImage getPieceImage (byte piece, Dimension pieceDimension, boolean shadowed)
         {
-            if (pieceImage[piece].getWidth() != pieceDimension.width || pieceImage[piece].getHeight() != pieceDimension.height) 
-                updateChessSetImages (pieceDimension);
+            setChessPiecesDimension(pieceDimension);
+            if (actualChessSet == null || !actualChessSet.equals(chessSet) || actualChessPiecesDimension == null || !actualChessPiecesDimension.equals(chessPiecesDimension))
+                updateChessSetImages ();
             return ( shadowed == true )? pieceImageShadow[piece] : pieceImage[piece];
         }
 
-        public void setPieceImage (byte piece, BufferedImage pieceImage)
+        private void setPieceImage (byte piece, BufferedImage pieceImage)
         {
             this.pieceImage[piece] = pieceImage; 
-            pieceImageShadow[piece] = GraphicsUtils.getShadowedImage (pieceImage, SHADOWSIZE, 1).getSubimage (SHADOWSIZE, SHADOWSIZE, pieceImage.getWidth(), pieceImage.getHeight());
+            this.pieceImageShadow[piece] = GraphicsUtils.getShadowedImage (pieceImage, SHADOWSIZE, 1).getSubimage (SHADOWSIZE, SHADOWSIZE, pieceImage.getWidth(), pieceImage.getHeight());
         }
-
+        
         private void updateChessSetImages ()
         {
-            String chessSetPath = Application.getInstance().getResourceImagesPath() + "pieces/" + this.chessSet + "/";
-            try 
-            {
-                for (byte piece = Board.WHITEPAWN; piece <= Board.BLACKKING; piece++) 
-                    setPieceImage(piece, ResourceUtils.getBufferedImage(chessSetPath + imageString[piece]));
-            }
-            catch(IOException e) {}
-        }
-
-        private void updateChessSetImages (Dimension pieceDimension)
-        {
-            String chessSetPath = Application.getInstance().getResourceImagesPath() + "pieces/" + this.chessSet + "/";
+            String chessSetPath = Application.getInstance().getResourceImagesPath() + "pieces/" + chessSet + "/";
             try 
             {
                 for (byte piece = Board.WHITEPAWN; piece <= Board.BLACKKING; piece++) 
                 {
-                    BufferedImage pieceImage = ResourceUtils.getBufferedImage(chessSetPath + imageString[piece]);
-                    pieceImage = GraphicsUtils.toBufferedImage (pieceImage.getScaledInstance (pieceDimension.width, pieceDimension.height, Image.SCALE_SMOOTH));
-                    setPieceImage (piece, pieceImage);
+                    BufferedImage scaledPieceImage = ResourceUtils.getBufferedImage(chessSetPath + imageString[piece] + ".gif");
+                    scaledPieceImage = GraphicsUtils.toBufferedImage (scaledPieceImage.getScaledInstance (chessPiecesDimension.width, chessPiecesDimension.height, Image.SCALE_SMOOTH));
+                    setPieceImage (piece, scaledPieceImage);
                 }
+                
+                actualChessSet = chessSet;
+                actualChessPiecesDimension = chessPiecesDimension;
             }
-            catch (IOException e) {}
+            catch (IOException e) 
+            {
+                actualChessSet = null;
+                actualChessPiecesDimension = null;
+            }
         }
     }
 }
