@@ -663,6 +663,10 @@ public class Board implements Disposable, Cloneable
 
             enPassantSquare = (Math.abs(move.getInitialSquare() - move.getEndSquare()) == 16)? (byte)((move.getInitialSquare() + move.getEndSquare()) / 2) : INVALIDSQUARE;
         }
+        else
+        {
+            enPassantSquare = INVALIDSQUARE;
+        }
         
         //Enroques
         if (movingFigure == KING)
