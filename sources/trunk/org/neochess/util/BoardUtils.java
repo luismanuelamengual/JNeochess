@@ -181,6 +181,25 @@ public abstract class BoardUtils
         }
     }
     
+    public long getBishopAttacks (Board board, byte square) 
+    {
+        long bishopAttack45 = bishop45Atak[square][(int)((board.blockerr45 >>> shift45[square]) & mask45[square])];
+        long bishopAttack315 = bishop315Atak[square][(int)((board.blockerr315 >>> shift315[square]) & mask315[square])];
+        return bishopAttack45 | bishopAttack315;
+    }
+    
+    public long getRookAttacks (Board board, byte square) 
+    {
+        long rookAttack00 = rook00Atak[square][(int)((board.blocker >>> shift00[square]) & 0xFF)];
+        long rookAttack90 = rook90Atak[square][(int)((board.blockerr90 >>> shift90[square]) & 0xFF)];
+        return rookAttack00 | rookAttack90;
+    }
+    
+    public long getQueenAttacks (Board board, byte square) 
+    {
+        return getRookAttacks(board, square) | getBishopAttacks(board, square);
+    }
+    
     private static void initSquareBitArrays () 
     {
         squareBit = new long[64];

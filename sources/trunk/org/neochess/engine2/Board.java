@@ -132,17 +132,17 @@ public class Board implements Disposable, Cloneable
     private static final long HASHCASTLEBS;
     private static final long HASHCASTLEBL;
     
-    private byte[] squareSide = new byte[64];
-    private byte[] squareFigure = new byte[64];
-    private byte epSquare;    
-    private byte castleState;
-    private byte sideToMove;
-    private long[][] pieces = new long[2][6];
-    private long friends[] = new long[2];
-    private long blocker;
-    private long blockerr90;
-    private long blockerr45;
-    private long blockerr315;  
+    public byte[] squareSide = new byte[64];
+    public byte[] squareFigure = new byte[64];
+    public byte epSquare;    
+    public byte castleState;
+    public byte sideToMove;
+    public long[][] pieces = new long[2][6];
+    public long friends[] = new long[2];
+    public long blocker;
+    public long blockerr90;
+    public long blockerr45;
+    public long blockerr315;  
 
     static
     {
