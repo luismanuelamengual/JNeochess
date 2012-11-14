@@ -29,11 +29,11 @@ public abstract class BoardUtils
     public static int[][] directions;
     private static int[] lzArray;
     private static int[] bitCount;
-    private static final int _ndir[] = { 2, 8, 4, 4, 8, 8, 2 };
-    private static final int _range[] = { 0, 0, 1, 1, 1, 0, 0 };
-    private static final int _slider[] = { 0, 0, 1, 1, 1, 0, 0 };
+    private static final int ndir[] = { 2, 8, 4, 4, 8, 8, 2 };
+    private static final int range[] = { 0, 0, 1, 1, 1, 0, 0 };
+    private static final int slider[] = { 0, 0, 1, 1, 1, 0, 0 };
     
-    private static final int _dir[][] =
+    private static final int dir[][] =
     { {   9,  11,   0,  0, 0,  0,  0,  0 },
       { -21, -19, -12, -8, 8, 12, 19, 21 },
       { -11,  -9,   9, 11, 0,  0,  0,  0 },
@@ -42,7 +42,7 @@ public abstract class BoardUtils
       { -11, -10,  -9, -1, 1,  9, 10, 11 },
       {  -9, -11,   0,  0, 0,  0,  0,  0 } };
     
-    private static final int _map[] =
+    private static final int map[] =
     { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
@@ -257,174 +257,143 @@ public abstract class BoardUtils
         }
     }
     
-    private static void _initMoveArray () 
+    private static void initMoveArray () 
     {
-        moveArray = new long[7][64];
-        for (byte pieceRef = Board.PAWN; pieceRef <= Board.BPAWN; pieceRef++) 
+	int pieceRef, from, to, f, t, n;
+	moveArray = new long[7][64];
+	for (pieceRef = Board.PAWN; pieceRef <= Board.BPAWN; pieceRef++) 
         {
-            for (byte mapSquare = 0; mapSquare < 120; mapSquare++) 
+            for (from = 0; from < 120; from++) 
             {
-                int from = _map[mapSquare];
-                if (from == -1) continue;
-                moveArray[pieceRef][from] = NULLBITBOARD;
-                for (byte n = 0; n < _ndir[pieceRef]; n++)
-                {
-                    int to = from;
+                if ((f = map[from]) == -1) continue;
+                moveArray[pieceRef][f] = NULLBITBOARD;
+                for ( n = 0; n < ndir[pieceRef]; n++ ) {
+                    to = from;
                     do 
                     {
-                        to += _dir[pieceRef][n];
-                        if ((to = _map[to]) != -1) 
-                            moveArray[pieceRef][from] |= squareBit[to];
+                        to += dir[pieceRef][n];
+                        if ((t = map[to]) != -1) 
+                            moveArray[pieceRef][f] |= squareBit[t];
                     } 
-                    while (( _range[pieceRef] > 0 ) && to != -1);
+                    while (( range[pieceRef] > 0 ) && t != -1);
                 }
             }
-        }
+	}
     }
-    
-    /**
-     * Inicializa el Array de Movimientos para las piezas 
-     * @access private 
-     */
-    private static void _initFromtoRay () 
+
+    private static void initFromtoRay () 
     {
         int pieceRef, from, to, f, t, n;
-        fromtoRay = new ncBitBoard[64][64];
-        for ( f = ncBoard.a1; f <= ncBoard.h8; f++ ) {
-            for ( t = ncBoard.a1; t <= ncBoard.h8; t++ ) {
-                fromtoRay[f][t] = new ncBitBoard();
-            }
-        }
+        fromtoRay = new long[64][64];
         long moves;
-	for (pieceRef = BITBOARD_BISHOP; pieceRef <= BITBOARD_ROOK; pieceRef++) {
-            for (from = 0; from < 120; from++) {
-                if ((f = _map[from]) == -1) continue;
-                for (n = 0; n < _ndir[pieceRef]; n++) {
+	for (pieceRef = Board.BISHOP; pieceRef <= Board.ROOK; pieceRef++) 
+        {
+            for (from = 0; from < 120; from++) 
+            {
+                if ((f = map[from]) == -1) continue;
+                for (n = 0; n < ndir[pieceRef]; n++) {
                     to = from;
-                    t = _map[to];
-                    do {
-                        moves = fromtoRay[f][t].value;
-                        to += _dir[pieceRef][n];         
-                        if ((t = _map[to]) != -1)
+                    t = map[to];
+                    do 
+                    {
+                        moves = fromtoRay[f][t];
+                        to += dir[pieceRef][n];         
+                        if ((t = map[to]) != -1)
                         {
-                            fromtoRay[f][t].setBit( t );
-                            fromtoRay[f][t].value |= moves;
+                            fromtoRay[f][t] |= squareBit[t];
+                            fromtoRay[f][t] |= moves;
                         }
-                    } while (t != -1);
+                    } 
+                    while (t != -1);
                 }
             }	
 	}
     }
     
-    /**
-     * Inicializa los Bitboard de ataque asi como tambien los bitboard de ataque
-     * rotados 90, 45 y 315 grados
-     */
-    private static void _initRotatedAtacks ()
+    private static void initRotatedAtacks ()
     {
 	int sq, map, sq1, sq2;
 	int cmap[] = { 128, 64, 32, 16, 8, 4, 2, 1 };
-	int rot1[] = { ncBoard.a1, ncBoard.a2, ncBoard.a3, ncBoard.a4, ncBoard.a5, ncBoard.a6, ncBoard.a7, ncBoard.a8 };
-	int rot2[] = { ncBoard.a1, ncBoard.b2, ncBoard.c3, ncBoard.d4, ncBoard.e5, ncBoard.f6, ncBoard.g7, ncBoard.h8 };
-	int rot3[] = { ncBoard.a8, ncBoard.b7, ncBoard.c6, ncBoard.d5, ncBoard.e4, ncBoard.f3, ncBoard.g2, ncBoard.h1 };
-
-        //Inicializacion de los arrays de BitBoards
-        rook00Atak = new ncBitBoard[64][256]; 
-        rook90Atak = new ncBitBoard[64][256]; 
-        bishop45Atak = new ncBitBoard[64][256];
-        bishop315Atak = new ncBitBoard[64][256];
-        for (sq = ncBoard.a1; sq <= ncBoard.h8; sq++) {
-            for (map = 0; map < 256; map++) {
-                rook00Atak[sq][map] = new ncBitBoard();
-                rook90Atak[sq][map] = new ncBitBoard();
-                bishop45Atak[sq][map] = new ncBitBoard();
-                bishop315Atak[sq][map] = new ncBitBoard();
-            }
-        }
-        
-        for (sq = ncBoard.a1; sq <= ncBoard.h1; sq++) {
-            for (map = 0; map < 256; map++) {
-                rook00Atak[sq][map].value = 0; 
-                rook90Atak[sq][map].value = 0;
-                bishop45Atak[sq][map].value = 0;
-                bishop315Atak[sq][map].value = 0;
+	int rot1[] = { Board.A1, Board.A2, Board.A3, Board.A4, Board.A5, Board.A6, Board.A7, Board.A8 };
+	int rot2[] = { Board.A1, Board.B2, Board.C3, Board.D4, Board.E5, Board.F6, Board.G7, Board.H8 };
+	int rot3[] = { Board.A8, Board.B7, Board.C6, Board.D5, Board.E4, Board.F3, Board.G2, Board.H1 };
+        rook00Atak = new long[64][256]; 
+        rook90Atak = new long[64][256]; 
+        bishop45Atak = new long[64][256];
+        bishop315Atak = new long[64][256];
+        for (sq = Board.A1; sq <= Board.H1; sq++) 
+        {
+            for (map = 0; map < 256; map++) 
+            {
+                rook00Atak[sq][map] = 0; 
+                rook90Atak[sq][map] = 0;
+                bishop45Atak[sq][map] = 0;
+                bishop315Atak[sq][map] = 0;
                 sq1 = sq2 = sq;
                 while (sq1 > 0) { if ( ( cmap[--sq1] & map ) > 0 ) break; }
                 while (sq2 < 7) { if ( ( cmap[++sq2] & map ) > 0 ) break; }  
-                rook00Atak[sq][map].value = fromtoRay[sq][sq1].value | fromtoRay[sq][sq2].value;
-                rook90Atak[rot1[sq]][map].value = fromtoRay[rot1[sq]][rot1[sq1]].value | fromtoRay[rot1[sq]][rot1[sq2]].value;
-                bishop45Atak[rot2[sq]][map].value = fromtoRay[rot2[sq]][rot2[sq1]].value | fromtoRay[rot2[sq]][rot2[sq2]].value;
-                bishop315Atak[rot3[sq]][map].value = fromtoRay[rot3[sq]][rot3[sq1]].value | fromtoRay[rot3[sq]][rot3[sq2]].value;
+                rook00Atak[sq][map] = fromtoRay[sq][sq1] | fromtoRay[sq][sq2];
+                rook90Atak[rot1[sq]][map] = fromtoRay[rot1[sq]][rot1[sq1]] | fromtoRay[rot1[sq]][rot1[sq2]];
+                bishop45Atak[rot2[sq]][map] = fromtoRay[rot2[sq]][rot2[sq1]] | fromtoRay[rot2[sq]][rot2[sq2]];
+                bishop315Atak[rot3[sq]][map] = fromtoRay[rot3[sq]][rot3[sq1]] | fromtoRay[rot3[sq]][rot3[sq2]];
             }
 	} 
 
-	for (map = 0; map < 256; map++) {
-            for (sq = ncBoard.a2; sq <= ncBoard.h8; sq++) {
-                rook00Atak[sq][map].value = rook00Atak[sq-8][map].value >>> 8;
-            }
-            for (sq1 = ncBoard.B; sq1 <= ncBoard.H; sq1++) {
-                for (sq2 = ncBoard.a1; sq2 <= ncBoard.h8; sq2+=8) {
+	for (map = 0; map < 256; map++) 
+        {
+            for (sq = Board.A2; sq <= Board.H8; sq++) 
+                rook00Atak[sq][map] = rook00Atak[sq-8][map] >>> 8;
+            
+            for (sq1 = Board.FILE_B; sq1 <= Board.FILE_H; sq1++) 
+            {
+                for (sq2 = Board.A1; sq2 <= Board.H8; sq2+=8) 
+                {
                     sq = sq2 + sq1;
-                    rook90Atak[sq][map].value = rook90Atak[sq-1][map].value >>> 1;
+                    rook90Atak[sq][map] = rook90Atak[sq-1][map] >>> 1;
                 }
             }
-            for (sq1 = ncBoard.b1, sq2 = ncBoard.h7; sq1 <= ncBoard.h1; sq1++, sq2-=8) {
-                for (sq = sq1; sq <= sq2; sq += 9) {
-                    bishop45Atak[sq][map].value = bishop45Atak[sq+8][map].value << 8;
-                }
-            }
-            for (sq1 = ncBoard.a2, sq2 = ncBoard.g8; sq1 <= ncBoard.a8; sq1+=8, sq2--) {
-                for (sq = sq1; sq <= sq2; sq += 9) {
-                    bishop45Atak[sq][map].value = (bishop45Atak[sq+1][map].value & ncBitBoard.squareBitX[sq1-8]) << 1;	
-                }
-            }
-            for (sq1 = ncBoard.h2, sq2 = ncBoard.b8; sq1 <= ncBoard.h8; sq1+=8, sq2++) {
-                for (sq = sq1; sq <= sq2; sq += 7) {
-                    bishop315Atak[sq][map].value = bishop315Atak[sq-8][map].value >>> 8;
-                }
-            }
-            for (sq1 = ncBoard.g1, sq2 = ncBoard.a7; sq1 >= ncBoard.a1; sq1--, sq2-=8) {
-                for (sq = sq1; sq <= sq2; sq += 7) {
-                    bishop315Atak[sq][map].value = (bishop315Atak[sq+1][map].value & ncBitBoard.squareBitX[sq2+8]) << 1;
-                }
-            }
+            for (sq1 = Board.B1, sq2 = Board.H7; sq1 <= Board.H1; sq1++, sq2-=8) 
+                for (sq = sq1; sq <= sq2; sq += 9) 
+                    bishop45Atak[sq][map] = bishop45Atak[sq+8][map] << 8;
+            for (sq1 = Board.A2, sq2 = Board.G8; sq1 <= Board.A8; sq1+=8, sq2--) 
+                for (sq = sq1; sq <= sq2; sq += 9) 
+                    bishop45Atak[sq][map] = (bishop45Atak[sq+1][map] & squareBitX[sq1-8]) << 1;	
+            for (sq1 = Board.H2, sq2 = Board.B8; sq1 <= Board.H8; sq1+=8, sq2++) 
+                for (sq = sq1; sq <= sq2; sq += 7) 
+                    bishop315Atak[sq][map] = bishop315Atak[sq-8][map] >>> 8;
+            for (sq1 = Board.G1, sq2 = Board.A7; sq1 >= Board.A1; sq1--, sq2-=8) 
+                for (sq = sq1; sq <= sq2; sq += 7) 
+                    bishop315Atak[sq][map] = (bishop315Atak[sq+1][map] & squareBitX[sq2+8]) << 1;
 	}
     }
     
-    /**
-     * Inicializa los desplazamientos desde un cuadro en una direccion establecida
-     */
-    private static void _initRayArray ()
+    private static void initRayArray ()
     {
         int square, direction;
         int piece, fsq, tsq, f, t, n, tempray;
-        
-        ray = new ncBitBoard[64][8];
-        for ( square = ncBoard.a1; square <= ncBoard.h8; square++ ) 
-            for ( direction = 0; direction < 8; direction++ )
-                ray[square][direction] = new ncBitBoard();
-        
-        for ( f = ncBoard.a1; f <= ncBoard.h8; f++ ) 
-            for ( t = ncBoard.a1; t <= ncBoard.h8; t++ ) 
+        directions = new int[64][64];
+        ray = new long[64][8];
+        for (f = Board.A1; f <= Board.H8; f++) 
+            for (t = Board.A1; t <= Board.H8; t++) 
                 directions[f][t] = -1;
         
 	for (fsq = 0; fsq < 120; fsq++)
 	{
-            if ((f = _map[fsq]) == -1) continue;
+            if ((f = map[fsq]) == -1) continue;
             tempray = -1;
-            for (piece = ncGlobals.BISHOP; piece <= ncGlobals.ROOK; piece++)
+            for (piece = Board.BISHOP; piece <= Board.ROOK; piece++)
             {
-                for (n = 0; n < _ndir[piece]; n++)
+                for (n = 0; n < ndir[piece]; n++)
                 {
                     tempray += 1;
-                    ray[f][tempray].clear();
+                    ray[f][tempray] = NULLBITBOARD;
                     tsq = fsq;
                     do
                     {
-                        tsq += _dir[piece][n];
-                        if ((t = _map[tsq]) != -1)
+                        tsq += dir[piece][n];
+                        if ((t = map[tsq]) != -1)
                         {
-                            ray[f][tempray].setBit(t);
+                            ray[f][tempray] |= squareBit[t];
                             directions[f][t] = tempray;
                         }
                     } while (t != -1);
@@ -433,23 +402,15 @@ public abstract class BoardUtils
 	}
     }
     
-    /**
-     * Inicializa los arrays de Distancia
-     */
-    private static void _initDistanceArrays ()
+    private static void initDistanceArrays ()
     {
         int f, t, j;
 	int d1, d2;
-
-        distMap = new ncBitBoard[64][8];
+        distance = new int[64][64];
+        taxicab = new int[64][64];
+        distMap = new long[64][8];
 	for (f = 0; f < 64; f++)
-            for (t = 0; t < 8; t++)
-            {
-		distMap[f][t] = new ncBitBoard();
-                distMap[f][t].clear();
-            }
-
-	for (f = 0; f < 64; f++)
+        {
             for (t = f; t < 64; t++)
             {
                 d1 = (t & 0x07) - (f & 0x07);
@@ -461,15 +422,15 @@ public abstract class BoardUtils
                 taxicab[f][t] = d1 + d2;
                 taxicab[t][f] = d1 + d2;
             }
-
+        }
+        
 	for (f = 0; f < 64; f++)
             for (t = 0; t < 64; t++)
-                distMap[f][distance[t][f]].value |= ncBitBoard.squareBit[t];
-
+                distMap[f][distance[t][f]] |= squareBit[t];
 	for (f = 0; f < 64; f++)
             for (t = 0; t < 8; t++)
                 for (j = 0; j < t; j++)
-                    distMap[f][t].value |= distMap[f][j].value;
+                    distMap[f][t] |= distMap[f][j];
     }
     
     static 
@@ -478,10 +439,15 @@ public abstract class BoardUtils
         initRankFileArrays ();
         initLzArray ();
         initBitCount ();
-        _initFromtoRay ();
-        _initMoveArray ();
-        _initRotatedAtacks ();
-        _initDistanceArrays ();
-        _initRayArray ();
+        initFromtoRay ();
+        initMoveArray ();
+        initRotatedAtacks ();
+        initDistanceArrays ();
+        initRayArray ();
+    }
+    
+    public static void main(final String[] args)
+    {
+        print(fromtoRay[Board.B2][Board.E5]);
     }
 }
