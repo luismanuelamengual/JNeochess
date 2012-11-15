@@ -33,7 +33,7 @@ public abstract class BoardUtils
     private static final int range[] = { 0, 0, 1, 1, 1, 0, 0 };
     private static final int slider[] = { 0, 0, 1, 1, 1, 0, 0 };
     
-    private static final int dir[][] =
+    public static final int dir[][] =
     { {   9,  11,   0,  0, 0,  0,  0,  0 },
       { -21, -19, -12, -8, 8, 12, 19, 21 },
       { -11,  -9,   9, 11, 0,  0,  0,  0 },
@@ -42,7 +42,7 @@ public abstract class BoardUtils
       { -11, -10,  -9, -1, 1,  9, 10, 11 },
       {  -9, -11,   0,  0, 0,  0,  0,  0 } };
     
-    private static final int map[] =
+    public static final int map[] =
     { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1,  0,  1,  2,  3,  4,  5,  6,  7, -1,
@@ -56,7 +56,7 @@ public abstract class BoardUtils
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  };
    
-    private static final int shift00[] =
+    public static final int shift00[] =
     { 56, 56, 56, 56, 56, 56, 56, 56,
       48, 48, 48, 48, 48, 48, 48, 48,
       40, 40, 40, 40, 40, 40, 40, 40,
@@ -66,7 +66,7 @@ public abstract class BoardUtils
        8,  8,  8,  8,  8,  8,  8,  8,
        0,  0,  0,  0,  0,  0,  0,  0 };
 
-    private static final int shift90[] = 
+    public static final int shift90[] = 
     { 0, 8, 16, 24, 32, 40, 48, 56,
       0, 8, 16, 24, 32, 40, 48, 56,
       0, 8, 16, 24, 32, 40, 48, 56,
@@ -76,7 +76,7 @@ public abstract class BoardUtils
       0, 8, 16, 24, 32, 40, 48, 56,
       0, 8, 16, 24, 32, 40, 48, 56 };
       
-    private static final int shift45[] = 
+    public static final int shift45[] = 
     { 28, 36, 43, 49, 54, 58, 61, 63,
       21, 28, 36, 43, 49, 54, 58, 61,
       15, 21, 28, 36, 43, 49, 54, 58,
@@ -86,7 +86,7 @@ public abstract class BoardUtils
        1,  3,  6, 10, 15, 21, 28, 36,
        0,  1,  3,  6, 10, 15, 21, 28 };
 
-    private static final int shift315[] = 
+    public static final int shift315[] = 
     { 63, 61, 58, 54, 49, 43, 36, 28,
       61, 58, 54, 49, 43, 36, 28, 21,
       58, 54, 49, 43, 36, 28, 21, 15,
@@ -96,7 +96,7 @@ public abstract class BoardUtils
       36, 28, 21, 15, 10,  6,  3,  1,
       28, 21, 15, 10,  6,  3,  1,  0 };
     
-    private static final int mask45[] =
+    public static final int mask45[] =
     { 0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 0x01,
       0x7F, 0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 0x03, 
       0x3F, 0x7F, 0xFF, 0x7F, 0x3F, 0x1F, 0x0F, 0x07, 
@@ -106,7 +106,7 @@ public abstract class BoardUtils
       0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF, 0x7F, 
       0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
 
-    private static final int mask315[] =
+    public static final int mask315[] =
     { 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF,
       0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF, 0x7F,
       0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF, 0x7F, 0x3F,
@@ -179,25 +179,6 @@ public abstract class BoardUtils
             }
             System.out.println();
         }
-    }
-    
-    public long getBishopAttacks (Board board, byte square) 
-    {
-        long bishopAttack45 = bishop45Atak[square][(int)((board.blockerr45 >>> shift45[square]) & mask45[square])];
-        long bishopAttack315 = bishop315Atak[square][(int)((board.blockerr315 >>> shift315[square]) & mask315[square])];
-        return bishopAttack45 | bishopAttack315;
-    }
-    
-    public long getRookAttacks (Board board, byte square) 
-    {
-        long rookAttack00 = rook00Atak[square][(int)((board.blocker >>> shift00[square]) & 0xFF)];
-        long rookAttack90 = rook90Atak[square][(int)((board.blockerr90 >>> shift90[square]) & 0xFF)];
-        return rookAttack00 | rookAttack90;
-    }
-    
-    public long getQueenAttacks (Board board, byte square) 
-    {
-        return getRookAttacks(board, square) | getBishopAttacks(board, square);
     }
     
     private static void initSquareBitArrays () 

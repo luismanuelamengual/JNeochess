@@ -132,17 +132,17 @@ public class Board implements Disposable, Cloneable
     private static final long HASHCASTLEBS;
     private static final long HASHCASTLEBL;
     
-    public byte[] squareSide = new byte[64];
-    public byte[] squareFigure = new byte[64];
-    public byte epSquare;    
-    public byte castleState;
-    public byte sideToMove;
-    public long[][] pieces = new long[2][6];
-    public long friends[] = new long[2];
-    public long blocker;
-    public long blockerr90;
-    public long blockerr45;
-    public long blockerr315;  
+    private byte[] squareSide = new byte[64];
+    private byte[] squareFigure = new byte[64];
+    private byte epSquare;    
+    private byte castleState;
+    private byte sideToMove;
+    private long[][] pieces = new long[2][6];
+    private long friends[] = new long[2];
+    private long blocker;
+    private long blockerr90;
+    private long blockerr45;
+    private long blockerr315;  
 
     static
     {
@@ -414,6 +414,25 @@ public class Board implements Disposable, Cloneable
            b &= BoardUtils.squareBitX[t];
         }
         return (false);
+    }
+    
+    public long getBishopAttacks (byte square) 
+    {
+        long bishopAttack45 = BoardUtils.bishop45Atak[square][(int)((blockerr45 >>> BoardUtils.shift45[square]) & BoardUtils.mask45[square])];
+        long bishopAttack315 = BoardUtils.bishop315Atak[square][(int)((blockerr315 >>> BoardUtils.shift315[square]) & BoardUtils.mask315[square])];
+        return bishopAttack45 | bishopAttack315;
+    }
+    
+    public long getRookAttacks (byte square) 
+    {
+        long rookAttack00 = BoardUtils.rook00Atak[square][(int)((blocker >>> BoardUtils.shift00[square]) & 0xFF)];
+        long rookAttack90 = BoardUtils.rook90Atak[square][(int)((blockerr90 >>> BoardUtils.shift90[square]) & 0xFF)];
+        return rookAttack00 | rookAttack90;
+    }
+    
+    public long getQueenAttacks (byte square) 
+    {
+        return getRookAttacks(square) | getBishopAttacks(square);
     }
     
     public static byte getSquareRank (byte square)
