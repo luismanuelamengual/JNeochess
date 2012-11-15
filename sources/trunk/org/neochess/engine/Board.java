@@ -891,4 +891,22 @@ public class Board implements Disposable, Cloneable
         else
             System.out.println("    H   G   F   E   D   C   B   A  ");
     }
+    
+    public static void main(final String[] args)
+    {
+        System.gc();
+        long iniTime = System.currentTimeMillis();
+        Board board = new Board();
+        board.setStartupPosition();
+        Board testBoard = board.clone();
+        for (int i = 0; i < 100000; i++)
+        {
+            board.makeMove(new Move(E2, E4));
+            board.makeMove(new Move(E7, E6));
+            List<Move> moves = board.getLegalMoves();
+            board.copy(testBoard);
+        }
+        long endTime = System.currentTimeMillis();
+        System.out.println (endTime - iniTime);
+    }
 }

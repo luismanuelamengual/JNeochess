@@ -193,10 +193,18 @@ public class Board implements Disposable, Cloneable
     
     public void copy (Board board)
     {
-        squareSide = board.squareSide;
-        squareFigure = board.squareFigure;
-        pieces = board.pieces;
-        friends = board.friends;
+        for (byte square = A1; square <= H8; square++)
+        {
+            squareSide[square] = board.squareSide[square];
+            squareFigure[square] = board.squareFigure[square];
+        }
+        for (byte figure = PAWN; figure <= KING; figure++)
+        {
+            pieces[WHITE][figure] = board.pieces[WHITE][figure];
+            pieces[BLACK][figure] = board.pieces[BLACK][figure];
+        }
+        friends[WHITE] = board.friends[WHITE];
+        friends[BLACK] = board.friends[BLACK];
         blocker = board.blocker;
         blockerr90 = board.blockerr90;
         blockerr45 = board.blockerr45;
@@ -838,6 +846,19 @@ public class Board implements Disposable, Cloneable
     
     public static void main(final String[] args)
     {
-        
+        System.gc();
+        long iniTime = System.currentTimeMillis();
+        Board board = new Board();
+        board.setStartupPosition();
+        Board testBoard = board.clone();
+        for (int i = 0; i < 100000; i++)
+        {
+            board.makeMove(new Move(E2, E4));
+            board.makeMove(new Move(E7, E6));
+            List<Move> moves = board.getLegalMoves();
+            board.copy(testBoard);
+        }
+        long endTime = System.currentTimeMillis();
+        System.out.println (endTime - iniTime);
     }
 }
