@@ -185,6 +185,12 @@ public class Board implements Disposable, Cloneable
     {
     }
     
+    @Override
+    public Board clone ()
+    {
+        return new Board(this);
+    }
+    
     public void copy (Board board)
     {
         squareSide = board.squareSide;
@@ -366,9 +372,282 @@ public class Board implements Disposable, Cloneable
         return pieces[side][KING] != BoardUtils.NULLBITBOARD? (byte)BoardUtils.getLeastSignificantBit(pieces[side][KING]) : INVALIDSQUARE;
     }
     
+    public boolean inCheck ()
+    {
+        return inCheck(sideToMove);
+    }
+    
+    public boolean inCheck (byte side)
+    {
+        byte kingSquare = getKingSquare(side);
+        return (kingSquare != INVALIDSQUARE)? isSquareAttacked(kingSquare, getOppositeSide(side)) : false;
+    }
+    
+    public boolean inCheckMate ()
+    {
+        return inCheck() && getLegalMoves().size() == 0;
+    }
+
+    public boolean inStaleMate ()
+    {
+        return !inCheck() && getLegalMoves().size() == 0;
+    }
+    
+    public void makeMove(Move move)
+    {
+        byte movingPiece = getPiece(move.getInitialSquare());
+        byte movingFigure = getPieceFigure(movingPiece);
+
+        //Promoción y Captura al Paso
+        if (movingFigure == PAWN)
+        {
+            if (sideToMove == WHITE)
+            {
+                if (getSquareRank(move.getEndSquare()) == RANK_8)
+                    movingPiece = WHITEQUEEN;
+                if (move.getEndSquare() == epSquare)
+                    removePiece((byte)(move.getEndSquare()-8));
+            }
+            else
+            {
+                if (getSquareRank(move.getEndSquare()) == RANK_1)
+                    movingPiece = BLACKQUEEN;
+                if (move.getEndSquare() == epSquare)
+                    removePiece((byte)(move.getEndSquare()+8));
+            }
+
+            epSquare = (Math.abs(move.getInitialSquare() - move.getEndSquare()) == 16)? (byte)((move.getInitialSquare() + move.getEndSquare()) / 2) : INVALIDSQUARE;
+        }
+        else
+        {
+            epSquare = INVALIDSQUARE;
+        }
+        
+        //Enroques
+        if (movingFigure == KING)
+        {
+            if (move.getInitialSquare() == E1)
+            {
+                switch (move.getEndSquare())
+                {
+                    case G1:
+                        removePiece(H1);
+                        putPiece(F1, WHITEROOK);
+                        break;
+                    case C1:
+                        removePiece(A1);
+                        putPiece(D1, WHITEROOK);
+                        break;
+                }
+            }
+            else if (move.getInitialSquare() == E8)
+            {
+                switch (move.getEndSquare())
+                {
+                    case G8:
+                        removePiece(H8);
+                        putPiece(F8, BLACKROOK);
+                        break;
+                    case C8:
+                        removePiece(A8);
+                        putPiece(D8, BLACKROOK);
+                        break;
+                }
+            }
+        }
+        
+        //Generación del movimiento
+        removePiece(move.getInitialSquare());
+        putPiece(move.getEndSquare(), movingPiece);
+        
+        //Modificación del estado del enroque
+        castleState &= CASTLEMASK[move.getInitialSquare()] & CASTLEMASK[move.getEndSquare()];
+        
+        //Modificación del color a mover
+        sideToMove = getOppositeSide(sideToMove);
+    }
+    
+    public boolean isMoveValid(Move move)
+    {
+        boolean isValid = false;
+        List<Move> moves = getLegalMoves();
+        for (Move validMove : moves)
+        {
+            if (validMove.equals(move))
+            {
+                isValid = true;
+                break;
+            }
+        }
+        return isValid;
+    }
+    
     public List<Move> getPseudoLegalMoves ()
     {
-        List<Move> moves = new ArrayList<Move>();
+        List<Move> moveList = new ArrayList<Move>();
+
+        byte side = sideToMove;
+        byte xside = getOppositeSide(side);
+        byte piece, fsq, tsq;
+        long movers, moves, captures;
+        long[] sidePieces = pieces[side];
+        long sideFriends = friends[side];
+        long notfriends = ~sideFriends;
+        long notblocker = ~blocker;
+        
+        for (piece = KNIGHT; piece <= KING; piece += 4)
+        {
+            movers = sidePieces[piece];
+            while (movers > 0)
+            {
+                fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+                movers &= BoardUtils.squareBitX[fsq];
+                moves = BoardUtils.moveArray[piece][fsq] & notfriends;
+                while (moves > 0)
+                {
+                    tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                    moves &= BoardUtils.squareBitX[tsq];
+                    moveList.add(new Move(fsq, tsq));
+                }
+            }
+        }
+
+        movers = sidePieces[BISHOP];
+        while (movers > 0)
+        {
+            fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+            movers &= BoardUtils.squareBitX[fsq];
+            moves = getBishopAttacks(fsq) & notfriends;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move(fsq, tsq));
+            }
+        }
+        
+        movers = sidePieces[ROOK];
+        while (movers > 0)
+        {
+            fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+            movers &= BoardUtils.squareBitX[fsq];
+            moves = getRookAttacks(fsq) & notfriends;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move(fsq, tsq));
+            }
+        }
+        
+        movers = sidePieces[QUEEN];
+        while (movers > 0)
+        {
+            fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+            movers &= BoardUtils.squareBitX[fsq];
+            moves = getQueenAttacks(fsq) & notfriends;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move(fsq, tsq));
+            }
+        }
+
+        captures = (friends[xside] | (epSquare != INVALIDSQUARE? BoardUtils.squareBit[epSquare] : BoardUtils.NULLBITBOARD));
+        if (side == WHITE)
+        {
+            moves = (sidePieces[PAWN] >> 8) & notblocker;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq-8), tsq));
+            }
+
+            movers = sidePieces[PAWN] & BoardUtils.rankBits[1];
+            moves = (movers >> 8) & notblocker;
+            moves = (moves >> 8) & notblocker;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq-16), tsq));
+            }
+
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
+            moves = (movers >> 7) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq-7), tsq));
+            }
+
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7]; 		
+            moves = (movers >> 9) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq-9), tsq));
+            }
+        }
+        else if (side == BLACK)
+        {
+            moves = (sidePieces[PAWN] << 8) & notblocker;		
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq+8), tsq));
+            }
+
+            movers = sidePieces[PAWN] & BoardUtils.rankBits[6];
+            moves = (movers << 8) & notblocker;
+            moves = (moves << 8) & notblocker;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq+16), tsq));
+            }
+
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7];	
+            moves = (movers << 7) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq+7), tsq));
+            }
+
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
+            moves = (movers << 9) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq+9), tsq));
+            }
+        }
+        return moveList;
+    }
+    
+    public List<Move> getLegalMoves ()
+    {
+        //Obtención de Movimientos Pseudo Legales
+        List<Move> moves = getPseudoLegalMoves();
+        
+        //Loop por los movimientos a ver si son legales 
+        Board testBoard = clone();
+        for (int i = (moves.size() - 1); i >= 0; i--)
+        {
+            testBoard.makeMove(moves.get(i));
+            if (testBoard.inCheck(sideToMove))
+                moves.remove(i);
+            testBoard.copy(this);
+        }
         return moves;
     }
     
@@ -420,27 +699,6 @@ public class Board implements Disposable, Cloneable
     public long getQueenAttacks (byte square) 
     {
         return getRookAttacks(square) | getBishopAttacks(square);
-    }
-    
-    public boolean inCheck ()
-    {
-        return inCheck(sideToMove);
-    }
-    
-    public boolean inCheck (byte side)
-    {
-        byte kingSquare = getKingSquare(side);
-        return (kingSquare != INVALIDSQUARE)? isSquareAttacked(kingSquare, getOppositeSide(side)) : false;
-    }
-    
-    public boolean inCheckMate ()
-    {
-        return inCheck() && getLegalMoves().size() == 0;
-    }
-
-    public boolean inStaleMate ()
-    {
-        return !inCheck() && getLegalMoves().size() == 0;
     }
     
     public static byte getSquareRank (byte square)
