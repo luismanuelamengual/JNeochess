@@ -364,54 +364,57 @@ public class Board implements Disposable, Cloneable
         return pieces[side][KING] != BoardUtils.NULLBITBOARD? (byte)BoardUtils.getLeastSignificantBit(pieces[side][KING]) : INVALIDSQUARE;
     }
     
-//    public boolean isSquareAttacked (int square, int side)
-//    {
-//        ncBitBoard movers, moves;
-//        movers = new ncBitBoard ();
-//        moves = new ncBitBoard ();
-//        int moveSquare;
-//        long sidePieces = getOccupiedBitBoard( side ).value;
-//        if ( ( sidePieces & _bitboard[BITBOARD_KNIGHT].value & moveArray[BITBOARD_KNIGHT][square].value ) != 0 ) return true;
-//        if ( ( sidePieces & _bitboard[BITBOARD_KING].value & moveArray[BITBOARD_KING][square].value ) != 0 ) return true;
-//        if ( ( sidePieces & _bitboard[BITBOARD_PAWN].value & moveArray[(( getOppositeSide(side) == ncGlobals.WHITE )?BITBOARD_PAWN:BITBOARD_BPAWN)][square].value ) != 0 ) return true;
-//        movers.value = ( sidePieces & ( _bitboard[BITBOARD_BISHOP].value | _bitboard[BITBOARD_QUEEN].value ) ) & moveArray[BITBOARD_BISHOP][square].value;
-//        moves.value = ~movers.value & _bitboard[BITBOARD_OCCUPIED].value;
-//        while ( movers.value != 0 ) {
-//        moveSquare = movers.getLeastSignificantBit();
-//        if ( ( fromtoRay[square][moveSquare].value & moves.value ) <= 0 ) return true;
-//        movers.clearBit ( moveSquare );
-//        }
-//        movers.value = ( sidePieces & ( _bitboard[BITBOARD_ROOK].value | _bitboard[BITBOARD_QUEEN].value ) ) & moveArray[BITBOARD_ROOK][square].value;
-//        moves.value = ~movers.value & _bitboard[BITBOARD_OCCUPIED].value;
-//        while ( movers.value != 0 ) {
-//        moveSquare = movers.getLeastSignificantBit();
-//        if ( ( fromtoRay[square][moveSquare].value & moves.value ) <= 0 ) return true;
-//        movers.clearBit ( moveSquare ); 
-//        }
-//        return false;
+    public boolean inCheck ()
+    {
+        return inCheck(sideToMove);
+    }
+    
+    public boolean inCheck (byte side)
+    {
+        byte kingSquare = getKingSquare(side);
+        return (kingSquare != INVALIDSQUARE)? isSquareAttacked(kingSquare, getOppositeSide(side)) : false;
+    }
+    
+    public boolean inCheckMate ()
+    {
+        return inCheck() && getLegalMoves().size() == 0;
+    }
+
+    public boolean inStaleMate ()
+    {
+        return !inCheck() && getLegalMoves().size() == 0;
+    }
+    
+    public boolean isSquareAttacked (byte square, byte side)
+    {   
+        long[] sidePieces = pieces[side];
+        byte oppositeSide = getOppositeSide(side);
+        if ((sidePieces[KNIGHT] & BoardUtils.moveArray[KNIGHT][square]) != 0) return true;
+        if ((sidePieces[KING] & BoardUtils.moveArray[KING][square]) != 0) return true;
+        if ((sidePieces[PAWN] & BoardUtils.moveArray[oppositeSide == WHITE? PAWN : BPAWN][square]) != 0) return true;
         
-//        int moveSquare;
-//        long movers, moves;
-//        long sidePieces = friends[side];   
-//        if ( ( sidePieces & _bitboard[BITBOARD_KNIGHT].value & moveArray[BITBOARD_KNIGHT][square].value ) != 0 ) return true;
-//        if ( ( sidePieces & _bitboard[BITBOARD_KING].value & moveArray[BITBOARD_KING][square].value ) != 0 ) return true;
-//        if ( ( sidePieces & _bitboard[BITBOARD_PAWN].value & moveArray[(( getOppositeSide(side) == ncGlobals.WHITE )?BITBOARD_PAWN:BITBOARD_BPAWN)][square].value ) != 0 ) return true;
-//        movers.value = ( sidePieces & ( _bitboard[BITBOARD_BISHOP].value | _bitboard[BITBOARD_QUEEN].value ) ) & moveArray[BITBOARD_BISHOP][square].value;
-//        moves.value = ~movers.value & _bitboard[BITBOARD_OCCUPIED].value;
-//        while ( movers.value != 0 ) {
-//        moveSquare = movers.getLeastSignificantBit();
-//        if ( ( fromtoRay[square][moveSquare].value & moves.value ) <= 0 ) return true;
-//        movers.clearBit ( moveSquare );
-//        }
-//        movers.value = ( sidePieces & ( _bitboard[BITBOARD_ROOK].value | _bitboard[BITBOARD_QUEEN].value ) ) & moveArray[BITBOARD_ROOK][square].value;
-//        moves.value = ~movers.value & _bitboard[BITBOARD_OCCUPIED].value;
-//        while ( movers.value != 0 ) {
-//        moveSquare = movers.getLeastSignificantBit();
-//        if ( ( fromtoRay[square][moveSquare].value & moves.value ) <= 0 ) return true;
-//        movers.clearBit ( moveSquare ); 
-//        }
-//        return false;
-//    }
+        long[] c = BoardUtils.fromtoRay[square];
+        long b = (sidePieces[BISHOP] | sidePieces[QUEEN]) & BoardUtils.moveArray[BISHOP][square];
+        long d = ~b & blocker;
+        int t; 
+        while (b != 0)
+        {
+            t = BoardUtils.getLeastSignificantBit(b);
+            if ((c[t] & d) == 0)
+               return (true);
+            b &= BoardUtils.squareBitX[t];
+        }
+        b = (sidePieces[ROOK] | sidePieces[QUEEN]) & BoardUtils.moveArray[ROOK][square];
+        d = ~b & blocker;
+        while (b != 0)
+        {
+           t = BoardUtils.getLeastSignificantBit(b);
+           if ((c[t] & d) == 0)
+              return (true);
+           b &= BoardUtils.squareBitX[t];
+        }
+        return (false);
+    }
     
     public static byte getSquareRank (byte square)
     {
