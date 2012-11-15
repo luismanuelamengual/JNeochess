@@ -1,6 +1,8 @@
 
 package org.neochess.engine2;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import org.neochess.general.Disposable;
 import org.neochess.util.BoardUtils;
@@ -364,25 +366,10 @@ public class Board implements Disposable, Cloneable
         return pieces[side][KING] != BoardUtils.NULLBITBOARD? (byte)BoardUtils.getLeastSignificantBit(pieces[side][KING]) : INVALIDSQUARE;
     }
     
-    public boolean inCheck ()
+    public List<Move> getPseudoLegalMoves ()
     {
-        return inCheck(sideToMove);
-    }
-    
-    public boolean inCheck (byte side)
-    {
-        byte kingSquare = getKingSquare(side);
-        return (kingSquare != INVALIDSQUARE)? isSquareAttacked(kingSquare, getOppositeSide(side)) : false;
-    }
-    
-    public boolean inCheckMate ()
-    {
-        return inCheck() && getLegalMoves().size() == 0;
-    }
-
-    public boolean inStaleMate ()
-    {
-        return !inCheck() && getLegalMoves().size() == 0;
+        List<Move> moves = new ArrayList<Move>();
+        return moves;
     }
     
     public boolean isSquareAttacked (byte square, byte side)
@@ -408,10 +395,10 @@ public class Board implements Disposable, Cloneable
         d = ~b & blocker;
         while (b != 0)
         {
-           t = BoardUtils.getLeastSignificantBit(b);
-           if ((c[t] & d) == 0)
+            t = BoardUtils.getLeastSignificantBit(b);
+            if ((c[t] & d) == 0)
               return (true);
-           b &= BoardUtils.squareBitX[t];
+            b &= BoardUtils.squareBitX[t];
         }
         return (false);
     }
@@ -433,6 +420,27 @@ public class Board implements Disposable, Cloneable
     public long getQueenAttacks (byte square) 
     {
         return getRookAttacks(square) | getBishopAttacks(square);
+    }
+    
+    public boolean inCheck ()
+    {
+        return inCheck(sideToMove);
+    }
+    
+    public boolean inCheck (byte side)
+    {
+        byte kingSquare = getKingSquare(side);
+        return (kingSquare != INVALIDSQUARE)? isSquareAttacked(kingSquare, getOppositeSide(side)) : false;
+    }
+    
+    public boolean inCheckMate ()
+    {
+        return inCheck() && getLegalMoves().size() == 0;
+    }
+
+    public boolean inStaleMate ()
+    {
+        return !inCheck() && getLegalMoves().size() == 0;
     }
     
     public static byte getSquareRank (byte square)

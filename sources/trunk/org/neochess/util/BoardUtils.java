@@ -312,11 +312,11 @@ public abstract class BoardUtils
     
     private static void initRotatedAtacks ()
     {
-	int sq, map, sq1, sq2;
-	int cmap[] = { 128, 64, 32, 16, 8, 4, 2, 1 };
-	int rot1[] = { Board.A1, Board.A2, Board.A3, Board.A4, Board.A5, Board.A6, Board.A7, Board.A8 };
-	int rot2[] = { Board.A1, Board.B2, Board.C3, Board.D4, Board.E5, Board.F6, Board.G7, Board.H8 };
-	int rot3[] = { Board.A8, Board.B7, Board.C6, Board.D5, Board.E4, Board.F3, Board.G2, Board.H1 };
+        int sq, map, sq1, sq2;
+        int cmap[] = { 128, 64, 32, 16, 8, 4, 2, 1 };
+        int rot1[] = { Board.A1, Board.A2, Board.A3, Board.A4, Board.A5, Board.A6, Board.A7, Board.A8 };
+        int rot2[] = { Board.A1, Board.B2, Board.C3, Board.D4, Board.E5, Board.F6, Board.G7, Board.H8 };
+        int rot3[] = { Board.A8, Board.B7, Board.C6, Board.D5, Board.E4, Board.F3, Board.G2, Board.H1 };
         rook00Atak = new long[64][256]; 
         rook90Atak = new long[64][256]; 
         bishop45Atak = new long[64][256];
@@ -337,13 +337,13 @@ public abstract class BoardUtils
                 bishop45Atak[rot2[sq]][map] = fromtoRay[rot2[sq]][rot2[sq1]] | fromtoRay[rot2[sq]][rot2[sq2]];
                 bishop315Atak[rot3[sq]][map] = fromtoRay[rot3[sq]][rot3[sq1]] | fromtoRay[rot3[sq]][rot3[sq2]];
             }
-	} 
+        } 
 
-	for (map = 0; map < 256; map++) 
+        for (map = 0; map < 256; map++) 
         {
             for (sq = Board.A2; sq <= Board.H8; sq++) 
                 rook00Atak[sq][map] = rook00Atak[sq-8][map] >>> 8;
-            
+
             for (sq1 = Board.FILE_B; sq1 <= Board.FILE_H; sq1++) 
             {
                 for (sq2 = Board.A1; sq2 <= Board.H8; sq2+=8) 
@@ -364,12 +364,11 @@ public abstract class BoardUtils
             for (sq1 = Board.G1, sq2 = Board.A7; sq1 >= Board.A1; sq1--, sq2-=8) 
                 for (sq = sq1; sq <= sq2; sq += 7) 
                     bishop315Atak[sq][map] = (bishop315Atak[sq+1][map] & squareBitX[sq2+8]) << 1;
-	}
+        }
     }
     
     private static void initRayArray ()
     {
-        int square, direction;
         int piece, fsq, tsq, f, t, n, tempray;
         directions = new int[64][64];
         ray = new long[64][8];
@@ -377,8 +376,8 @@ public abstract class BoardUtils
             for (t = Board.A1; t <= Board.H8; t++) 
                 directions[f][t] = -1;
         
-	for (fsq = 0; fsq < 120; fsq++)
-	{
+        for (fsq = 0; fsq < 120; fsq++)
+        {
             if ((f = map[fsq]) == -1) continue;
             tempray = -1;
             for (piece = Board.BISHOP; piece <= Board.ROOK; piece++)
@@ -399,17 +398,17 @@ public abstract class BoardUtils
                     } while (t != -1);
                 }
             }	
-	}
+        }
     }
     
     private static void initDistanceArrays ()
     {
         int f, t, j;
-	int d1, d2;
+        int d1, d2;
         distance = new int[64][64];
         taxicab = new int[64][64];
         distMap = new long[64][8];
-	for (f = 0; f < 64; f++)
+        for (f = 0; f < 64; f++)
         {
             for (t = f; t < 64; t++)
             {
@@ -424,10 +423,10 @@ public abstract class BoardUtils
             }
         }
         
-	for (f = 0; f < 64; f++)
+        for (f = 0; f < 64; f++)
             for (t = 0; t < 64; t++)
                 distMap[f][distance[t][f]] |= squareBit[t];
-	for (f = 0; f < 64; f++)
+        for (f = 0; f < 64; f++)
             for (t = 0; t < 8; t++)
                 for (j = 0; j < t; j++)
                     distMap[f][t] |= distMap[f][j];
