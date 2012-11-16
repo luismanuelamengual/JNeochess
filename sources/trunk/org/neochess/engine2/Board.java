@@ -122,8 +122,6 @@ public class Board implements Disposable, Cloneable
     private static final byte WHITECASTLELONG = 2;
     private static final byte BLACKCASTLESHORT = 4;
     private static final byte BLACKCASTLELONG = 8;
-    private static final byte WHITECASTLE = (WHITECASTLESHORT | WHITECASTLELONG);
-    private static final byte BLACKCASTLE = (BLACKCASTLESHORT | BLACKCASTLELONG);
     private static final byte[] CASTLEMASK;
     
     private static final long HASHPIECE[][] = new long[12][64];
@@ -644,10 +642,7 @@ public class Board implements Disposable, Cloneable
     
     public List<Move> getLegalMoves ()
     {
-        //Obtención de Movimientos Pseudo Legales
         List<Move> moves = getPseudoLegalMoves();
-        
-        //Loop por los movimientos a ver si son legales 
         Board testBoard = clone();
         for (int i = (moves.size() - 1); i >= 0; i--)
         {
@@ -718,10 +713,10 @@ public class Board implements Disposable, Cloneable
             if ((slideMoves[t] & blocker & BoardUtils.squareBitX[t]) == 0)
                 attackers |= BoardUtils.squareBit[t];
         }
-        return (attackers);
+        return attackers;
     }
     
-    public long getSquareXAttackers (byte sq, byte side)
+    public long getSquareXAttackers (byte square, byte side)
     {
         byte xside = getOppositeSide(side);
         long[] sidePieces, xsidePieces, slideMoves; 
@@ -729,13 +724,13 @@ public class Board implements Disposable, Cloneable
         byte t;
         sidePieces = pieces[side];
         xsidePieces = pieces[xside];
-        attackers = (sidePieces[KNIGHT] & BoardUtils.moveArray[KNIGHT][sq]); 
-        attackers |= (sidePieces[KING] & BoardUtils.moveArray[KING][sq]); 
-        slideMoves = BoardUtils.fromtoRay[sq];
-        moves = (sidePieces[PAWN] & BoardUtils.moveArray[xside==WHITE?PAWN:BPAWN][sq]);
+        attackers = (sidePieces[KNIGHT] & BoardUtils.moveArray[KNIGHT][square]); 
+        attackers |= (sidePieces[KING] & BoardUtils.moveArray[KING][square]); 
+        slideMoves = BoardUtils.fromtoRay[square];
+        moves = (sidePieces[PAWN] & BoardUtils.moveArray[xside==WHITE?PAWN:BPAWN][square]);
         blocker = this.blocker;
         blocker &= ~(sidePieces[BISHOP] | sidePieces[QUEEN] | xsidePieces[BISHOP] | xsidePieces[QUEEN] | moves);
-        moves |= (sidePieces[BISHOP] | sidePieces[QUEEN]) & BoardUtils.moveArray[BISHOP][sq];
+        moves |= (sidePieces[BISHOP] | sidePieces[QUEEN]) & BoardUtils.moveArray[BISHOP][square];
         while (moves > 0)
         {
             t = (byte)BoardUtils.getLeastSignificantBit(moves);
@@ -743,7 +738,7 @@ public class Board implements Disposable, Cloneable
             if ((slideMoves[t] & blocker & BoardUtils.squareBitX[t]) == 0)
                 attackers |= BoardUtils.squareBit[t];
         }
-        moves = (sidePieces[ROOK] | sidePieces[QUEEN]) & BoardUtils.moveArray[ROOK][sq];
+        moves = (sidePieces[ROOK] | sidePieces[QUEEN]) & BoardUtils.moveArray[ROOK][square];
         blocker = this.blocker;
         blocker &= ~(sidePieces[ROOK] | sidePieces[QUEEN] | xsidePieces[ROOK] | xsidePieces[QUEEN]);
         while (moves > 0)
@@ -753,7 +748,88 @@ public class Board implements Disposable, Cloneable
             if ((slideMoves[t] & blocker & BoardUtils.squareBitX[t]) == 0)
                 attackers |= BoardUtils.squareBit[t];
         }
-        return (attackers);
+        return attackers;
+    }
+    
+    public long getSquareAttacks (byte square, byte figure, byte side)
+    {
+        switch (figure)
+        {
+            case PAWN:
+                return BoardUtils.moveArray[side==WHITE?PAWN:BPAWN][square];
+            case KNIGHT:
+                return BoardUtils.moveArray[KNIGHT][square];
+            case BISHOP:
+                return getBishopAttacks(square);
+            case ROOK:
+                return getRookAttacks(square);
+            case QUEEN:
+                return getQueenAttacks(square);
+            case KING:
+                return BoardUtils.moveArray[KING][square];
+        } 
+        return 0;
+    }
+    
+    public long getSquareXAttacks (byte square, byte side)
+    {
+        long[] sidePieces;
+        long attacks, rays, blocker;
+        int piece, dir, blocksq;
+        sidePieces = pieces[side];
+        piece = squareFigure[square];
+        blocker = this.blocker;
+        attacks = 0;
+        switch (piece)
+        {
+            case PAWN:
+                attacks = BoardUtils.moveArray[side==WHITE?PAWN:BPAWN][square];
+                break;
+            case KNIGHT:
+                attacks = BoardUtils.moveArray[KNIGHT][square];
+                break;
+            case BISHOP:
+            case QUEEN:
+                blocker &= ~(sidePieces[BISHOP] | sidePieces[QUEEN]);
+                for (dir = BoardUtils.raybeg[BISHOP]; dir < BoardUtils.rayend[BISHOP]; dir++)
+                {
+                    rays = BoardUtils.ray[square][dir] & blocker;
+                    if (rays == BoardUtils.NULLBITBOARD)
+                    {
+                        rays = BoardUtils.ray[square][dir];
+                    }
+                    else
+                    {
+                        blocksq = (BoardUtils.squareBit[square] > rays? BoardUtils.getLeastSignificantBit(rays) : BoardUtils.getMostSignificantBit(rays));
+                        rays = BoardUtils.fromtoRay[square][blocksq];
+                    }
+                    attacks |= rays;
+                }
+                if (piece == BISHOP) 
+                    break;
+                blocker = this.blocker;
+            case ROOK:
+                blocker &= ~(sidePieces[ROOK] | sidePieces[QUEEN]);
+                for (dir = BoardUtils.raybeg[ROOK]; dir < BoardUtils.rayend[ROOK]; dir++)
+                {
+                    rays = BoardUtils.ray[square][dir] & blocker;
+                    if (rays == BoardUtils.NULLBITBOARD)
+                    {
+                        rays = BoardUtils.ray[square][dir];
+                    }
+                    else
+                    {
+                        blocksq = (BoardUtils.squareBit[square] > rays ? BoardUtils.getLeastSignificantBit(rays) : BoardUtils.getMostSignificantBit(rays));
+                        rays = BoardUtils.fromtoRay[square][blocksq];
+                    }
+                    attacks |= rays;
+                }
+                break;
+            case KING:
+                attacks = BoardUtils.moveArray[KING][square];
+                break;
+        }
+        return (attacks);
     }
     
     public long getBishopAttacks (byte square) 
