@@ -641,6 +641,138 @@ public class Board implements Disposable, Cloneable
         return moveList;
     }
     
+    public List<Move> getCaptureMoves ()
+    {
+        List<Move> moveList = new ArrayList<Move>();
+
+        byte side = sideToMove;
+        byte xside = getOppositeSide(side);
+        byte piece, fsq, tsq;
+        long movers, moves, captures;
+        long[] sidePieces = pieces[side];
+        long enemy = friends[xside];
+        
+        for (piece = KNIGHT; piece <= KING; piece += 4)
+        {
+            movers = sidePieces[piece];
+            while (movers > 0)
+            {
+                fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+                movers &= BoardUtils.squareBitX[fsq];
+                moves = BoardUtils.moveArray[piece][fsq] & enemy;
+                while (moves > 0)
+                {
+                    tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                    moves &= BoardUtils.squareBitX[tsq];
+                    moveList.add(new Move(fsq, tsq));
+                }
+            }
+        }
+
+        movers = sidePieces[BISHOP];
+        while (movers > 0)
+        {
+            fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+            movers &= BoardUtils.squareBitX[fsq];
+            moves = getBishopAttacks(fsq) & enemy;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move(fsq, tsq));
+            }
+        }
+        
+        movers = sidePieces[ROOK];
+        while (movers > 0)
+        {
+            fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+            movers &= BoardUtils.squareBitX[fsq];
+            moves = getRookAttacks(fsq) & enemy;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move(fsq, tsq));
+            }
+        }
+        
+        movers = sidePieces[QUEEN];
+        while (movers > 0)
+        {
+            fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
+            movers &= BoardUtils.squareBitX[fsq];
+            moves = getQueenAttacks(fsq) & enemy;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move(fsq, tsq));
+            }
+        }
+
+        captures = (friends[xside] | (epSquare != INVALIDSQUARE? BoardUtils.squareBit[epSquare] : BoardUtils.NULLBITBOARD));
+        if (side == WHITE)
+        {
+            movers = sidePieces[PAWN] & BoardUtils.rankBits[6];			
+            moves = (movers >> 8) & ~blocker;			
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq-8), tsq));
+            }
+
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
+            moves = (movers >> 7) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq-7), tsq));
+            }
+
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7]; 		
+            moves = (movers >> 9) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq-9), tsq));
+            }
+        }
+        else if (side == BLACK)
+        {
+            movers = sidePieces[PAWN] & BoardUtils.rankBits[1];			
+            moves = (movers << 8) & ~blocker;		
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq+8), tsq));
+            }
+            
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7];	
+            moves = (movers << 7) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq+7), tsq));
+            }
+
+            movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
+            moves = (movers << 9) & captures;
+            while (moves > 0)
+            {
+                tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
+                moves &= BoardUtils.squareBitX[tsq];
+                moveList.add(new Move((byte)(tsq+9), tsq));
+            }
+        }
+        return moveList;
+    }
+    
     public List<Move> getLegalMoves ()
     {
         List<Move> moves = getPseudoLegalMoves();
