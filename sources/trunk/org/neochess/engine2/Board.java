@@ -1106,17 +1106,17 @@ public class Board implements Disposable, Cloneable
     
     public static byte getOppositeSide (byte side)
     {
-        return side == WHITE? BLACK : WHITE;
+        return (byte)(1^side);
     }
     
     public static byte getPieceSide (byte piece)
     {
-        return piece >= BLACKPAWN? BLACK : WHITE;
+        return (byte)(piece / 6);
     }
 
     public static byte getPieceFigure (byte piece)
     {
-        return (piece >= BLACKPAWN)? piece -= BLACKPAWN : piece;
+        return (byte)(piece % 6);
     }
     
     public static void main(final String[] args)
