@@ -209,6 +209,7 @@ public class Board implements Disposable, Cloneable
         blockerr315 = board.blockerr315;
         epSquare = board.epSquare;
         castleState = board.castleState;
+        sideToMove = board.sideToMove;
     }
     
     public long getHash ()
