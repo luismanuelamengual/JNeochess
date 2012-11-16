@@ -481,7 +481,12 @@ public class Board implements Disposable, Cloneable
     public List<Move> getPseudoLegalMoves ()
     {
         List<Move> moveList = new ArrayList<Move>();
-
+        getPseudoLegalMoves (moveList);
+        return moveList;
+    }
+    
+    public void getPseudoLegalMoves (List<Move> moveList)
+    {
         byte side = sideToMove;
         byte xside = getOppositeSide(side);
         byte piece, fsq, tsq;
@@ -627,13 +632,17 @@ public class Board implements Disposable, Cloneable
                 moveList.add(new Move((byte)(tsq+9), tsq));
             }
         }
-        return moveList;
     }
     
     public List<Move> getCaptureMoves ()
     {
         List<Move> moveList = new ArrayList<Move>();
-
+        getCaptureMoves (moveList);
+        return moveList;
+    }
+    
+    public void getCaptureMoves (List<Move> moveList)
+    {
         byte side = sideToMove;
         byte xside = getOppositeSide(side);
         byte piece, fsq, tsq;
@@ -759,21 +768,26 @@ public class Board implements Disposable, Cloneable
                 moveList.add(new Move((byte)(tsq+9), tsq));
             }
         }
-        return moveList;
     }
     
     public List<Move> getLegalMoves ()
     {
-        List<Move> moves = getPseudoLegalMoves();
+        List<Move> moveList = new ArrayList<Move>();
+        getLegalMoves(moveList);
+        return moveList;
+    }
+    
+    public void getLegalMoves (List<Move> moveList)
+    {
+        getPseudoLegalMoves(moveList);
         Board testBoard = clone();
-        for (int i = (moves.size() - 1); i >= 0; i--)
+        for (int i = (moveList.size() - 1); i >= 0; i--)
         {
-            testBoard.makeMove(moves.get(i));
+            testBoard.makeMove(moveList.get(i));
             if (testBoard.inCheck(sideToMove))
-                moves.remove(i);
+                moveList.remove(i);
             testBoard.copy(this);
         }
-        return moves;
     }
     
     public boolean isSquareAttacked (byte square, byte side)
