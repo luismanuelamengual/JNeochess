@@ -404,73 +404,62 @@ public class Board implements Disposable, Cloneable
     {
         byte movingPiece = getPiece(move.getInitialSquare());
         byte movingFigure = getPieceFigure(movingPiece);
-
-        //Promoción y Captura al Paso
         if (movingFigure == PAWN)
         {
             if (sideToMove == WHITE)
             {
                 if (getSquareRank(move.getEndSquare()) == RANK_8)
                     movingPiece = WHITEQUEEN;
-                if (move.getEndSquare() == epSquare)
+                else if (move.getEndSquare() == epSquare)
                     removePiece((byte)(move.getEndSquare()-8));
             }
             else
             {
                 if (getSquareRank(move.getEndSquare()) == RANK_1)
                     movingPiece = BLACKQUEEN;
-                if (move.getEndSquare() == epSquare)
+                else if (move.getEndSquare() == epSquare)
                     removePiece((byte)(move.getEndSquare()+8));
             }
-
             epSquare = (Math.abs(move.getInitialSquare() - move.getEndSquare()) == 16)? (byte)((move.getInitialSquare() + move.getEndSquare()) / 2) : INVALIDSQUARE;
         }
         else
         {
+            if (movingFigure == KING)
+            {
+                if (move.getInitialSquare() == E1)
+                {
+                    switch (move.getEndSquare())
+                    {
+                        case G1:
+                            removePiece(H1);
+                            putPiece(F1, WHITEROOK);
+                            break;
+                        case C1:
+                            removePiece(A1);
+                            putPiece(D1, WHITEROOK);
+                            break;
+                    }
+                }
+                else if (move.getInitialSquare() == E8)
+                {
+                    switch (move.getEndSquare())
+                    {
+                        case G8:
+                            removePiece(H8);
+                            putPiece(F8, BLACKROOK);
+                            break;
+                        case C8:
+                            removePiece(A8);
+                            putPiece(D8, BLACKROOK);
+                            break;
+                    }
+                }
+            }
             epSquare = INVALIDSQUARE;
         }
-        
-        //Enroques
-        if (movingFigure == KING)
-        {
-            if (move.getInitialSquare() == E1)
-            {
-                switch (move.getEndSquare())
-                {
-                    case G1:
-                        removePiece(H1);
-                        putPiece(F1, WHITEROOK);
-                        break;
-                    case C1:
-                        removePiece(A1);
-                        putPiece(D1, WHITEROOK);
-                        break;
-                }
-            }
-            else if (move.getInitialSquare() == E8)
-            {
-                switch (move.getEndSquare())
-                {
-                    case G8:
-                        removePiece(H8);
-                        putPiece(F8, BLACKROOK);
-                        break;
-                    case C8:
-                        removePiece(A8);
-                        putPiece(D8, BLACKROOK);
-                        break;
-                }
-            }
-        }
-        
-        //Generación del movimiento
         removePiece(move.getInitialSquare());
         putPiece(move.getEndSquare(), movingPiece);
-        
-        //Modificación del estado del enroque
         castleState &= CASTLEMASK[move.getInitialSquare()] & CASTLEMASK[move.getEndSquare()];
-        
-        //Modificación del color a mover
         sideToMove = getOppositeSide(sideToMove);
     }
     
