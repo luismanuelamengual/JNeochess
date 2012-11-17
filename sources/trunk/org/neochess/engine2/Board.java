@@ -400,27 +400,41 @@ public class Board implements Disposable, Cloneable
         return !inCheck() && getLegalMoves().size() == 0;
     }
     
-    public void makeMove(int move)
+    public int makeMove (int move)
     {
         byte initialSquare = getMoveInitialSquare(move);
         byte endSquare = getMoveEndSquare(move);
         byte movingPiece = getPiece(initialSquare);
         byte movingFigure = getPieceFigure(movingPiece);
+        byte capturedPiece = getPiece(endSquare);
+        short flags = (short)((capturedPiece & 0x0F) | (castleState << 4));
         if (movingFigure == PAWN)
         {
             if (sideToMove == WHITE)
             {
                 if (getSquareRank(endSquare) == RANK_8)
+                {
+                    flags |= 0x100;
                     movingPiece = WHITEQUEEN;
+                }
                 else if (endSquare == epSquare)
+                {
+                    flags |= 0x200;
                     removePiece((byte)(endSquare-8));
+                }
             }
             else
             {
                 if (getSquareRank(endSquare) == RANK_1)
+                {
+                    flags |= 0x100;
                     movingPiece = BLACKQUEEN;
+                }
                 else if (endSquare == epSquare)
+                {
+                    flags |= 0x200;
                     removePiece((byte)(endSquare+8));
+                }
             }
             epSquare = (Math.abs(initialSquare - endSquare) == 16)? (byte)((initialSquare + endSquare) / 2) : INVALIDSQUARE;
         }
@@ -463,6 +477,69 @@ public class Board implements Disposable, Cloneable
         putPiece(endSquare, movingPiece);
         castleState &= CASTLEMASK[initialSquare] & CASTLEMASK[endSquare];
         sideToMove = getOppositeSide(sideToMove);
+        return (move & 0xFFFF) | (flags << 16);
+    }
+    
+    public void unmakeMove (int move)
+    {
+        byte initialSquare = getMoveInitialSquare(move);
+        byte endSquare = getMoveEndSquare(move);
+        short flags = getMoveFlags(move);
+        byte capturedPiece = (byte)(flags & 0x0F);
+        byte moveCastleState = (byte)((flags & 0xF0) >> 4);
+        boolean isPromotion = (flags & 0x100) > 0;
+        byte movingSide = getOppositeSide(sideToMove);
+        byte movingPiece = (isPromotion)? (movingSide == WHITE? WHITEPAWN : BLACKPAWN) : getPiece(endSquare);
+        byte movingFigure = getPieceFigure(movingPiece);
+        if (movingFigure == PAWN)
+        {
+            boolean isEpCapture = (flags & 0x200) > 0;
+            if (isEpCapture)
+            {
+                if (movingSide == WHITE)
+                    putPiece((byte)(endSquare-8), BLACKPAWN);
+                else
+                    putPiece((byte)(endSquare+8), WHITEPAWN);
+            }
+        }
+        else if (movingFigure == KING)
+        {
+            if (initialSquare == E1)
+            {
+                switch (endSquare)
+                {
+                    case G1:
+                        removePiece(F1);
+                        putPiece(H1, WHITEROOK);
+                        break;
+                    case C1:
+                        removePiece(D1);
+                        putPiece(A1, WHITEROOK);
+                        break;
+                }
+            }
+            else if (initialSquare == E8)
+            {
+                switch (endSquare)
+                {
+                    case G8:
+                        removePiece(F8);
+                        putPiece(H8, BLACKROOK);
+                        break;
+                    case C8:
+                        removePiece(D8);
+                        putPiece(A8, BLACKROOK);
+                        break;
+                }
+            }
+        }
+        if (capturedPiece > 0 && capturedPiece != 15)
+            putPiece(endSquare, capturedPiece);
+        else
+            removePiece(endSquare);
+        putPiece(initialSquare, movingPiece);
+        castleState = moveCastleState;
+        sideToMove = movingSide;
     }
     
     public boolean isMoveValid(int move)
@@ -1022,6 +1099,11 @@ public class Board implements Disposable, Cloneable
     public static byte getMoveEndSquare (int move)
     {
         return (byte)((move & 0xFF00) >> 8);
+    }
+    
+    public static short getMoveFlags (int move)
+    {
+        return (short)((move & 0xFFFF0000) >> 16);
     }
     
     public static int getMove (byte initialSquare, byte endSquare)
