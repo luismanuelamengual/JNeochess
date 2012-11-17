@@ -902,7 +902,6 @@ public class Board implements Disposable, Cloneable
         for (int i = 0; i < 100000; i++)
         {
             board.makeMove(new Move(E2, E4));
-            board.makeMove(new Move(E7, E6));
             List<Move> moves = board.getLegalMoves();
             board.copy(testBoard);
         }
