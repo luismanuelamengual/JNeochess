@@ -400,7 +400,7 @@ public class Board implements Disposable, Cloneable
         return !inCheck() && getLegalMoves().size() == 0;
     }
     
-    public void makeMove(short move)
+    public void makeMove(int move)
     {
         byte initialSquare = getMoveInitialSquare(move);
         byte endSquare = getMoveEndSquare(move);
@@ -465,11 +465,11 @@ public class Board implements Disposable, Cloneable
         sideToMove = getOppositeSide(sideToMove);
     }
     
-    public boolean isMoveValid(short move)
+    public boolean isMoveValid(int move)
     {
         boolean isValid = false;
-        List<Short> moves = getLegalMoves();
-        for (short validMove : moves)
+        List<Integer> moves = getLegalMoves();
+        for (int validMove : moves)
         {
             if (validMove == move)
             {
@@ -480,14 +480,14 @@ public class Board implements Disposable, Cloneable
         return isValid;
     }
     
-    public List<Short> getPseudoLegalMoves ()
+    public List<Integer> getPseudoLegalMoves ()
     {
-        List<Short> moveList = new ArrayList<Short>();
+        List<Integer> moveList = new ArrayList<Integer>();
         getPseudoLegalMoves (moveList);
         return moveList;
     }
     
-    public void getPseudoLegalMoves (List<Short> moveList)
+    public void getPseudoLegalMoves (List<Integer> moveList)
     {
         byte side = sideToMove;
         byte xside = getOppositeSide(side);
@@ -636,14 +636,14 @@ public class Board implements Disposable, Cloneable
         }
     }
     
-    public List<Short> getCaptureMoves ()
+    public List<Integer> getCaptureMoves ()
     {
-        List<Short> moveList = new ArrayList<Short>();
+        List<Integer> moveList = new ArrayList<Integer>();
         getCaptureMoves (moveList);
         return moveList;
     }
     
-    public void getCaptureMoves (List<Short> moveList)
+    public void getCaptureMoves (List<Integer> moveList)
     {
         byte side = sideToMove;
         byte xside = getOppositeSide(side);
@@ -772,14 +772,14 @@ public class Board implements Disposable, Cloneable
         }
     }
     
-    public List<Short> getLegalMoves ()
+    public List<Integer> getLegalMoves ()
     {
-        List<Short> moveList = new ArrayList<Short>();
+        List<Integer> moveList = new ArrayList<Integer>();
         getLegalMoves(moveList);
         return moveList;
     }
     
-    public void getLegalMoves (List<Short> moveList)
+    public void getLegalMoves (List<Integer> moveList)
     {
         getPseudoLegalMoves(moveList);
         Board testBoard = clone();
@@ -1014,27 +1014,27 @@ public class Board implements Disposable, Cloneable
         return String.valueOf(getFileChar(Board.getSquareFile(square))) + String.valueOf(getRankChar(Board.getSquareRank(square)));
     }
     
-    public static byte getMoveInitialSquare (short move)
+    public static byte getMoveInitialSquare (int move)
     {
         return (byte)(move & 0xFF);
     }
     
-    public static byte getMoveEndSquare (short move)
+    public static byte getMoveEndSquare (int move)
     {
         return (byte)((move & 0xFF00) >> 8);
     }
     
-    public static short getMove (byte initialSquare, byte endSquare)
+    public static int getMove (byte initialSquare, byte endSquare)
     {
         return (short)(initialSquare | (endSquare << 8));
     }
     
-    public static String getMoveString (short move)
+    public static String getMoveString (int move)
     {
         return Board.getSquareString(getMoveInitialSquare(move)) + Board.getSquareString(getMoveEndSquare(move));
     }
     
-    public static String getMoveSANString (short move, Board board)
+    public static String getMoveSANString (int move, Board board)
     {
         String san = "";
         byte initialSquare = getMoveInitialSquare(move);
