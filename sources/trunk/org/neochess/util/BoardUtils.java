@@ -183,6 +183,34 @@ public abstract class BoardUtils
         }
     }
     
+    public static void print(Board board, boolean flipped)
+    {
+        System.out.println("  .---.---.---.---.---.---.---.---.");
+        for (byte rank = Board.RANK_8; rank >= Board.RANK_1; rank--)
+        {
+            byte printRank = flipped? (byte)(7 - rank) : rank;
+            System.out.print (Board.getRankChar(printRank));
+            System.out.print (' ');
+            System.out.print('|');
+            for (byte file = Board.FILE_A; file <= Board.FILE_H; file++)
+            {
+                byte printFile = flipped? (byte)(7 - file) : file;
+                byte square = Board.getSquare(printFile, printRank);
+                byte piece = board.getPiece(square);
+                System.out.print (' ');
+                System.out.print (Board.getPieceChar(piece));
+                System.out.print (' ');                
+                System.out.print('|');
+            }
+            System.out.println();
+            System.out.println("  .---.---.---.---.---.---.---.---.");
+        }
+        if (!flipped)
+            System.out.println("    A   B   C   D   E   F   G   H  ");
+        else
+            System.out.println("    H   G   F   E   D   C   B   A  ");
+    }
+    
     private static void initSquareBitArrays () 
     {
         squareBit = new long[64];

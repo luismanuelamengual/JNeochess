@@ -859,13 +859,12 @@ public class Board implements Disposable, Cloneable
     public void getLegalMoves (List<Integer> moveList)
     {
         getPseudoLegalMoves(moveList);
-        Board testBoard = clone();
         for (int i = (moveList.size() - 1); i >= 0; i--)
         {
-            testBoard.makeMove(moveList.get(i));
-            if (testBoard.inCheck(sideToMove))
+            int moveMade = makeMove(moveList.get(i));
+            if (inCheck(getOppositeSide(sideToMove)))
                 moveList.remove(i);
-            testBoard.copy(this);
+            unmakeMove(moveMade);
         }
     }
     
