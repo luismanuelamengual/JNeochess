@@ -3,7 +3,9 @@ package org.neochess.engine.searchagents;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.neochess.engine.Board;
 import org.neochess.engine.evaluators.DefaultEvaluator;
 import org.neochess.engine.evaluators.Evaluator;
@@ -18,16 +20,15 @@ public class DefaultSearchAgent extends SearchAgent
     protected final static int[] PIECEVALUE = {100, 300, 315, 500, 950, 10000};
 
     private Evaluator evaluator;
+    private Board searchBoard;
     private boolean searching;
     private boolean searchStopped;
     private long searchMilliseconds;
     private long searchStartMilliseconds;
-    private Board searchBoard;
     private int searchHistory[][];
-    private List<Integer> searchMoves;
+    private Map<Integer, List<Integer>> searchMoves;
     private int searchIteration;
     private int searchMove;
-    private boolean verbose;
     protected int pv[][];
     protected int pv_length[];
 
@@ -39,7 +40,6 @@ public class DefaultSearchAgent extends SearchAgent
         searchHistory = new int[64][64];
         pv_length = new int[MAX_DEPTH];
         pv = new int[MAX_DEPTH][MAX_DEPTH];
-        verbose = true;
     }
 
     @Override
@@ -70,8 +70,7 @@ public class DefaultSearchAgent extends SearchAgent
         this.searchBoard = board;
         this.searchMilliseconds = searchMilliseconds;
         this.searchStopped = false;
-        this.searchMoves = new ArrayList<Integer>();
-        board.getLegalMoves(this.searchMoves);
+        this.searchMoves = new HashMap<Integer, List<Integer>>();
         this.searchIteration = 0;
         for (byte source = 0; source < 64; source++)
             for (byte destination = 0; destination < 64; destination++)
@@ -83,11 +82,24 @@ public class DefaultSearchAgent extends SearchAgent
                 pv[depth1][depth2] = -1;
         }
         searchStartMilliseconds = System.currentTimeMillis();
+        board.getLegalMoves(getMoveList());
     }
 
     protected void finalizeSearch ()
     {
         this.searching = false;
+    }
+    
+    protected List<Integer> getMoveList ()    
+    {
+        return getMoveList(0);
+    }
+    
+    protected List<Integer> getMoveList (int ply)
+    {
+        if (searchMoves.get(ply) == null)
+            searchMoves.put(ply, new ArrayList<Integer>());
+        return searchMoves.get(ply);
     }
 
     protected boolean isTimeUp ()
@@ -99,7 +111,7 @@ public class DefaultSearchAgent extends SearchAgent
     {
         int bestMove = searchMove;
         if (bestMove == -1)
-            bestMove = searchMoves.get(0);
+            bestMove = getMoveList().get(0);
         return bestMove;
     }
 
@@ -195,32 +207,34 @@ public class DefaultSearchAgent extends SearchAgent
         preparePrincipalVariation (ply);
 
         //Generar los movimientos
-        Board testBoard = board.clone();
-        List<Integer> moves = ply == 0? searchMoves : testBoard.getPseudoLegalMoves();
+        List<Integer> moves = getMoveList(ply);
+        if (ply > 0)
+        {
+            moves.clear();
+            board.getPseudoLegalMoves(moves);
+        }
         if (moves.size() == 0)
             return -MATE + ply - 2;
 
         //Ponderación y Ordenamiento de movimientos
-        if (ply > 0)
-            ponderMoves(testBoard, moves);
-        Collections.sort(moves, Collections.reverseOrder());
+        ponderMoves(board, ply, moves);
+        sortMoves(board, ply, moves);
 
         //Iterar sobre los movimientos posibles
         for (int testMove : moves)
         {
-            testBoard.makeMove(testMove);
+            int moveMade = board.makeMove(testMove);
             if (foundPV)
             {
-                searchResult = -alphaBetaSearch (testBoard, -alpha - 1, -alpha, depth - 1, ply + 1);
+                searchResult = -alphaBetaSearch (board, -alpha - 1, -alpha, depth - 1, ply + 1);
                 if ((searchResult > alpha) && (searchResult < beta))
-                    searchResult = -alphaBetaSearch (testBoard, -beta, -alpha, depth - 1, ply + 1);
+                    searchResult = -alphaBetaSearch (board, -beta, -alpha, depth - 1, ply + 1);
             }
             else
             {
-                searchResult = -alphaBetaSearch (testBoard, -beta, -alpha, depth - 1, ply + 1);
+                searchResult = -alphaBetaSearch (board, -beta, -alpha, depth - 1, ply + 1);
             }
-            testMove.setScore(searchResult);
-            testBoard.copy(board);
+            board.unmakeMove(moveMade);
             
             if (searchIteration > 1 && isTimeUp())
                 return -MATE;
@@ -261,31 +275,31 @@ public class DefaultSearchAgent extends SearchAgent
         preparePrincipalVariation (ply);
         
         //Generacion de movimientos
-        Board testBoard = board.clone();
-        List<Integer> moves = testBoard.getCaptureMoves();
+        List<Integer> moves = getMoveList(ply);
+        moves.clear();
+        board.getCaptureMoves(moves);
         if (moves.size() == 0) 
             return quiescResult;
 
         //Ponderación y Ordenamiento de movimientos
-        ponderCaptureMoves(testBoard, moves);
-        Collections.sort(moves, Collections.reverseOrder());
+        ponderCaptureMoves(board, ply, moves);
+        sortMoves (board, ply, moves);
         
         //Iterar sobre los movimientos posibles
         for (int testMove : moves)
         {
-            testBoard.makeMove(testMove);
+            int moveMade = board.makeMove(testMove);
             if (foundPV) 
             {
-                quiescResult = -quiescentSearch (testBoard, -alpha - 1, -alpha, ply + 1);
+                quiescResult = -quiescentSearch (board, -alpha - 1, -alpha, ply + 1);
                 if ((quiescResult > alpha) && (quiescResult < beta)) 
-                    quiescResult = -quiescentSearch (testBoard, -beta, -alpha, ply + 1);
+                    quiescResult = -quiescentSearch (board, -beta, -alpha, ply + 1);
             } 
             else 
             {
-                quiescResult = -quiescentSearch (testBoard, -beta, -alpha, ply + 1);
+                quiescResult = -quiescentSearch (board, -beta, -alpha, ply + 1);
             }
-            testMove.setScore(quiescResult);
-            testBoard.copy(board);
+            board.unmakeMove(moveMade);
             
             if (quiescResult > alpha) 
             {
@@ -299,8 +313,11 @@ public class DefaultSearchAgent extends SearchAgent
         return alpha;
     }
 
-    protected void ponderMoves (Board board, List<Integer> moves)
+    protected void ponderMoves (Board board, int ply, List<Integer> moves)
     {
+        if (ply > 0)
+            establecer el score del ply 0 
+        
         for (int testMove : moves)
         {
             int score = 0;
@@ -320,8 +337,8 @@ public class DefaultSearchAgent extends SearchAgent
             testMove.setScore(score);
         }
     }
-
-    protected void ponderCaptureMoves (Board board, List<Integer> moves)
+    
+    protected void ponderCaptureMoves (Board board, int ply, List<Integer> moves)
     {
         for (int testMove : moves)
         {
@@ -331,5 +348,10 @@ public class DefaultSearchAgent extends SearchAgent
             int destinationValue = PIECEVALUE[endSquare == board.getEnPassantSquare()? Board.PAWN : board.getSquareFigure(endSquare)];
             testMove.setScore(destinationValue - sourceValue);
         }
+    }
+    
+    protected void sortMoves (Board board, int ply, List<Integer> moves)
+    {
+        Collections.sort(moves, Collections.reverseOrder());
     }
 }
