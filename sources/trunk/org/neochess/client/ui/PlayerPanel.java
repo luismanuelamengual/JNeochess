@@ -8,7 +8,6 @@ import javax.swing.*;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Match;
-import org.neochess.engine.Move;
 import org.neochess.engine.Player;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
@@ -221,7 +220,7 @@ public class PlayerPanel extends JPanel implements Disposable, MatchFrame.MatchF
     public void onMatchStarted (MatchFrame match) {}
     public void onMatchFinished (MatchFrame match) {}
     public void onMatchPositionChanged (MatchFrame match) {}
-    public void onMatchMove (MatchFrame match, Move move) {}
-    public void onMatchTakeback (MatchFrame match, Move move) {}
+    public void onMatchMove (MatchFrame match, int move) {}
+    public void onMatchTakeback (MatchFrame match, int move) {}
     public void onMatchStateChanged (MatchFrame match, byte state) {}
 }

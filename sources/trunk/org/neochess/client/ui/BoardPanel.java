@@ -14,7 +14,6 @@ import javax.swing.JPanel;
 import org.neochess.client.Application;
 import org.neochess.engine.Board;
 import org.neochess.engine.Match;
-import org.neochess.engine.Move;
 import org.neochess.general.Disposable;
 import org.neochess.util.ColorUtils;
 import org.neochess.util.GraphicsUtils;
@@ -375,16 +374,18 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
             int moveIndex = matchFrame.getDisplayPly() - 1;
             if (moveIndex >= 0)
             {
-                Move lastMove = matchFrame.getMove(moveIndex);
+                int lastMove = matchFrame.getMove(moveIndex);
                 drawMoveArrow(screen, lastMove);
             }
         }
     }
     
-    private void drawMoveArrow (Graphics screen, Move move)
+    private void drawMoveArrow (Graphics screen, int move)
     {
-        Rectangle initialSquareRectangle = getBoardSquareRectangle(move.getInitialSquare());
-        Rectangle endSquareRectangle = getBoardSquareRectangle(move.getEndSquare());
+        byte initialSquare = Board.getMoveInitialSquare(move);
+        byte endSquare = Board.getMoveEndSquare(move);
+        Rectangle initialSquareRectangle = getBoardSquareRectangle(initialSquare);
+        Rectangle endSquareRectangle = getBoardSquareRectangle(endSquare);
         int arrowSize = (int)(initialSquareRectangle.getWidth()*0.4);
         drawArrow(screen, (int)initialSquareRectangle.getCenterX(), (int)initialSquareRectangle.getCenterY(), (int)endSquareRectangle.getCenterX(), (int)endSquareRectangle.getCenterY(), arrowSize, currentMoveArrowColor);
     }
@@ -426,12 +427,12 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     
     private Rectangle getBoardSquareRectangle (byte square)
     {
-        square = (!boardFlipped)? square : (byte)(Board.H1 - square);
+        square = (!boardFlipped)? square : (byte)(Board.H8 - square);
         Dimension squareDimension = getBoardSquareDimension();
         int file = Board.getSquareFile(square);
         int rank = Board.getSquareRank(square);
         int x = file * squareDimension.width + boardPosition.x;
-        int y = rank * squareDimension.height + boardPosition.y; 
+        int y = (7-rank) * squareDimension.height + boardPosition.y; 
         return new Rectangle(x, y, squareDimension.width, squareDimension.height);
     }
    
@@ -440,7 +441,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         if (isPointOverBoard(point) == false) { return Board.EMPTY; }
         Dimension squareDimension = getBoardSquareDimension ();
         byte file = (byte)((point.x - boardPosition.x) / squareDimension.width);
-        byte rank = (byte)((point.y - boardPosition.x) / squareDimension.height);
+        byte rank = (byte)(7 - ((point.y - boardPosition.x) / squareDimension.height));
         byte square = Board.getSquare (file, rank);
         return (!boardFlipped)? square : (byte)(Board.H8 - square);
     }
@@ -475,11 +476,11 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     }
 
     public void onMatchFinished(MatchFrame match){}
-    public void onMatchMove(MatchFrame match, Move move){}
+    public void onMatchMove(MatchFrame match, int move){}
     public void onMatchPositionChanged(MatchFrame match){}
     public void onMatchStarted(MatchFrame match){}
     public void onMatchStateChanged(MatchFrame match, byte state){}
-    public void onMatchTakeback(MatchFrame match, Move move){}
+    public void onMatchTakeback(MatchFrame match, int move){}
     public void onMatchTurnStarted (MatchFrame match, byte side){}
     public void onMatchTurnEnded (MatchFrame match, byte side){}
     
@@ -531,7 +532,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         if (draggingSquare != Board.EMPTY) 
         {
             if (matchFrame.getState() == Match.STATE_PLAYING && humanMoveEnabled)
-                matchFrame.makeMove(new Move(draggingSquare, getSquareAtPoint(draggingPoint)));
+                matchFrame.makeMove(Board.getMove(draggingSquare, getSquareAtPoint(draggingPoint)));
             draggingSquare = Board.EMPTY;
             mouseMoved (event);
             repaint();

@@ -36,16 +36,16 @@ public class ComputerPlayer extends Player
         super.dispose();
     }
     
-    public synchronized Move startMoveSearch (Match match)
+    public synchronized int startMoveSearch (Match match)
     {
-        Move bestMove = null;
+        int bestMove = -1;
         Board board = match.getBoard();
         int movesMade = match.getPly() / 2;
         
         if (openingBook != null && movesMade <= 10)
             bestMove = openingBook.getMove(board);
         
-        if (bestMove == null)
+        if (bestMove == -1)
         {
             Clock clock = match.getTurnClock();
             long searchTime = 30000;

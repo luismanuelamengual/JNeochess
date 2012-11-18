@@ -1,7 +1,7 @@
 
 package org.neochess.util;
 
-import org.neochess.engine2.Board;
+import org.neochess.engine.Board;
 
 public abstract class BoardUtils
 {

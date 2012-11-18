@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.neochess.engine.Board;
-import org.neochess.engine.Move;
 
 public class DefaultOpeningBook extends OpeningBook
 {
@@ -46,8 +45,8 @@ public class DefaultOpeningBook extends OpeningBook
                     String[] moveTokens = line.split(" ");
                     for (String moveToken : moveTokens)
                     {
-                        Move move = new Move(moveToken);
-                        if (move != null && board.isMoveValid(move))
+                        int move = Board.getMove(moveToken);
+                        if (board.isMoveValid(move))
                         {
                             addOpeningBookEntry(board, move);
                             board.makeMove(move);
@@ -71,15 +70,14 @@ public class DefaultOpeningBook extends OpeningBook
         }
     }
 
-    public void addOpeningBookEntry (Board board, Move move)
+    public void addOpeningBookEntry (Board board, int move)
     {
         long boardHash = board.getHash();
-        int moveHash = move.getHash();
-        List<Move> moves = getMoves(board);
+        List<Integer> moves = getMoves(board);
         boolean moveFound = false;
-        for (Move openingBookMove : moves)
+        for (int openingBookMove : moves)
         {
-            if (openingBookMove.equals(move))
+            if (openingBookMove == move)
             {
                 moveFound = true;
                 break;
@@ -95,7 +93,7 @@ public class DefaultOpeningBook extends OpeningBook
                 fos = new FileOutputStream(filename, true);
                 dos = new DataOutputStream(fos);
                 dos.writeLong(boardHash);
-                dos.writeInt(moveHash);
+                dos.writeInt(move);
                 dos.flush();
                 System.out.println ("Book entry added: " + boardHash + " => " + move);
             }
@@ -114,10 +112,10 @@ public class DefaultOpeningBook extends OpeningBook
         }
     }
 
-    public List<Move> getMoves (Board board)
+    public List<Integer> getMoves (Board board)
     {
         long boardHash = board.getHash();
-        List<Move> moves = new ArrayList<Move>();
+        List<Integer> moves = new ArrayList<Integer>();
         FileInputStream fis = null;
         DataInputStream dis = null;
         try
@@ -129,7 +127,7 @@ public class DefaultOpeningBook extends OpeningBook
                 long testBoardHash = dis.readLong();
                 int testMoveHash = dis.readInt();
                 if (boardHash == testBoardHash)
-                    moves.add(new Move(testMoveHash));
+                    moves.add(testMoveHash);
             }
         }
         catch (Exception ex) {}
@@ -141,10 +139,10 @@ public class DefaultOpeningBook extends OpeningBook
     }
 
     @Override
-    public Move getMove (Board board)
+    public int getMove (Board board)
     {
-        Move move = null;
-        List<Move> moves = getMoves(board);
+        int move = -1;
+        List<Integer> moves = getMoves(board);
         Random randomGenerator = new Random(System.currentTimeMillis());
         if (moves.size() > 0)
             move = moves.get(randomGenerator.nextInt(moves.size()));

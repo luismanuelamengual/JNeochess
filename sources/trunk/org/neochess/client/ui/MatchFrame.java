@@ -26,7 +26,6 @@ import org.neochess.engine.Clock;
 import org.neochess.engine.ComputerPlayer;
 import org.neochess.engine.HumanPlayer;
 import org.neochess.engine.Match;
-import org.neochess.engine.Move;
 import org.neochess.engine.Player;
 import org.neochess.engine.User;
 import org.neochess.util.ResourceUtils;
@@ -357,12 +356,12 @@ public class MatchFrame extends InternalFrame implements ActionListener
         return match.getPlayer(side);
     }
 
-    public List<Move> getMoves ()
+    public List<Integer> getMoves ()
     {
         return match.getMoves();
     }
 
-    public Move getMove (int ply)
+    public int getMove (int ply)
     {
         return match.getMove(ply);
     }
@@ -402,7 +401,7 @@ public class MatchFrame extends InternalFrame implements ActionListener
         initializeMatch ();
     }
     
-    public synchronized boolean makeMove (Move move)
+    public synchronized boolean makeMove (int move)
     {
         boolean moveMade = match.makeMove(move);
         if (moveMade)
@@ -417,7 +416,7 @@ public class MatchFrame extends InternalFrame implements ActionListener
     
     public synchronized boolean unmakeMove ()
     {
-        Move lastMove = match.getMoves().get(match.getMoves().size()-1);
+        int lastMove = match.getMoves().get(match.getMoves().size()-1);
         boolean moveUnmade = match.unmakeMove();
         if (moveUnmade)
         {
@@ -500,7 +499,7 @@ public class MatchFrame extends InternalFrame implements ActionListener
                     @Override
                     public void run ()
                     {
-                        final Move moveSearched = computerPlayer.startMoveSearch(match);
+                        final int moveSearched = computerPlayer.startMoveSearch(match);
                         SwingUtilities.invokeLater(new Runnable() 
                         {
                             @Override
@@ -610,13 +609,13 @@ public class MatchFrame extends InternalFrame implements ActionListener
             listener.onMatchTurnEnded(this, side);
     }
     
-    private void fireMatchMoveEvent (Move move)
+    private void fireMatchMoveEvent (int move)
     {
         for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
             listener.onMatchMove(this, move);
     }
     
-    private void fireMatchTakebackEvent (Move move)
+    private void fireMatchTakebackEvent (int move)
     {
         for (MatchFrameListener listener : listeners.getListeners(MatchFrameListener.class))
             listener.onMatchTakeback(this, move);
@@ -647,8 +646,8 @@ public class MatchFrame extends InternalFrame implements ActionListener
         public void onMatchPositionChanged (MatchFrame match);
         public void onMatchTurnStarted (MatchFrame match, byte side);
         public void onMatchTurnEnded (MatchFrame match, byte side);
-        public void onMatchMove (MatchFrame match, Move move);
-        public void onMatchTakeback (MatchFrame match, Move move);
+        public void onMatchMove (MatchFrame match, int move);
+        public void onMatchTakeback (MatchFrame match, int move);
         public void onMatchStateChanged (MatchFrame match, byte state);
         public void onMatchDisplayPlyChanged (MatchFrame match, int ply);
         public void onMatchBoardFlipped (MatchFrame match, boolean flipped);
