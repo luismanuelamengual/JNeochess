@@ -344,6 +344,16 @@ public class Board implements Disposable, Cloneable
         castleState = WHITECASTLESHORT | WHITECASTLELONG | BLACKCASTLESHORT | BLACKCASTLELONG;
     }
     
+    public byte getSquareSide (byte square)
+    {
+        return squareSide[square];
+    }
+    
+    public byte getSquareFigure (byte square)
+    {
+        return squareFigure[square];
+    }
+    
     public byte getCastleState()
     {
         return castleState;
@@ -398,6 +408,11 @@ public class Board implements Disposable, Cloneable
     public boolean inStaleMate ()
     {
         return !inCheck() && getLegalMoves().size() == 0;
+    }
+    
+    public int makeMove (byte initialSquare, byte endSquare)
+    {
+        return getMove(initialSquare, endSquare);
     }
     
     public int makeMove (int move)
@@ -1108,6 +1123,11 @@ public class Board implements Disposable, Cloneable
     public static int getMove (byte initialSquare, byte endSquare)
     {
         return (short)(initialSquare | (endSquare << 8));
+    }
+    
+    public static int getMove (String moveString)
+    {
+        return getMove(getSquare(moveString.substring(0, 2)), getSquare(moveString.substring(2, 4)));
     }
     
     public static String getMoveString (int move)
