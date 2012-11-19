@@ -36,7 +36,7 @@ public class DefaultSearchAgent extends SearchAgent
     {
         evaluator = new DefaultEvaluator();
         searching = false;
-        searchMoves = null;
+        searchMoves = searchMoves = new HashMap<Integer, List<Integer>>();
         searchHistory = new int[64][64];
         pv_length = new int[MAX_DEPTH];
         pv = new int[MAX_DEPTH][MAX_DEPTH];
@@ -67,10 +67,10 @@ public class DefaultSearchAgent extends SearchAgent
     {
         this.searching = true;
         this.searchMove = -1;
+        this.searchMoves.clear();
         this.searchBoard = board;
         this.searchMilliseconds = searchMilliseconds;
         this.searchStopped = false;
-        this.searchMoves = new HashMap<Integer, List<Integer>>();
         this.searchIteration = 0;
         for (byte source = 0; source < 64; source++)
             for (byte destination = 0; destination < 64; destination++)
@@ -101,7 +101,7 @@ public class DefaultSearchAgent extends SearchAgent
             searchMoves.put(ply, new ArrayList<Integer>());
         return searchMoves.get(ply);
     }
-
+    
     protected boolean isTimeUp ()
     {
         return searchStopped || ((System.currentTimeMillis() - searchStartMilliseconds) >= searchMilliseconds);
