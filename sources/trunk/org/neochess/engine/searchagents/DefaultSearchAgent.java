@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.neochess.engine.Board;
+import org.neochess.engine.Move;
 import org.neochess.engine.evaluators.DefaultEvaluator;
 import org.neochess.engine.evaluators.Evaluator;
 
@@ -26,24 +27,24 @@ public class DefaultSearchAgent extends SearchAgent
     private long searchMilliseconds;
     private long searchStartMilliseconds;
     private int searchHistory[][];
-    private Map<Integer, List<Integer>> searchMoves;
+    private Map<Integer, List<Move>> searchMoves;
     private int searchIteration;
-    private int searchMove;
-    protected int pv[][];
+    private Move searchMove;
+    protected Move pv[][];
     protected int pv_length[];
 
     public DefaultSearchAgent ()
     {
         evaluator = new DefaultEvaluator();
         searching = false;
-        searchMoves = searchMoves = new HashMap<Integer, List<Integer>>();
+        searchMoves = searchMoves = new HashMap<Integer, List<Move>>();
         searchHistory = new int[64][64];
         pv_length = new int[MAX_DEPTH];
-        pv = new int[MAX_DEPTH][MAX_DEPTH];
+        pv = new Move[MAX_DEPTH][MAX_DEPTH];
     }
 
     @Override
-    public int startSearch(Board board, long searchMilliseconds)
+    public Move startSearch(Board board, long searchMilliseconds)
     {
         initializeSearch(board, searchMilliseconds);
         startSearchIterations();
@@ -66,7 +67,7 @@ public class DefaultSearchAgent extends SearchAgent
     protected void initializeSearch (Board board, long searchMilliseconds)
     {
         this.searching = true;
-        this.searchMove = -1;
+        this.searchMove = null;
         this.searchMoves.clear();
         this.searchBoard = board;
         this.searchMilliseconds = searchMilliseconds;
@@ -79,7 +80,7 @@ public class DefaultSearchAgent extends SearchAgent
         {
             pv_length[depth1] = 0;
             for (int depth2 = 0; depth2 < MAX_DEPTH; depth2++)
-                pv[depth1][depth2] = -1;
+                pv[depth1][depth2] = null;
         }
         searchStartMilliseconds = System.currentTimeMillis();
         board.getLegalMoves(getMoveList());
@@ -90,15 +91,15 @@ public class DefaultSearchAgent extends SearchAgent
         this.searching = false;
     }
     
-    protected List<Integer> getMoveList ()    
+    protected List<Move> getMoveList ()    
     {
         return getMoveList(0);
     }
     
-    protected List<Integer> getMoveList (int ply)
+    protected List<Move> getMoveList (int ply)
     {
         if (searchMoves.get(ply) == null)
-            searchMoves.put(ply, new ArrayList<Integer>());
+            searchMoves.put(ply, new ArrayList<Move>());
         return searchMoves.get(ply);
     }
     
@@ -107,10 +108,10 @@ public class DefaultSearchAgent extends SearchAgent
         return searchStopped || ((System.currentTimeMillis() - searchStartMilliseconds) >= searchMilliseconds);
     }
 
-    protected int getSearchMove ()
+    protected Move getSearchMove ()
     {
-        int bestMove = searchMove;
-        if (bestMove == -1)
+        Move bestMove = searchMove;
+        if (bestMove == null)
             bestMove = getMoveList().get(0);
         return bestMove;
     }
@@ -128,7 +129,7 @@ public class DefaultSearchAgent extends SearchAgent
         pv_length[ply] = ply;
     }
 
-    protected void updatePrincipalVariation (int ply, int move)
+    protected void updatePrincipalVariation (int ply, Move move)
     {
         pv[ply][ply] = move;
         for (int j = ply + 1; j < pv_length[ply + 1]; j++)
@@ -140,7 +141,7 @@ public class DefaultSearchAgent extends SearchAgent
     {
         String mainline = "";
         for ( int j = 0; j < pv_length[0]; ++j ) 
-            mainline += Board.getMoveString(pv[0][j]) + " ";
+            mainline += pv[0][j] + " ";
         return mainline;
     }
 
@@ -207,7 +208,7 @@ public class DefaultSearchAgent extends SearchAgent
         preparePrincipalVariation (ply);
 
         //Generar los movimientos
-        List<Integer> moves = getMoveList(ply);
+        List<Move> moves = getMoveList(ply);
         if (ply > 0)
         {
             moves.clear();
@@ -221,9 +222,9 @@ public class DefaultSearchAgent extends SearchAgent
         sortMoves(board, ply, moves);
 
         //Iterar sobre los movimientos posibles
-        for (int testMove : moves)
+        for (Move testMove : moves)
         {
-            int moveMade = board.makeMove(testMove);
+            board.makeMove(testMove);
             if (foundPV)
             {
                 searchResult = -alphaBetaSearch (board, -alpha - 1, -alpha, depth - 1, ply + 1);
@@ -234,7 +235,7 @@ public class DefaultSearchAgent extends SearchAgent
             {
                 searchResult = -alphaBetaSearch (board, -beta, -alpha, depth - 1, ply + 1);
             }
-            board.unmakeMove(moveMade);
+            board.unmakeMove(testMove);
             
             if (searchIteration > 1 && isTimeUp())
                 return -MATE;
@@ -244,7 +245,7 @@ public class DefaultSearchAgent extends SearchAgent
                 foundPV = true;
                 alpha = searchResult;
                 updatePrincipalVariation (ply, testMove);
-                searchHistory[Board.getMoveInitialSquare(testMove)][Board.getMoveEndSquare(testMove)] += ply*ply;
+                searchHistory[testMove.getInitialSquare()][testMove.getEndSquare()] += ply*ply;
                 if (ply == 0)
                     searchMove = testMove;
                 if (alpha >= beta)
@@ -275,7 +276,7 @@ public class DefaultSearchAgent extends SearchAgent
         preparePrincipalVariation (ply);
         
         //Generacion de movimientos
-        List<Integer> moves = getMoveList(ply);
+        List<Move> moves = getMoveList(ply);
         moves.clear();
         board.getCaptureMoves(moves);
         if (moves.size() == 0) 
@@ -286,9 +287,9 @@ public class DefaultSearchAgent extends SearchAgent
         sortMoves (board, ply, moves);
         
         //Iterar sobre los movimientos posibles
-        for (int testMove : moves)
+        for (Move testMove : moves)
         {
-            int moveMade = board.makeMove(testMove);
+            board.makeMove(testMove);
             if (foundPV) 
             {
                 quiescResult = -quiescentSearch (board, -alpha - 1, -alpha, ply + 1);
@@ -299,7 +300,7 @@ public class DefaultSearchAgent extends SearchAgent
             {
                 quiescResult = -quiescentSearch (board, -beta, -alpha, ply + 1);
             }
-            board.unmakeMove(moveMade);
+            board.unmakeMove(testMove);
             
             if (quiescResult > alpha) 
             {
@@ -313,16 +314,16 @@ public class DefaultSearchAgent extends SearchAgent
         return alpha;
     }
 
-    protected void ponderMoves (Board board, int ply, List<Integer> moves)
+    protected void ponderMoves (Board board, int ply, List<Move> moves)
     {
         if (ply > 0)
             establecer el score del ply 0 
         
-        for (int testMove : moves)
+        for (Move testMove : moves)
         {
             int score = 0;
-            byte initialSquare = Board.getMoveInitialSquare(testMove);
-            byte endSquare = Board.getMoveEndSquare(testMove);
+            byte initialSquare = testMove.getInitialSquare();
+            byte endSquare = testMove.getEndSquare();
             byte capturedFigure = endSquare == board.getEnPassantSquare()? Board.PAWN : board.getSquareFigure(endSquare);
             if (capturedFigure != Board.EMPTY)
             {
@@ -338,19 +339,19 @@ public class DefaultSearchAgent extends SearchAgent
         }
     }
     
-    protected void ponderCaptureMoves (Board board, int ply, List<Integer> moves)
+    protected void ponderCaptureMoves (Board board, int ply, List<Move> moves)
     {
-        for (int testMove : moves)
+        for (Move testMove : moves)
         {
-            byte initialSquare = Board.getMoveInitialSquare(testMove);
-            byte endSquare = Board.getMoveEndSquare(testMove);
+            byte initialSquare = testMove.getInitialSquare();
+            byte endSquare = testMove.getEndSquare();
             int sourceValue = PIECEVALUE[board.getSquareFigure(initialSquare)];
             int destinationValue = PIECEVALUE[endSquare == board.getEnPassantSquare()? Board.PAWN : board.getSquareFigure(endSquare)];
             testMove.setScore(destinationValue - sourceValue);
         }
     }
     
-    protected void sortMoves (Board board, int ply, List<Integer> moves)
+    protected void sortMoves (Board board, int ply, List<Move> moves)
     {
         Collections.sort(moves, Collections.reverseOrder());
     }

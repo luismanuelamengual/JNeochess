@@ -3,6 +3,7 @@ package org.neochess.util;
 
 import java.util.List;
 import org.neochess.engine.Board;
+import org.neochess.engine.Move;
 import org.neochess.engine.evaluators.DefaultEvaluator;
 import org.neochess.engine.evaluators.Evaluator;
 import org.neochess.engine.openingbooks.DefaultOpeningBook;
@@ -25,43 +26,43 @@ public abstract class ChessUtils
         return evaluator.evaluate(board);
     }
 
-    public static int getOpeningBookMove (Board board)
+    public static Move getOpeningBookMove (Board board)
     {
         OpeningBook book = new DefaultOpeningBook();
-        int move = book.getMove(board);
+        Move move = book.getMove(board);
         book.dispose();
         return move;
     }
 
-    public static List<Integer> getOpeningBookPossibleMoves (Board board)
+    public static List<Move> getOpeningBookPossibleMoves (Board board)
     {
         DefaultOpeningBook book = new DefaultOpeningBook();
-        List<Integer> moves = book.getMoves(board);
+        List<Move> moves = book.getMoves(board);
         book.dispose();
         return moves;
     }
 
-    public static int getBestMove (Board board)
+    public static Move getBestMove (Board board)
     {
         return getBestMove (board, 10000);
     }
     
-    public static int getBestMove (Board board, long searchMilliseconds)
+    public static Move getBestMove (Board board, long searchMilliseconds)
     {
         SearchAgent agent = new DefaultSearchAgent();
         OpeningBook book = new DefaultOpeningBook();
-        int bestMove = getBestMove (board, agent, book, searchMilliseconds);
+        Move bestMove = getBestMove (board, agent, book, searchMilliseconds);
         agent.dispose();
         book.dispose();
         return bestMove;
     }
     
-    public static int getBestMove (Board board, SearchAgent agent, OpeningBook openingBook, long searchMilliseconds)
+    public static Move getBestMove (Board board, SearchAgent agent, OpeningBook openingBook, long searchMilliseconds)
     {
-        int bestMove = -1;
+        Move bestMove = null;
         if (openingBook != null)
             bestMove = openingBook.getMove(board);
-        if (bestMove == -1)
+        if (bestMove == null)
             bestMove = agent.startSearch(board, searchMilliseconds);
         return bestMove;
     }

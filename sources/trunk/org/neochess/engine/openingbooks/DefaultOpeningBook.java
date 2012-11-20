@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import org.neochess.engine.Board;
+import org.neochess.engine.Move;
 
 public class DefaultOpeningBook extends OpeningBook
 {
@@ -45,7 +46,7 @@ public class DefaultOpeningBook extends OpeningBook
                     String[] moveTokens = line.split(" ");
                     for (String moveToken : moveTokens)
                     {
-                        int move = Board.getMove(moveToken);
+                        Move move = new Move(moveToken);
                         if (board.isMoveValid(move))
                         {
                             addOpeningBookEntry(board, move);
@@ -70,14 +71,14 @@ public class DefaultOpeningBook extends OpeningBook
         }
     }
 
-    public void addOpeningBookEntry (Board board, int move)
+    public void addOpeningBookEntry (Board board, Move move)
     {
         long boardHash = board.getHash();
-        List<Integer> moves = getMoves(board);
+        List<Move> moves = getMoves(board);
         boolean moveFound = false;
-        for (int openingBookMove : moves)
+        for (Move openingBookMove : moves)
         {
-            if (openingBookMove == move)
+            if (openingBookMove.equals(move))
             {
                 moveFound = true;
                 break;
@@ -93,7 +94,7 @@ public class DefaultOpeningBook extends OpeningBook
                 fos = new FileOutputStream(filename, true);
                 dos = new DataOutputStream(fos);
                 dos.writeLong(boardHash);
-                dos.writeInt(move);
+                dos.writeInt(move.getHash());
                 dos.flush();
                 System.out.println ("Book entry added: " + boardHash + " => " + move);
             }
@@ -112,10 +113,10 @@ public class DefaultOpeningBook extends OpeningBook
         }
     }
 
-    public List<Integer> getMoves (Board board)
+    public List<Move> getMoves (Board board)
     {
         long boardHash = board.getHash();
-        List<Integer> moves = new ArrayList<Integer>();
+        List<Move> moves = new ArrayList<Move>();
         FileInputStream fis = null;
         DataInputStream dis = null;
         try
@@ -127,7 +128,7 @@ public class DefaultOpeningBook extends OpeningBook
                 long testBoardHash = dis.readLong();
                 int testMoveHash = dis.readInt();
                 if (boardHash == testBoardHash)
-                    moves.add(testMoveHash);
+                    moves.add(new Move(testMoveHash));
             }
         }
         catch (Exception ex) {}
@@ -139,10 +140,10 @@ public class DefaultOpeningBook extends OpeningBook
     }
 
     @Override
-    public int getMove (Board board)
+    public Move getMove (Board board)
     {
-        int move = -1;
-        List<Integer> moves = getMoves(board);
+        Move move = null;
+        List<Move> moves = getMoves(board);
         Random randomGenerator = new Random(System.currentTimeMillis());
         if (moves.size() > 0)
             move = moves.get(randomGenerator.nextInt(moves.size()));

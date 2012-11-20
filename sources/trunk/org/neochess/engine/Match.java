@@ -14,7 +14,7 @@ public class Match implements Disposable
     public static final byte STATE_FINISHED_BLACKWIN = 4;
     
     private List<Board> historyBoards;
-    private List<Integer> historyMoves;
+    private List<Move> historyMoves;
     private Board board;
     private Player whitePlayer;
     private Player blackPlayer;
@@ -25,7 +25,7 @@ public class Match implements Disposable
     public Match ()
     {
         historyBoards = new ArrayList<Board>();
-        historyMoves = new ArrayList<Integer>();
+        historyMoves = new ArrayList<Move>();
         board = new Board();
     }
     
@@ -121,12 +121,12 @@ public class Match implements Disposable
         return (ply == getPly())? getBoard() : historyBoards.get(ply);
     }
 
-    public int getMove (int ply)
+    public Move getMove (int ply)
     {
         return historyMoves.get(ply);
     }
 
-    public List<Integer> getMoves()
+    public List<Move> getMoves()
     {
         return historyMoves;
     }
@@ -246,7 +246,7 @@ public class Match implements Disposable
         return isDrawn;
     }
     
-    public synchronized boolean makeMove (int move)
+    public synchronized boolean makeMove (Move move)
     {
         boolean moveMade = false;
         updateState ();
@@ -287,7 +287,7 @@ public class Match implements Disposable
             {
                 byte sideMoving = getSideToMove();
                 Board lastHistoryBoard = historyBoards.get(historyBoards.size() - 1);
-                int lastMove = historyMoves.get(historyMoves.size() - 1);
+                Move lastMove = historyMoves.get(historyMoves.size() - 1);
                 board.copy(lastHistoryBoard);
                 historyBoards.remove(lastHistoryBoard);
                 historyMoves.remove(lastMove);

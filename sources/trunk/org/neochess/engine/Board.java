@@ -410,19 +410,14 @@ public class Board implements Disposable, Cloneable
         return !inCheck() && getLegalMoves().size() == 0;
     }
     
-    public int makeMove (byte initialSquare, byte endSquare)
+    public void makeMove (Move move)
     {
-        return getMove(initialSquare, endSquare);
-    }
-    
-    public int makeMove (int move)
-    {
-        byte initialSquare = getMoveInitialSquare(move);
-        byte endSquare = getMoveEndSquare(move);
+        byte initialSquare = move.getInitialSquare();
+        byte endSquare = move.getEndSquare();
         byte movingPiece = getPiece(initialSquare);
         byte movingFigure = getPieceFigure(movingPiece);
         byte capturedPiece = getPiece(endSquare);
-        short flags = (short)((capturedPiece & 0x0F) | (castleState << 4));
+        int flags = (short)((capturedPiece & 0x0F) | (castleState << 4));
         if (movingFigure == PAWN)
         {
             if (sideToMove == WHITE)
@@ -492,14 +487,14 @@ public class Board implements Disposable, Cloneable
         putPiece(endSquare, movingPiece);
         castleState &= CASTLEMASK[initialSquare] & CASTLEMASK[endSquare];
         sideToMove = getOppositeSide(sideToMove);
-        return (move & 0xFFFF) | (flags << 16);
+        move.setFlags(flags);
     }
     
-    public void unmakeMove (int move)
+    public void unmakeMove (Move move)
     {
-        byte initialSquare = getMoveInitialSquare(move);
-        byte endSquare = getMoveEndSquare(move);
-        short flags = getMoveFlags(move);
+        byte initialSquare = move.getInitialSquare();
+        byte endSquare = move.getEndSquare();
+        int flags = move.getFlags();
         byte capturedPiece = (byte)(flags & 0x0F);
         byte moveCastleState = (byte)((flags & 0xF0) >> 4);
         boolean isPromotion = (flags & 0x100) > 0;
@@ -557,13 +552,13 @@ public class Board implements Disposable, Cloneable
         sideToMove = movingSide;
     }
     
-    public boolean isMoveValid(int move)
+    public boolean isMoveValid(Move move)
     {
         boolean isValid = false;
-        List<Integer> moves = getLegalMoves();
-        for (int validMove : moves)
+        List<Move> moves = getLegalMoves();
+        for (Move validMove : moves)
         {
-            if (validMove == move)
+            if (validMove.equals(move))
             {
                 isValid = true;
                 break;
@@ -572,14 +567,14 @@ public class Board implements Disposable, Cloneable
         return isValid;
     }
     
-    public List<Integer> getPseudoLegalMoves ()
+    public List<Move> getPseudoLegalMoves ()
     {
-        List<Integer> moveList = new ArrayList<Integer>();
+        List<Move> moveList = new ArrayList<Move>();
         getPseudoLegalMoves (moveList);
         return moveList;
     }
     
-    public void getPseudoLegalMoves (List<Integer> moveList)
+    public void getPseudoLegalMoves (List<Move> moveList)
     {
         byte side = sideToMove;
         byte xside = getOppositeSide(side);
@@ -602,7 +597,7 @@ public class Board implements Disposable, Cloneable
                 {
                     tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                     moves &= BoardUtils.squareBitX[tsq];
-                    moveList.add(getMove(fsq, tsq));
+                    moveList.add(new Move(fsq, tsq));
                 }
             }
         }
@@ -617,7 +612,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove(fsq, tsq));
+                moveList.add(new Move(fsq, tsq));
             }
         }
         
@@ -631,7 +626,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove(fsq, tsq));
+                moveList.add(new Move(fsq, tsq));
             }
         }
         
@@ -645,7 +640,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove(fsq, tsq));
+                moveList.add(new Move(fsq, tsq));
             }
         }
 
@@ -657,7 +652,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq-8), tsq));
+                moveList.add(new Move((byte)(tsq-8), tsq));
             }
 
             movers = sidePieces[PAWN] & BoardUtils.rankBits[1];
@@ -667,7 +662,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq-16), tsq));
+                moveList.add(new Move((byte)(tsq-16), tsq));
             }
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
@@ -676,7 +671,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq-7), tsq));
+                moveList.add(new Move((byte)(tsq-7), tsq));
             }
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7]; 		
@@ -685,7 +680,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq-9), tsq));
+                moveList.add(new Move((byte)(tsq-9), tsq));
             }
         }
         else if (side == BLACK)
@@ -695,7 +690,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq+8), tsq));
+                moveList.add(new Move((byte)(tsq+8), tsq));
             }
 
             movers = sidePieces[PAWN] & BoardUtils.rankBits[6];
@@ -705,7 +700,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq+16), tsq));
+                moveList.add(new Move((byte)(tsq+16), tsq));
             }
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7];	
@@ -714,7 +709,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq+7), tsq));
+                moveList.add(new Move((byte)(tsq+7), tsq));
             }
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
@@ -723,19 +718,19 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq+9), tsq));
+                moveList.add(new Move((byte)(tsq+9), tsq));
             }
         }
     }
     
-    public List<Integer> getCaptureMoves ()
+    public List<Move> getCaptureMoves ()
     {
-        List<Integer> moveList = new ArrayList<Integer>();
+        List<Move> moveList = new ArrayList<Move>();
         getCaptureMoves (moveList);
         return moveList;
     }
     
-    public void getCaptureMoves (List<Integer> moveList)
+    public void getCaptureMoves (List<Move> moveList)
     {
         byte side = sideToMove;
         byte xside = getOppositeSide(side);
@@ -756,7 +751,7 @@ public class Board implements Disposable, Cloneable
                 {
                     tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                     moves &= BoardUtils.squareBitX[tsq];
-                    moveList.add(getMove(fsq, tsq));
+                    moveList.add(new Move(fsq, tsq));
                 }
             }
         }
@@ -771,7 +766,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove(fsq, tsq));
+                moveList.add(new Move(fsq, tsq));
             }
         }
         
@@ -785,7 +780,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove(fsq, tsq));
+                moveList.add(new Move(fsq, tsq));
             }
         }
         
@@ -799,7 +794,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove(fsq, tsq));
+                moveList.add(new Move(fsq, tsq));
             }
         }
 
@@ -812,7 +807,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq-8), tsq));
+                moveList.add(new Move((byte)(tsq-8), tsq));
             }
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
@@ -821,7 +816,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq-7), tsq));
+                moveList.add(new Move((byte)(tsq-7), tsq));
             }
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7]; 		
@@ -830,7 +825,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq-9), tsq));
+                moveList.add(new Move((byte)(tsq-9), tsq));
             }
         }
         else if (side == BLACK)
@@ -841,7 +836,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq+8), tsq));
+                moveList.add(new Move((byte)(tsq+8), tsq));
             }
             
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7];	
@@ -850,7 +845,7 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq+7), tsq));
+                moveList.add(new Move((byte)(tsq+7), tsq));
             }
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
@@ -859,27 +854,27 @@ public class Board implements Disposable, Cloneable
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
-                moveList.add(getMove((byte)(tsq+9), tsq));
+                moveList.add(new Move((byte)(tsq+9), tsq));
             }
         }
     }
     
-    public List<Integer> getLegalMoves ()
+    public List<Move> getLegalMoves ()
     {
-        List<Integer> moveList = new ArrayList<Integer>();
+        List<Move> moveList = new ArrayList<Move>();
         getLegalMoves(moveList);
         return moveList;
     }
     
-    public void getLegalMoves (List<Integer> moveList)
+    public void getLegalMoves (List<Move> moveList)
     {
         getPseudoLegalMoves(moveList);
         for (int i = (moveList.size() - 1); i >= 0; i--)
         {
-            int moveMade = makeMove(moveList.get(i));
+            makeMove(moveList.get(i));
             if (inCheck(getOppositeSide(sideToMove)))
                 moveList.remove(i);
-            unmakeMove(moveMade);
+            unmakeMove(moveList.get(i));
         }
     }
     
@@ -1105,81 +1100,6 @@ public class Board implements Disposable, Cloneable
         return String.valueOf(getFileChar(Board.getSquareFile(square))) + String.valueOf(getRankChar(Board.getSquareRank(square)));
     }
     
-    public static byte getMoveInitialSquare (int move)
-    {
-        return (byte)(move & 0xFF);
-    }
-    
-    public static byte getMoveEndSquare (int move)
-    {
-        return (byte)((move & 0xFF00) >> 8);
-    }
-    
-    public static short getMoveFlags (int move)
-    {
-        return (short)((move & 0xFFFF0000) >> 16);
-    }
-    
-    public static int getMove (byte initialSquare, byte endSquare)
-    {
-        return (short)(initialSquare | (endSquare << 8));
-    }
-    
-    public static int getMove (String moveString)
-    {
-        return getMove(getSquare(moveString.substring(0, 2)), getSquare(moveString.substring(2, 4)));
-    }
-    
-    public static String getMoveString (int move)
-    {
-        return Board.getSquareString(getMoveInitialSquare(move)) + Board.getSquareString(getMoveEndSquare(move));
-    }
-    
-    public static String getMoveSANString (int move, Board board)
-    {
-        String san = "";
-        byte initialSquare = getMoveInitialSquare(move);
-        byte endSquare = getMoveEndSquare(move);
-        byte movingPiece = board.getPiece(initialSquare);
-        if ((movingPiece == Board.WHITEKING && initialSquare == Board.E1 && endSquare == Board.G1) || (movingPiece == Board.BLACKKING && initialSquare == Board.E8 && endSquare == Board.G8)) 
-        {
-            san = "O-O";
-        }
-        else if ((movingPiece == Board.WHITEKING && initialSquare == Board.E1 && endSquare == Board.C1) || (movingPiece == Board.BLACKKING && initialSquare == Board.E8 && endSquare == Board.C8))
-        {
-            san = "O-O-O";
-        }
-        else
-        {
-            byte movingFigure = Board.getPieceFigure(movingPiece);
-            if (movingFigure == Board.PAWN) 
-            {
-                if (board.getPiece(endSquare) != Board.EMPTY || endSquare == board.getEnPassantSquare())
-                {
-                    san += Board.getFileChar(Board.getSquareFile(initialSquare));
-                    san += 'x';
-                }
-                san += Board.getSquareString(endSquare);
-                byte endSquareRank = Board.getSquareRank(endSquare);
-                if (endSquareRank == Board.RANK_1 || endSquareRank == Board.RANK_8)
-                    san += "=Q";
-            }
-            else 
-            {
-                san += Board.getFigureChar(movingFigure);
-                if (board.getPiece(endSquare) != Board.EMPTY)
-                    san += 'x';                    
-                san += Board.getSquareString(endSquare);
-            }
-
-            Board testBoard = new Board(board);
-            testBoard.makeMove(move);
-            if (testBoard.inCheck(testBoard.getSideToMove()))
-                san += ((testBoard.getLegalMoves().size() == 0)? '#' : '+');
-        }
-        return san;
-    }
-    
     public static byte getFile (char fileChar)
     {
         byte file = -1;
@@ -1292,19 +1212,6 @@ public class Board implements Disposable, Cloneable
     
     public static void main(final String[] args)
     {
-        System.gc();
-        long iniTime = System.currentTimeMillis();
-        Board board = new Board();
-        board.setStartupPosition();
-        List<Integer> moves = new ArrayList<Integer>();
-        for (int i = 0; i < 100000; i++)
-        {
-            int moveMade = board.makeMove(getMove(E2, E4));
-            moves.clear();
-            board.getLegalMoves(moves);
-            board.unmakeMove(moveMade);
-        }
-        long endTime = System.currentTimeMillis();
-        System.out.println (endTime - iniTime);
+        
     }
 }

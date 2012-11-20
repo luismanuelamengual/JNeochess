@@ -12,6 +12,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import org.neochess.client.ui.MatchFrame.MatchFrameListener;
 import org.neochess.engine.Board;
+import org.neochess.engine.Move;
 import org.neochess.general.Disposable;
 import org.neochess.util.UserInterfaceUtils;
 
@@ -93,9 +94,9 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchFrame
         updateScrollBarValues();
     }
 
-    public void addMove(MatchFrame match, int move)
+    public void addMove(MatchFrame match, Move move)
     {
-        String moveString = Board.getMoveSANString(move, match.getBoard(match.getPly()-1));
+        String moveString = move.getSANString(match.getBoard(match.getPly()-1));
         if ((match.getPly()-1) % 2 == 0)
         {
             moveListTableModel.addRow(new String[] { String.valueOf(moveListTableModel.getRowCount() + 1), moveString, "" });
@@ -122,12 +123,12 @@ public class MatchMoveListPanel extends JPanel implements Disposable, MatchFrame
         updateScrollBarValues();
     }
 
-    public void onMatchMove(MatchFrame match, int move)
+    public void onMatchMove(MatchFrame match, Move move)
     {
         addMove(match, move);   
     }
     
-    public void onMatchTakeback(MatchFrame match, int move)
+    public void onMatchTakeback(MatchFrame match, Move move)
     {
         removeMove(match);
     }
