@@ -37,7 +37,7 @@ public class DefaultSearchAgent extends SearchAgent
     {
         evaluator = new DefaultEvaluator();
         searching = false;
-        searchMoves = searchMoves = new HashMap<Integer, List<Move>>();
+        searchMoves = new HashMap<Integer, List<Move>>();
         searchHistory = new int[64][64];
         pv_length = new int[MAX_DEPTH];
         pv = new Move[MAX_DEPTH][MAX_DEPTH];
@@ -69,7 +69,7 @@ public class DefaultSearchAgent extends SearchAgent
         this.searching = true;
         this.searchMove = null;
         this.searchMoves.clear();
-        this.searchBoard = board;
+        this.searchBoard = board.clone();
         this.searchMilliseconds = searchMilliseconds;
         this.searchStopped = false;
         this.searchIteration = 0;
@@ -83,7 +83,7 @@ public class DefaultSearchAgent extends SearchAgent
                 pv[depth1][depth2] = null;
         }
         searchStartMilliseconds = System.currentTimeMillis();
-        board.getLegalMoves(getMoveList());
+        this.searchBoard.getLegalMoves(getMoveList());
     }
 
     protected void finalizeSearch ()
@@ -155,7 +155,6 @@ public class DefaultSearchAgent extends SearchAgent
         do
         {
             searchIteration++;
-            
             if (rootSearchResult > (MATE-ASPIRATIONWINDOW_TOLERANCE))
             {
                 rootAlpha = rootSearchResult - 1;
@@ -218,8 +217,9 @@ public class DefaultSearchAgent extends SearchAgent
             return -MATE + ply - 2;
 
         //Ponderación y Ordenamiento de movimientos
-        ponderMoves(board, ply, moves);
-        sortMoves(board, ply, moves);
+        if (ply > 0)
+            ponderMoves(moves);
+        sortMoves(moves);
 
         //Iterar sobre los movimientos posibles
         for (Move testMove : moves)
@@ -235,6 +235,7 @@ public class DefaultSearchAgent extends SearchAgent
             {
                 searchResult = -alphaBetaSearch (board, -beta, -alpha, depth - 1, ply + 1);
             }
+            testMove.setScore(searchResult);
             board.unmakeMove(testMove);
             
             if (searchIteration > 1 && isTimeUp())
@@ -283,8 +284,8 @@ public class DefaultSearchAgent extends SearchAgent
             return quiescResult;
 
         //Ponderación y Ordenamiento de movimientos
-        ponderCaptureMoves(board, ply, moves);
-        sortMoves (board, ply, moves);
+        ponderCaptureMoves(moves);
+        sortMoves(moves);
         
         //Iterar sobre los movimientos posibles
         for (Move testMove : moves)
@@ -314,20 +315,17 @@ public class DefaultSearchAgent extends SearchAgent
         return alpha;
     }
 
-    protected void ponderMoves (Board board, int ply, List<Move> moves)
+    protected void ponderMoves (List<Move> moves)
     {
-        if (ply > 0)
-            establecer el score del ply 0 
-        
         for (Move testMove : moves)
         {
             int score = 0;
             byte initialSquare = testMove.getInitialSquare();
             byte endSquare = testMove.getEndSquare();
-            byte capturedFigure = endSquare == board.getEnPassantSquare()? Board.PAWN : board.getSquareFigure(endSquare);
+            byte capturedFigure = endSquare == searchBoard.getEnPassantSquare()? Board.PAWN : searchBoard.getSquareFigure(endSquare);
             if (capturedFigure != Board.EMPTY)
             {
-                byte sourceFigure = board.getSquareFigure(initialSquare);
+                byte sourceFigure = searchBoard.getSquareFigure(initialSquare);
                 int toValue = PIECEVALUE[capturedFigure];
                 int fromValue = PIECEVALUE[sourceFigure];
                 score += PIECEVALUE[capturedFigure] - PIECEVALUE[sourceFigure];
@@ -339,19 +337,19 @@ public class DefaultSearchAgent extends SearchAgent
         }
     }
     
-    protected void ponderCaptureMoves (Board board, int ply, List<Move> moves)
+    protected void ponderCaptureMoves (List<Move> moves)
     {
         for (Move testMove : moves)
         {
             byte initialSquare = testMove.getInitialSquare();
             byte endSquare = testMove.getEndSquare();
-            int sourceValue = PIECEVALUE[board.getSquareFigure(initialSquare)];
-            int destinationValue = PIECEVALUE[endSquare == board.getEnPassantSquare()? Board.PAWN : board.getSquareFigure(endSquare)];
+            int sourceValue = PIECEVALUE[searchBoard.getSquareFigure(initialSquare)];
+            int destinationValue = PIECEVALUE[endSquare == searchBoard.getEnPassantSquare()? Board.PAWN : searchBoard.getSquareFigure(endSquare)];
             testMove.setScore(destinationValue - sourceValue);
         }
     }
     
-    protected void sortMoves (Board board, int ply, List<Move> moves)
+    protected void sortMoves (List<Move> moves)
     {
         Collections.sort(moves, Collections.reverseOrder());
     }
