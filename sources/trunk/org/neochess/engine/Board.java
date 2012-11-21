@@ -588,12 +588,12 @@ public class Board implements Disposable, Cloneable
         for (piece = KNIGHT; piece <= KING; piece += 4)
         {
             movers = sidePieces[piece];
-            while (movers > 0)
+            while (movers != 0)
             {
                 fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
                 movers &= BoardUtils.squareBitX[fsq];
                 moves = BoardUtils.moveArray[piece][fsq] & notfriends;
-                while (moves > 0)
+                while (moves != 0)
                 {
                     tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                     moves &= BoardUtils.squareBitX[tsq];
@@ -603,12 +603,12 @@ public class Board implements Disposable, Cloneable
         }
 
         movers = sidePieces[BISHOP];
-        while (movers > 0)
+        while (movers != 0)
         {
             fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
             movers &= BoardUtils.squareBitX[fsq];
             moves = getBishopAttacks(fsq) & notfriends;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -617,12 +617,12 @@ public class Board implements Disposable, Cloneable
         }
         
         movers = sidePieces[ROOK];
-        while (movers > 0)
+        while (movers != 0)
         {
             fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
             movers &= BoardUtils.squareBitX[fsq];
             moves = getRookAttacks(fsq) & notfriends;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -631,12 +631,12 @@ public class Board implements Disposable, Cloneable
         }
         
         movers = sidePieces[QUEEN];
-        while (movers > 0)
+        while (movers != 0)
         {
             fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
             movers &= BoardUtils.squareBitX[fsq];
             moves = getQueenAttacks(fsq) & notfriends;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -648,7 +648,7 @@ public class Board implements Disposable, Cloneable
         if (side == WHITE)
         {
             moves = (sidePieces[PAWN] >> 8) & notblocker;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -658,7 +658,7 @@ public class Board implements Disposable, Cloneable
             movers = sidePieces[PAWN] & BoardUtils.rankBits[1];
             moves = (movers >> 8) & notblocker;
             moves = (moves >> 8) & notblocker;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -667,7 +667,7 @@ public class Board implements Disposable, Cloneable
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
             moves = (movers >> 7) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -676,7 +676,7 @@ public class Board implements Disposable, Cloneable
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7]; 		
             moves = (movers >> 9) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -686,7 +686,7 @@ public class Board implements Disposable, Cloneable
         else if (side == BLACK)
         {
             moves = (sidePieces[PAWN] << 8) & notblocker;		
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -696,7 +696,7 @@ public class Board implements Disposable, Cloneable
             movers = sidePieces[PAWN] & BoardUtils.rankBits[6];
             moves = (movers << 8) & notblocker;
             moves = (moves << 8) & notblocker;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -705,7 +705,7 @@ public class Board implements Disposable, Cloneable
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7];	
             moves = (movers << 7) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -714,7 +714,7 @@ public class Board implements Disposable, Cloneable
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
             moves = (movers << 9) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -742,12 +742,12 @@ public class Board implements Disposable, Cloneable
         for (piece = KNIGHT; piece <= KING; piece += 4)
         {
             movers = sidePieces[piece];
-            while (movers > 0)
+            while (movers != 0)
             {
                 fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
                 movers &= BoardUtils.squareBitX[fsq];
                 moves = BoardUtils.moveArray[piece][fsq] & enemy;
-                while (moves > 0)
+                while (moves != 0)
                 {
                     tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                     moves &= BoardUtils.squareBitX[tsq];
@@ -757,12 +757,12 @@ public class Board implements Disposable, Cloneable
         }
 
         movers = sidePieces[BISHOP];
-        while (movers > 0)
+        while (movers != 0)
         {
             fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
             movers &= BoardUtils.squareBitX[fsq];
             moves = getBishopAttacks(fsq) & enemy;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -771,12 +771,12 @@ public class Board implements Disposable, Cloneable
         }
         
         movers = sidePieces[ROOK];
-        while (movers > 0)
+        while (movers != 0)
         {
             fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
             movers &= BoardUtils.squareBitX[fsq];
             moves = getRookAttacks(fsq) & enemy;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -785,12 +785,12 @@ public class Board implements Disposable, Cloneable
         }
         
         movers = sidePieces[QUEEN];
-        while (movers > 0)
+        while (movers != 0)
         {
             fsq = (byte)BoardUtils.getLeastSignificantBit(movers);
             movers &= BoardUtils.squareBitX[fsq];
             moves = getQueenAttacks(fsq) & enemy;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -803,7 +803,7 @@ public class Board implements Disposable, Cloneable
         {
             movers = sidePieces[PAWN] & BoardUtils.rankBits[6];			
             moves = (movers >> 8) & ~blocker;			
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -812,7 +812,7 @@ public class Board implements Disposable, Cloneable
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
             moves = (movers >> 7) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -821,7 +821,7 @@ public class Board implements Disposable, Cloneable
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7]; 		
             moves = (movers >> 9) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -832,7 +832,7 @@ public class Board implements Disposable, Cloneable
         {
             movers = sidePieces[PAWN] & BoardUtils.rankBits[1];			
             moves = (movers << 8) & ~blocker;		
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -841,7 +841,7 @@ public class Board implements Disposable, Cloneable
             
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[7];	
             moves = (movers << 7) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -850,7 +850,7 @@ public class Board implements Disposable, Cloneable
 
             movers = sidePieces[PAWN] & ~BoardUtils.fileBits[0];
             moves = (movers << 9) & captures;
-            while (moves > 0)
+            while (moves != 0)
             {
                 tsq = (byte)BoardUtils.getLeastSignificantBit(moves);
                 moves &= BoardUtils.squareBitX[tsq];
@@ -922,7 +922,7 @@ public class Board implements Disposable, Cloneable
         attackers |= (sidePieces[PAWN] & BoardUtils.moveArray[xside==WHITE?PAWN:BPAWN][square]);
         slideMoves = BoardUtils.fromtoRay[square];
         moves = (sidePieces[BISHOP] | sidePieces[QUEEN]) & BoardUtils.moveArray[BISHOP][square];
-        while (moves > 0)
+        while (moves != 0)
         {
             t = (byte)BoardUtils.getLeastSignificantBit(moves);
             moves &= BoardUtils.squareBitX[t];
@@ -930,7 +930,7 @@ public class Board implements Disposable, Cloneable
                 attackers |= BoardUtils.squareBit[t];
         }
         moves = (sidePieces[ROOK] | sidePieces[QUEEN]) & BoardUtils.moveArray[ROOK][square];
-        while (moves > 0)
+        while (moves != 0)
         {
             t = (byte)BoardUtils.getLeastSignificantBit(moves);
             moves &= BoardUtils.squareBitX[t];
@@ -955,7 +955,7 @@ public class Board implements Disposable, Cloneable
         blocker = this.blocker;
         blocker &= ~(sidePieces[BISHOP] | sidePieces[QUEEN] | xsidePieces[BISHOP] | xsidePieces[QUEEN] | moves);
         moves |= (sidePieces[BISHOP] | sidePieces[QUEEN]) & BoardUtils.moveArray[BISHOP][square];
-        while (moves > 0)
+        while (moves != 0)
         {
             t = (byte)BoardUtils.getLeastSignificantBit(moves);
             moves &= BoardUtils.squareBitX[t];
@@ -965,7 +965,7 @@ public class Board implements Disposable, Cloneable
         moves = (sidePieces[ROOK] | sidePieces[QUEEN]) & BoardUtils.moveArray[ROOK][square];
         blocker = this.blocker;
         blocker &= ~(sidePieces[ROOK] | sidePieces[QUEEN] | xsidePieces[ROOK] | xsidePieces[QUEEN]);
-        while (moves > 0)
+        while (moves != 0)
         {
             t = (byte)BoardUtils.getLeastSignificantBit(moves);
             moves &= BoardUtils.squareBitX[t];
@@ -1210,8 +1210,71 @@ public class Board implements Disposable, Cloneable
         return (byte)(piece % 6);
     }
     
+    public boolean checkState ()
+    {
+        boolean stateOk = true;
+        for (byte square = A1; square <= H8; square++)
+        {
+            byte squareSide = this.squareSide[square];
+            byte squareFigure = this.squareFigure[square];
+            long squareBitBoard = BoardUtils.squareBit[square];
+            for (byte side = WHITE; side <= BLACK; side++)
+            {
+                boolean friendsBitSet = (friends[side] & squareBitBoard) != 0;
+                if (side == squareSide)
+                {
+                    if (!friendsBitSet)
+                        stateOk = false;
+                }
+                else
+                {
+                    if (friendsBitSet)
+                        stateOk = false;
+                }
+                
+                for (byte figure = PAWN; figure <= KING; figure++)
+                {
+                    boolean pieceBitSet = (pieces[side][figure] & squareBitBoard) != 0;
+                    if (side == squareSide && figure == squareFigure)
+                    {
+                        if (!pieceBitSet)
+                            stateOk = false;
+                    }
+                    else
+                    {
+                        if (pieceBitSet)
+                            stateOk = false;
+                    }
+                }
+            }
+            
+            if (squareSide != NOSIDE)
+            {
+                if ((blocker & squareBitBoard) == 0)
+                    stateOk = false;
+                if ((blockerr45 & BoardUtils.squareBit45[square]) == 0)
+                    stateOk = false;
+                if ((blockerr90 & BoardUtils.squareBit90[square]) == 0)
+                    stateOk = false;
+                if ((blockerr315 & BoardUtils.squareBit315[square]) == 0)
+                    stateOk = false;
+            }
+            else
+            {
+                if ((blocker & squareBitBoard) != 0)
+                    stateOk = false;
+                if ((blockerr45 & BoardUtils.squareBit45[square]) != 0)
+                    stateOk = false;
+                if ((blockerr90 & BoardUtils.squareBit90[square]) != 0)
+                    stateOk = false;
+                if ((blockerr315 & BoardUtils.squareBit315[square]) != 0)
+                    stateOk = false;
+            }
+        }
+        return stateOk;
+    }
+    
     public static void main(final String[] args)
     {
-        
     }
 }
