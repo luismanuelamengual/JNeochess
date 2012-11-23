@@ -417,34 +417,22 @@ public class Board implements Disposable, Cloneable
         byte movingPiece = getPiece(initialSquare);
         byte movingFigure = getPieceFigure(movingPiece);
         byte capturedPiece = getPiece(endSquare);
-        int flags = (short)((capturedPiece & 0x0F) | (castleState << 4));
+        move.setFlags(movingPiece | (capturedPiece << 8) | (castleState << 16) | (epSquare << 24));
         if (movingFigure == PAWN)
         {
             if (sideToMove == WHITE)
             {
                 if (getSquareRank(endSquare) == RANK_8)
-                {
-                    flags |= 0x100;
                     movingPiece = WHITEQUEEN;
-                }
                 else if (endSquare == epSquare)
-                {
-                    flags |= 0x200;
                     removePiece((byte)(endSquare-8));
-                }
             }
             else
             {
                 if (getSquareRank(endSquare) == RANK_1)
-                {
-                    flags |= 0x100;
                     movingPiece = BLACKQUEEN;
-                }
                 else if (endSquare == epSquare)
-                {
-                    flags |= 0x200;
                     removePiece((byte)(endSquare+8));
-                }
             }
             epSquare = (Math.abs(initialSquare - endSquare) == 16)? (byte)((initialSquare + endSquare) / 2) : INVALIDSQUARE;
         }
@@ -487,7 +475,6 @@ public class Board implements Disposable, Cloneable
         putPiece(endSquare, movingPiece);
         castleState &= CASTLEMASK[initialSquare] & CASTLEMASK[endSquare];
         sideToMove = getOppositeSide(sideToMove);
-        move.setFlags(flags);
     }
     
     public void unmakeMove (Move move)
@@ -495,16 +482,20 @@ public class Board implements Disposable, Cloneable
         byte initialSquare = move.getInitialSquare();
         byte endSquare = move.getEndSquare();
         int flags = move.getFlags();
-        byte capturedPiece = (byte)(flags & 0x0F);
-        byte moveCastleState = (byte)((flags & 0xF0) >> 4);
-        boolean isPromotion = (flags & 0x100) > 0;
-        byte movingSide = getOppositeSide(sideToMove);
-        byte movingPiece = (isPromotion)? (movingSide == WHITE? WHITEPAWN : BLACKPAWN) : getPiece(endSquare);
+        byte movingPiece = (byte)(flags & 0xFF);
         byte movingFigure = getPieceFigure(movingPiece);
+        byte movingSide = getPieceSide(movingPiece);
+        byte capturedPiece = (byte)((flags & 0xFF00) >> 8);
+        if (capturedPiece == 255)
+            capturedPiece = EMPTY;
+        byte lastCastleState = (byte)((flags & 0xFF0000) >> 16);
+        byte lastEpSquare = (byte)((flags & 0xFF000000) >> 24);
+        if (lastEpSquare == 255)
+            lastEpSquare = INVALIDSQUARE;
+        
         if (movingFigure == PAWN)
         {
-            boolean isEpCapture = (flags & 0x200) > 0;
-            if (isEpCapture)
+            if (endSquare == lastEpSquare)
             {
                 if (movingSide == WHITE)
                     putPiece((byte)(endSquare-8), BLACKPAWN);
@@ -543,12 +534,13 @@ public class Board implements Disposable, Cloneable
                 }
             }
         }
-        if (capturedPiece > 0 && capturedPiece != 15)
+        if (capturedPiece != EMPTY)
             putPiece(endSquare, capturedPiece);
         else
             removePiece(endSquare);
         putPiece(initialSquare, movingPiece);
-        castleState = moveCastleState;
+        epSquare = lastEpSquare;
+        castleState = lastCastleState;
         sideToMove = movingSide;
     }
     

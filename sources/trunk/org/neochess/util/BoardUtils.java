@@ -183,6 +183,11 @@ public abstract class BoardUtils
         }
     }
     
+    public static void print(Board board)
+    {
+        print(board, false);
+    }
+    
     public static void print(Board board, boolean flipped)
     {
         System.out.println("  .---.---.---.---.---.---.---.---.");
