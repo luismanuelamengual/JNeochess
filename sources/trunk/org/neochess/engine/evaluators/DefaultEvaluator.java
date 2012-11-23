@@ -94,9 +94,9 @@ public class DefaultEvaluator extends Evaluator
     
     static
     {
-        for (byte initialSquare = Board.A8; initialSquare <= Board.H1; initialSquare++)
+        for (byte initialSquare = Board.A1; initialSquare <= Board.H8; initialSquare++)
         {
-            for (byte finalSquare = Board.A8; finalSquare <= Board.H1; finalSquare++)
+            for (byte finalSquare = Board.A1; finalSquare <= Board.H8; finalSquare++)
             {
                 for (byte z = 0; z < 8; z++)
                 {
@@ -190,7 +190,7 @@ public class DefaultEvaluator extends Evaluator
         retrieveEvaluationData(board);
         byte whiteBishops = 0;
         byte blackBishops = 0;
-        for (byte square = Board.A8; square <= Board.H1; square++)
+        for (byte square = Board.A1; square <= Board.H8; square++)
         {
             byte side = board.getSquareSide(square);
             if (side != Board.NOSIDE)
@@ -242,7 +242,7 @@ public class DefaultEvaluator extends Evaluator
         evaluationBlackPawnMaterial = 0;
         evaluationBlackPieceMaterial = 0;
         
-        for (byte square = Board.A8; square <= Board.H1; square++)
+        for (byte square = Board.A1; square <= Board.H8; square++)
         {
             byte side = board.getSquareSide(square);
             byte squareFile = Board.getSquareFile(square);
