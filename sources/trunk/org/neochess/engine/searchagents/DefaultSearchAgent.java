@@ -344,7 +344,16 @@ public class DefaultSearchAgent extends SearchAgent
             byte initialSquare = testMove.getInitialSquare();
             byte endSquare = testMove.getEndSquare();
             int sourceValue = PIECEVALUE[searchBoard.getSquareFigure(initialSquare)];
-            int destinationValue = PIECEVALUE[endSquare == searchBoard.getEnPassantSquare()? Board.PAWN : searchBoard.getSquareFigure(endSquare)];
+            int destinationValue = 0;
+            if (endSquare == searchBoard.getEnPassantSquare())
+            {
+                destinationValue = Board.PAWN;
+            }
+            else
+            {
+                byte endSquareFigure = searchBoard.getSquareFigure(endSquare);
+                destinationValue = (endSquareFigure == Board.EMPTY)? Board.QUEEN : endSquareFigure;
+            }
             testMove.setScore(destinationValue - sourceValue);
         }
     }
