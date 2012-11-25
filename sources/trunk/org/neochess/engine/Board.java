@@ -863,10 +863,11 @@ public class Board implements Disposable, Cloneable
         getPseudoLegalMoves(moveList);
         for (int i = (moveList.size() - 1); i >= 0; i--)
         {
-            makeMove(moveList.get(i));
+            Move move = moveList.get(i);
+            makeMove(move);
             if (inCheck(getOppositeSide(sideToMove)))
                 moveList.remove(i);
-            unmakeMove(moveList.get(i));
+            unmakeMove(move);
         }
     }
     
