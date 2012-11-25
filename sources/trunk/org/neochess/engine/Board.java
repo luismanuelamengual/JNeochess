@@ -147,7 +147,7 @@ public class Board implements Disposable, Cloneable
     static
     {
         CASTLEMASK = new byte[64];
-        for (byte square = A8; square <= H1; square++)
+        for (byte square = A1; square <= H8; square++)
             CASTLEMASK[square] = WHITECASTLESHORT | WHITECASTLELONG | BLACKCASTLESHORT | BLACKCASTLELONG;
         CASTLEMASK[A1] = WHITECASTLESHORT | BLACKCASTLESHORT | BLACKCASTLELONG;
         CASTLEMASK[H1] = WHITECASTLELONG | BLACKCASTLESHORT | BLACKCASTLELONG;
@@ -158,7 +158,7 @@ public class Board implements Disposable, Cloneable
 
         Random randomGenerator = new Random(0);
         for (byte piece = WHITEPAWN; piece <= BLACKKING; piece++)
-            for (byte square = A8; square <= H1; square++)
+            for (byte square = A1; square <= H8; square++)
                 HASHPIECE[piece][square] = randomGenerator.nextLong();
         for (byte epSquare = 0; epSquare < 64; epSquare++)
             HASHEP[epSquare] = randomGenerator.nextLong();
@@ -215,7 +215,7 @@ public class Board implements Disposable, Cloneable
     public long getHash ()
     {
         long hashValue = 0L;
-        for (byte square = A8; square <= H1; square++)
+        for (byte square = A1; square <= H8; square++)
         {
             byte piece = getPiece(square);
             if (piece != EMPTY)
