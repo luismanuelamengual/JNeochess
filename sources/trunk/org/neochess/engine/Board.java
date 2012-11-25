@@ -713,6 +713,25 @@ public class Board implements Disposable, Cloneable
                 moveList.add(new Move((byte)(tsq+9), tsq));
             }
         }
+        
+        if (side == WHITE) 
+        {
+            if ((castleState & WHITECASTLESHORT) > 0)
+                if (squareSide[F1] == EMPTY && squareSide[G1] == EMPTY && !inCheck() && !isSquareAttacked(F1, BLACK) && !isSquareAttacked(G1, BLACK))
+                    moveList.add(new Move(E1, G1));
+            if ((castleState & WHITECASTLELONG) > 0)
+                if (squareSide[B1] == EMPTY && squareSide[C1] == EMPTY && squareSide[D1] == EMPTY && !inCheck() && !isSquareAttacked(C1, BLACK) && !isSquareAttacked(D1, BLACK))
+                    moveList.add(new Move(E1, C1));
+        }
+        else 
+        {
+            if ((castleState & BLACKCASTLESHORT) > 0)
+                if (squareSide[F8] == EMPTY && squareSide[G8] == EMPTY && !inCheck() && !isSquareAttacked(F8, WHITE) && !isSquareAttacked(G8, WHITE))
+                    moveList.add(new Move(E8, G8));
+            if ((castleState & BLACKCASTLELONG) > 0)
+                if (squareSide[B8] == EMPTY && squareSide[C8] == EMPTY && squareSide[D8] == EMPTY && !inCheck() && !isSquareAttacked(C8, WHITE) && !isSquareAttacked(D8, WHITE))
+                    moveList.add(new Move(E8, C8));
+        }
     }
     
     public List<Move> getCaptureMoves ()
