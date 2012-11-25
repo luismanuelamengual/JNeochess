@@ -9,11 +9,11 @@ import org.neochess.util.BoardUtils;
 
 public class Board implements Disposable, Cloneable
 {
-    public static final byte NOSIDE = -1;
+    public static final byte NOSIDE = Byte.MAX_VALUE;
     public static final byte WHITE = 0;
     public static final byte BLACK = 1;
     
-    public static final byte EMPTY = -1;
+    public static final byte EMPTY = Byte.MAX_VALUE;
     public static final byte PAWN = 0;
     public static final byte KNIGHT = 1;
     public static final byte BISHOP = 2;
@@ -34,7 +34,7 @@ public class Board implements Disposable, Cloneable
     public static final byte BLACKQUEEN = 10;
     public static final byte BLACKKING = 11;
     
-    public static final byte INVALIDSQUARE = -1;
+    public static final byte INVALIDSQUARE = Byte.MAX_VALUE;
     public static final byte A1 = 0;
     public static final byte B1 = 1;
     public static final byte C1 = 2;
