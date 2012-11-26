@@ -54,7 +54,7 @@ public class ComputerPlayer extends Player
                 long remainingTime = clock.getRemainingTime();
                 if (remainingTime > 60000)
                 {
-                    if (movesMade < 30)
+                    if (movesMade < 38)
                     {
                         long availiableTime = 75 * remainingTime / 100;
                         int movesLimit = 30 - movesMade;
