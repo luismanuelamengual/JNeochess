@@ -1,493 +1,244 @@
 
 package org.neochess.engine.evaluators;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 import org.neochess.engine.Board;
+import org.neochess.util.BoardUtils;
 
 public class DefaultEvaluator extends Evaluator
 {
-    private Hashtable<String, Integer> properties;
-    private byte evaluationPhase;
-    private byte[] evaluationWhitePawnStructure;
-    private byte[] evaluationBlackPawnStructure;
-    private int evaluationWhitePawnMaterial;
-    private int evaluationWhitePieceMaterial;
-    private int evaluationBlackPawnMaterial;
-    private int evaluationBlackPieceMaterial;
+    private final static int PHASENUMBER = 8;
+    private final static int _isolani_normal[] = { 12, 10, 8, 6, 6, 8, 10, 12 };
+    private final static int _isolani_weaker[] = { -2, -4, -6, -8, -8, -6, -4, -2 };  
+    private final static long _d2e2[] = { 0x0018000000000000L, 0x0000000000001800L };
+    private final static long _brank7[] = { 0x000000000000FF00L, 0x00FF000000000000L };
+    private final static long _brank8[] = { 0x00000000000000FFL, 0xFF00000000000000L };
+    private final static long _brank67[] = { 0x0000000000FFFF00L, 0x00FFFF0000000000L };
+    private final static long _brank58[] = { 0x00000000FFFFFFFFL, 0xFFFFFFFF00000000L };
+    private final static long sideVertical[] = { 0xFFFFFFFF00000000L, 0x00000000FFFFFFFFL, };
+    private final static long sideHorizontal[] = { 0xF0F0F0F0F0F0F0F0L, 0x0F0F0F0F0F0F0F0FL };
+    private final static long BOX_01 = 0x00003C3C3C3C0000L;
+    private final static long BOX_012 = 0x007E7E7E7E7E7E00L;
+    private final static int _pawnCoverture[] = { -60, -30, 0, 5, 30, 30, 30, 30, 30 };
+    private final static int _safetyFactor[] = { 7, 8, 8, 7, 6, 5, 4, 2, 0, };
+    private final static int _rank7[] = { 6, 1 };
+    private final static int _rank8[] = { 7, 0 };
+    private static long _passedPawnMask[][] = new long[2][64];
+    private static long _isolaniPawnMask[] = new long[8];
+    private final static long _initialKnights[] = { BoardUtils.squareBit[Board.B1] | BoardUtils.squareBit[Board.G1], BoardUtils.squareBit[Board.B8] | BoardUtils.squareBit[Board.G8] };
+    private final static long _initialBishops[] = { BoardUtils.squareBit[Board.C1] | BoardUtils.squareBit[Board.F1], BoardUtils.squareBit[Board.C8] | BoardUtils.squareBit[Board.F8] };
+    private final static long _centerFiles = BoardUtils.fileBits[Board.FILE_D] | BoardUtils.fileBits[Board.FILE_E];
+    private final static int _pawnSquareValue[][] = 
+    {
+        {  0,  0,  0,  0,  0,  0,  0,  0,
+           5,  5,  5,-15,-15,  5,  5,  5,
+          -2, -2, -2,  6,  6, -2, -2, -2,
+           0,  0,  0, 25, 25,  0,  0,  0,
+           2,  2, 12, 16, 16, 12,  2,  2,
+           4,  8, 12, 16, 16, 12,  4,  4,
+           4,  8, 12, 16, 16, 12,  4,  4,
+           0,  0,  0,  0,  0,  0,  0,  0
+        },
+        {  0,  0,  0,  0,  0,  0,  0,  0,
+           4,  8, 12, 16, 16, 12,  4,  4,
+           4,  8, 12, 16, 16, 12,  4,  4,
+           2,  2, 12, 16, 16, 12,  2,  2,
+           0,  0,  0, 25, 25,  0,  0,  0,
+          -2, -2, -2,  6,  6, -2, -2, -2,
+           5,  5,  5,-15,-15,  5,  5,  5,
+           0,  0,  0,  0,  0,  0,  0,  0
+        }
+    };
     
-    private static final int figureValue[] = {100, 300, 310, 500, 900, 0};
+    private final static int _scoreKing[] =
+    {
+       24, 24, 24, 16, 16,  0, 32, 32,
+       24, 20, 16, 12, 12, 16, 20, 24,
+       16, 12,  8,  4,  4,  8, 12, 16,
+       12,  8,  4,  0,  0,  4,  8, 12,
+       12,  8,  4,  0,  0,  4,  8, 12,
+       16, 12,  8,  4,  4,  8, 12, 16,
+       24, 20, 16, 12, 12, 16, 20, 24,
+       24, 24, 24, 16, 16,  0, 32, 32
+    };
 
-    private static final int pawnSquareValue[] = 
+    private final static int _scoreKingFinalist[] =
     {
-          0,   0,   0,   0,   0,   0,   0,   0,
-          5,  10,  15,  20,  20,  15,  10,   5,
-          4,   8,  12,  16,  16,  12,   8,   4,
-          3,   6,   9,  12,  12,   9,   6,   3,
-          2,   4,   6,   8,   8,   6,   4,   2,
-          1,   2,   3,  -6,  -6,   3,   2,   1,
-          0,   0,   0, -25, -25,   0,   0,   0,
-          0,   0,   0,   0,   0,   0,   0,   0
+       0,  6, 12, 18, 18, 12,  6,  0,
+       6, 12, 18, 24, 24, 18, 12,  6,
+      12, 18, 24, 32, 32, 24, 18, 12,
+      18, 24, 32, 48, 48, 32, 24, 18,
+      18, 24, 32, 48, 48, 32, 24, 18,
+      12, 18, 24, 32, 32, 24, 18, 12,
+       6, 12, 18, 24, 24, 18, 12,  6,
+       0,  6, 12, 18, 18, 12,  6,  0
     };
     
-    private static final int knightSquareValue[] = 
-    {
-        -10, -10, -10, -10, -10, -10, -10, -10,
-        -10,   0,   0,   0,   0,   0,   0, -10,
-        -10,   0,   5,   5,   5,   5,   0, -10,
-        -10,   0,   5,  10,  10,   5,   0, -10,
-        -10,   0,   5,  10,  10,   5,   0, -10,
-        -10,   0,   5,   5,   5,   5,   0, -10,
-        -10,   0,   0,   0,   0,   0,   0, -10,
-        -10, -30, -10, -10, -10, -10, -30, -10
-    };
+    private Map<String, Integer> scores;
+    private int phase;
     
-    private static final int bishopSquareValue[] = 
+    public DefaultEvaluator ()
     {
-        -10, -10, -10, -10, -10, -10, -10, -10,
-        -10,   0,   0,   0,   0,   0,   0, -10,
-        -10,   0,   5,   5,   5,   5,   0, -10,
-        -10,   0,   5,  10,  10,   5,   0, -10,
-        -10,   0,   5,  10,  10,   5,   0, -10,
-        -10,   0,   5,   5,   5,   5,   0, -10,
-        -10,   5,   0,   0,   0,   0,   5, -10,
-        -10, -10, -20, -10, -10, -20, -10, -10
-    };
-    
-    private static final int kingSquareValue[] = 
-    {
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -40, -40, -40, -40, -40, -40, -40, -40,
-        -20, -20, -20, -20, -20, -20, -20, -20,
-          0,  20,  40, -20,   0, -20,  40,  20
-    };
-    
-    private static final int kingEndingSquareValue[] = 
-    {
-         0,  10,  20,  30,  30,  20,  10,   0,
-         10,  20,  30,  40,  40,  30,  20,  10,
-         20,  30,  40,  50,  50,  40,  30,  20,
-         30,  40,  50,  60,  60,  50,  40,  30,
-         30,  40,  50,  60,  60,  50,  40,  30,
-         20,  30,  40,  50,  50,  40,  30,  20,
-         10,  20,  30,  40,  40,  30,  20,  10,
-          0,  10,  20,  30,  30,  20,  10,   0
-    };
-    
-    private static final byte flip[] = 
-    {
-         56,  57,  58,  59,  60,  61,  62,  63,
-         48,  49,  50,  51,  52,  53,  54,  55,
-         40,  41,  42,  43,  44,  45,  46,  47,
-         32,  33,  34,  35,  36,  37,  38,  39,
-         24,  25,  26,  27,  28,  29,  30,  31,
-         16,  17,  18,  19,  20,  21,  22,  23,
-          8,   9,  10,  11,  12,  13,  14,  15,
-          0,   1,   2,   3,   4,   5,   6,   7
-    };
-    
-    private static byte[][][] linearPaths = new byte[64][64][8];
-    private static byte[][][] diagonalPaths = new byte[64][64][8];
-    
-    static
-    {
-        for (byte initialSquare = Board.A1; initialSquare <= Board.H8; initialSquare++)
-        {
-            for (byte finalSquare = Board.A1; finalSquare <= Board.H8; finalSquare++)
-            {
-                for (byte z = 0; z < 8; z++)
-                {
-                    linearPaths[initialSquare][finalSquare][z] = -1;
-                    diagonalPaths[initialSquare][finalSquare][z] = -1;
-                }
-                
-                if (initialSquare == finalSquare)
-                    continue;
-            
-                if ((Board.getSquareFile(initialSquare) == Board.getSquareFile(finalSquare)) || (Board.getSquareRank(initialSquare) == Board.getSquareRank(finalSquare)))
-                {
-                    byte fileIndex = Board.getSquareFile(initialSquare);
-                    byte rankIndex = Board.getSquareRank(initialSquare);
-                    byte finalSquareFileIndex = Board.getSquareFile(finalSquare);
-                    byte finalSquareRankIndex = Board.getSquareRank(finalSquare);
-                    byte index = 0;
-                    while (fileIndex != finalSquareFileIndex || rankIndex != finalSquareRankIndex)
-                    {
-                        if (finalSquareFileIndex != fileIndex)
-                            fileIndex = (byte)((fileIndex < finalSquareFileIndex)? (fileIndex+1) : (fileIndex-1));
-                        if (finalSquareRankIndex != rankIndex)
-                            rankIndex = (byte)((rankIndex < finalSquareRankIndex)? (rankIndex+1) : (rankIndex-1));
-                        linearPaths[initialSquare][finalSquare][index++] = Board.getSquare(fileIndex, rankIndex);
-                    }
-                }
-                
-                int fileDiff = Board.getSquareFile(finalSquare) - Board.getSquareFile(initialSquare);
-                int rankDiff = Board.getSquareRank(finalSquare) - Board.getSquareRank(initialSquare);
-                if (Math.abs(fileDiff) == Math.abs(rankDiff))
-                {
-                    byte fileIndex = Board.getSquareFile(initialSquare);
-                    byte rankIndex = Board.getSquareRank(initialSquare);
-                    byte finalSquareFileIndex = Board.getSquareFile(finalSquare);
-                    byte finalSquareRankIndex = Board.getSquareRank(finalSquare);
-                    byte index = 0;
-                    while (fileIndex != finalSquareFileIndex || rankIndex != finalSquareRankIndex)
-                    {
-                        fileIndex = (byte)((fileIndex < finalSquareFileIndex)? (fileIndex+1) : (fileIndex-1));
-                        rankIndex = (byte)((rankIndex < finalSquareRankIndex)? (rankIndex+1) : (rankIndex-1));
-                        diagonalPaths[initialSquare][finalSquare][index++] = Board.getSquare(fileIndex, rankIndex);
-                    }
-                }
-            }
-        }   
+        scores = new HashMap<String, Integer>();
+        scores.put("SCORE_PAWN", 100);
+        scores.put("SCORE_KNIGHT", 300);
+        scores.put("SCORE_BISHOP", 300);
+        scores.put("SCORE_ROOK", 500);
+        scores.put("SCORE_QUEEN", 950);
+        scores.put("SCORE_KING", 10000);
+        scores.put("SCORE_MINORNOTDEVELOPED", -28);
+        scores.put("SCORE_NOTCASTLED", -20);
+        scores.put("SCORE_KINGMOVED", -20);
+        scores.put("SCORE_EARLYQUEENMOVE", -80);
+        scores.put("SCORE_EARLYMINORREPEAT", -15);
+        scores.put("SCORE_EARLYCENTERPREPEAT", -12);
+        scores.put("SCORE_EARLYWINGPAWNMOVE", -9);
+        scores.put("SCORE_DOUBLEDPAWNS", -20);
+        scores.put("SCORE_ISOLATEDPAWNS", -15);
+        scores.put("SCORE_ALLPAWNS", -10);
+        scores.put("SCORE_CENTERPAWNS", 17);
+        scores.put("SCORE_BACKWARDPAWNS", -9);
+        scores.put("SCORE_PASSEDPAWNS", 15);
+        scores.put("SCORE_PAWNBASEATAK", -18);
+        scores.put("SCORE_LOCKEDPAWNS", -10);
+        scores.put("SCORE_ATAKWEAKPAWN", 8);
+        scores.put("SCORE_DOUBLEDBISHOPS", 15);
+        scores.put("SCORE_ROOKHALFFILE", 5);
+        scores.put("SCORE_ROOKOPENFILE", 8);
+        scores.put("SCORE_QUEENNOTPRESENT", -25);
+        scores.put("SCORE_GOPEN", -30);
+        scores.put("SCORE_HOPEN", -600); 
+        scores.put("SCORE_KINGOPENFILE", -10);
+        scores.put("SCORE_KINGENEMYOPENFILE", -6);
+        scores.put("SCORE_KINGDEFENCEDEFICIT", -50);
+        scores.put("SCORE_PAWNNEARKING", 40);
+        scores.put("SCORE_BLOCKDEPAWNS", -40);
+        scores.put("SCORE_ROOK7RANK", 30);
+        scores.put("SCORE_RUPTURE", -20);
     }
     
-    public DefaultEvaluator()
+    public void setScore (String key, int value)
     {
-        properties = new Hashtable<String, Integer>();
-        evaluationWhitePawnStructure = new byte[8];
-        evaluationBlackPawnStructure = new byte[8];
-        setProperty("PAWNVALUE", figureValue[Board.PAWN]);
-        setProperty("KNIGHTVALUE", figureValue[Board.KNIGHT]);
-        setProperty("BISHOPVALUE", figureValue[Board.BISHOP]);
-        setProperty("ROOKVALUE", figureValue[Board.ROOK]);
-        setProperty("QUEENVALUE", figureValue[Board.QUEEN]);
-        setProperty("KINGVALUE", 10000);     
-        setProperty("DOUBLEDPAWNSCORE", -22);
-        setProperty("ISOLATEDPAWNSCORE", -30);
-        setProperty("BACKWARDPAWNSCORE", -18);
-        setProperty("PASSEDPAWNSCORE", 20);
-        setProperty("ROOKOPENFILESCORE", 15);
-        setProperty("ROOKSEMIOPENFILESCORE", 10);
-        setProperty("ROOK7THRANKSCORE", 20);
-        setProperty("DOUBLEDBISHOPSSCORE", 15);
+        scores.put(key, value);
+    }
+    
+    public int getScore (String key)
+    {
+        return scores.get(key);
     }
     
     @Override
-    public void dispose ()
+    public int evaluate (Board board) 
     {
-        properties.clear();
-        properties = null;
-        super.dispose();
-    }
+        int materialWhite = evaluateMaterial(board, Board.WHITE);
+        int materialBlack = evaluateMaterial(board, Board.BLACK);
+        int originalMaterial = ((getScore("SCORE_PAWN")*16)+(getScore("SCORE_KNIGHT")*4)+(getScore("SCORE_BISHOP")*4)+(getScore("SCORE_ROOK")*4)+getScore("SCORE_QUEEN"))*4;
+        int actualMaterial = materialWhite + materialBlack - (2*getScore("SCORE_KING"));
+        phase = PHASENUMBER - (int)(((double)actualMaterial * (double)PHASENUMBER) / (double)originalMaterial);
+        phase = Math.max(phase, 0);
+        phase = Math.min(phase, PHASENUMBER);
 
-    public void setProperty (String key, int value)
+        int score = 0;
+        score += (materialWhite - materialBlack);
+        score += (evaluateDevelopment(board, Board.WHITE) - evaluateDevelopment(board, Board.BLACK));
+        score += (evaluatePawns(board, Board.WHITE) - evaluatePawns(board, Board.BLACK));
+        score += (evaluateKnights(board, Board.WHITE) - evaluateKnights(board, Board.BLACK));
+        score += (evaluateBishops(board, Board.WHITE) - evaluateBishops(board, Board.BLACK));
+        score += (evaluateRooks(board, Board.WHITE) - evaluateRooks(board, Board.BLACK));
+        score += (evaluateQueens(board, Board.WHITE) - evaluateQueens(board, Board.BLACK));
+        score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
+        return score;
+    }   
+    
+    private int evaluateMaterial (Board board, int side)
     {
-        properties.put(key, value);
-    }
-
-    public int getProperty (String key)
-    {
-        return properties.get(key);
-    }
-
-    @Override
-    public int evaluate(Board board)
-    {
-        int score = 0;        
-        retrieveEvaluationData(board);
-        byte whiteBishops = 0;
-        byte blackBishops = 0;
+        int score = 0;
         for (byte square = Board.A1; square <= Board.H8; square++)
         {
-            byte side = board.getSquareSide(square);
-            if (side != Board.NOSIDE)
+            if (board.getSquareSide(square) == side)
             {
-                byte figure = board.getSquareFigure(square);
-                switch (figure)
+                switch (board.getSquareFigure(square))
                 {
-                    case Board.PAWN:
-                        score += evaluatePawn(square, side);
-                        break;
-                    case Board.KNIGHT:
-                        score += evaluateKnight(square, side);
-                        break;
-                    case Board.BISHOP:
-                        score += evaluateBishop(square, side);
-                        if (side == Board.WHITE)
-                            whiteBishops++;
-                        else
-                            blackBishops++;
-                        break;
-                    case Board.ROOK:
-                        score += evaluateRook(square, side);
-                        break;
-                    case Board.QUEEN:
-                        score += evaluateQueen(square, side);
-                        break;
-                    case Board.KING:
-                        score += evaluateKing(square, side);
-                        break;
+                    case Board.PAWN: score += getScore("SCORE_PAWN"); break;
+                    case Board.KNIGHT: score += getScore("SCORE_KNIGHT"); break;
+                    case Board.BISHOP: score += getScore("SCORE_BISHOP"); break;
+                    case Board.ROOK: score += getScore("SCORE_ROOK"); break;
+                    case Board.QUEEN: score += getScore("SCORE_QUEEN"); break;
+                    case Board.KING: score += getScore("SCORE_KING"); break;
+                    default: continue;
                 }
             }
         }
-        if (whiteBishops == 2)
-            score += getProperty("DOUBLEDBISHOPSSCORE");
-        if (blackBishops == 2)
-            score -= getProperty("DOUBLEDBISHOPSSCORE");
         return score;
     }
     
-    protected void retrieveEvaluationData (Board board)
-    {
-        for (int file = Board.FILE_A; file <= Board.FILE_H; file++)
-        {
-            evaluationWhitePawnStructure[file] = Board.RANK_8;
-            evaluationBlackPawnStructure[file] = Board.RANK_1;
-        }
-        evaluationWhitePawnMaterial = 0;
-        evaluationWhitePieceMaterial = 0;
-        evaluationBlackPawnMaterial = 0;
-        evaluationBlackPieceMaterial = 0;
-        
-        for (byte square = Board.A1; square <= Board.H8; square++)
-        {
-            byte side = board.getSquareSide(square);
-            byte squareFile = Board.getSquareFile(square);
-            byte squareRank = Board.getSquareRank(square);
-            if (side != Board.NOSIDE)
-            {
-                byte figure = board.getSquareFigure(square);
-                if (side == Board.WHITE)
-                {
-                    switch (figure)
-                    {
-                        case Board.PAWN:
-                            evaluationWhitePawnMaterial += figureValue[Board.PAWN];
-                            if (squareRank > evaluationWhitePawnStructure[squareFile])
-                                evaluationWhitePawnStructure[squareFile] = squareRank;
-                            break;
-                        default:
-                            evaluationWhitePieceMaterial += figureValue[figure];
-                            break;
-                    }
-                }
-                else
-                {
-                    switch (figure)
-                    {
-                        case Board.PAWN:
-                            evaluationBlackPawnMaterial += figureValue[Board.PAWN];
-                            if (squareRank < evaluationBlackPawnStructure[squareFile])
-                                evaluationBlackPawnStructure[squareFile] = squareRank;
-                            break;
-                        default:
-                            evaluationBlackPieceMaterial += figureValue[figure];
-                            break;
-                    }
-                }
-            }
-        }
-        byte numberOfPhases = 8;
-        int originalMaterial = (figureValue[Board.PAWN] * 16) + (figureValue[Board.KNIGHT] * 4) + (figureValue[Board.BISHOP] * 4) + (figureValue[Board.ROOK] * 4) + (figureValue[Board.QUEEN] * 2);
-        int actualMaterial = evaluationWhitePawnMaterial + evaluationWhitePieceMaterial + evaluationBlackPawnMaterial + evaluationBlackPieceMaterial;
-        evaluationPhase = (byte)(numberOfPhases - Math.floor((actualMaterial * numberOfPhases) / originalMaterial));
-    }
-    
-    protected int evaluatePawn (byte square, byte side)
-    {
-        int score = getProperty("PAWNVALUE");
-        byte squareFile = Board.getSquareFile(square);
-        byte squareRank = Board.getSquareRank(square);
-        
-        if (side == Board.WHITE)
-        {
-            score += pawnSquareValue[square];
-            if (evaluationWhitePawnStructure[squareFile] > squareRank)
-                score += getProperty("DOUBLEDPAWNSCORE");
-            if ((squareFile == Board.FILE_A || evaluationWhitePawnStructure[squareFile - 1] == Board.RANK_8) && (squareFile == Board.FILE_H || evaluationWhitePawnStructure[squareFile + 1] == Board.RANK_8))
-                score += getProperty("ISOLATEDPAWNSCORE");
-            else if ((squareFile == Board.FILE_A || evaluationWhitePawnStructure[squareFile - 1] < squareRank) && (squareFile == Board.FILE_H || evaluationWhitePawnStructure[squareFile + 1] < squareRank))
-                score += getProperty("BACKWARDPAWNSCORE");
-            if ((squareFile == Board.FILE_A || evaluationBlackPawnStructure[squareFile - 1] >= squareRank) && (squareFile == Board.FILE_H || evaluationBlackPawnStructure[squareFile + 1] >= squareRank) && evaluationBlackPawnStructure[squareFile] >= squareRank)
-                score += (7 - squareRank) * getProperty("PASSEDPAWNSCORE");
-        }
-        else
-        {
-            score += pawnSquareValue[flip[square]];
-            if (evaluationBlackPawnStructure[squareFile] < squareRank)
-                score += getProperty("DOUBLEDPAWNSCORE");
-            if ((squareFile == Board.FILE_A || evaluationBlackPawnStructure[squareFile - 1] == Board.RANK_1) && (squareFile == Board.FILE_H || evaluationBlackPawnStructure[squareFile + 1] == Board.RANK_1))
-                score += getProperty("ISOLATEDPAWNSCORE");
-            else if ((squareFile == Board.FILE_A || evaluationBlackPawnStructure[squareFile - 1] > squareRank) && (squareFile == Board.FILE_H || evaluationBlackPawnStructure[squareFile + 1] > squareRank))
-                score += getProperty("BACKWARDPAWNSCORE");
-            if ((squareFile == Board.FILE_A || evaluationWhitePawnStructure[squareFile - 1] <= squareRank) && (squareFile == Board.FILE_H || evaluationWhitePawnStructure[squareFile + 1] <= squareRank) && evaluationWhitePawnStructure[squareFile] <= squareRank)
-                score += squareRank * getProperty("PASSEDPAWNSCORE");
-        }
-        return (side == Board.BLACK)? -score : score;
-    }
-    
-    protected int evaluateKnight (byte square, byte side)
-    {
-        int score = getProperty("KNIGHTVALUE");
-        if (side == Board.WHITE)
-            score += knightSquareValue[square];
-        else
-            score += knightSquareValue[flip[square]];
-        return (side == Board.BLACK)? -score : score;
-    }
-    
-    protected int evaluateBishop (byte square, byte side)
-    {
-        int score = getProperty("BISHOPVALUE");
-        if (side == Board.WHITE)
-            score += bishopSquareValue[square];
-        else
-            score += bishopSquareValue[flip[square]];
-        return (side == Board.BLACK)? -score : score;
-    }
-    
-    protected int evaluateRook (byte square, byte side)
-    {
-        int score = getProperty("ROOKVALUE");
-        byte squareFile = Board.getSquareFile(square);
-        byte squareRank = Board.getSquareRank(square);
-        
-        if (side == Board.WHITE)
-        {
-            if (evaluationWhitePawnStructure[squareFile] == Board.RANK_8)
-            {
-                if (evaluationBlackPawnStructure[squareFile] == Board.RANK_1)
-                    score += getProperty("ROOKOPENFILESCORE");
-                else
-                    score += getProperty("ROOKSEMIOPENFILESCORE");
-            }
-            if (squareRank == Board.RANK_7)
-                score += getProperty("ROOK7THRANKSCORE");
-        }
-        else
-        {
-            if (evaluationBlackPawnStructure[squareFile] == Board.RANK_1)
-            {
-                if (evaluationWhitePawnStructure[squareFile] == Board.RANK_8)
-                    score += getProperty("ROOKOPENFILESCORE");
-                else
-                    score += getProperty("ROOKSEMIOPENFILESCORE");
-            }
-            if (squareRank == Board.RANK_2)
-                score += getProperty("ROOK7THRANKSCORE");
-        }
-        return (side == Board.BLACK)? -score : score;
-    }
-    
-    protected int evaluateQueen (byte square, byte side)
-    {
-        int score = getProperty("QUEENVALUE");
-        return (side == Board.BLACK)? -score : score;
-    }
-    
-    protected int evaluateKing (byte square, byte side)
-    {
-        int score = getProperty("KINGVALUE");
-        byte squareFile = Board.getSquareFile(square);
-        int safetyScore = 0;
-        int maxOppositeMaterialForEnding = 900;
-        if (side == Board.WHITE)
-        {
-            if (evaluationBlackPieceMaterial > maxOppositeMaterialForEnding)
-            {
-                safetyScore += kingSquareValue[square];
-                if (squareFile < Board.FILE_D) 
-                {
-                    safetyScore += evaluatePawnFile(Board.FILE_A, Board.WHITE);
-                    safetyScore += evaluatePawnFile(Board.FILE_B, Board.WHITE); 
-                    safetyScore += evaluatePawnFile(Board.FILE_C, Board.WHITE) / 2;
-                }
-                else if (squareFile > Board.FILE_F)
-                {
-                    safetyScore += evaluatePawnFile(Board.FILE_H, Board.WHITE);
-                    safetyScore += evaluatePawnFile(Board.FILE_G, Board.WHITE);
-                    safetyScore += evaluatePawnFile(Board.FILE_F, Board.WHITE) / 2;
-                }
-                else 
-                {
-                    for (int i = squareFile - 1; i <= squareFile + 1; i++)
-                        if (evaluationWhitePawnStructure[i] == Board.RANK_8 && evaluationBlackPawnStructure[i] == Board.RANK_1)
-                            safetyScore += -10;
-                }
-                safetyScore *= evaluationBlackPieceMaterial;
-                safetyScore /= 3100;
-            }
-            else
-            {
-                safetyScore += kingEndingSquareValue[square];
-            }
-        }
-        else
-        {
-            if (evaluationWhitePieceMaterial > maxOppositeMaterialForEnding)
-            {
-                safetyScore += kingSquareValue[flip[square]];
-                if (squareFile < Board.FILE_D) 
-                {
-                    safetyScore += evaluatePawnFile(Board.FILE_A, Board.WHITE);
-                    safetyScore += evaluatePawnFile(Board.FILE_B, Board.WHITE); 
-                    safetyScore += evaluatePawnFile(Board.FILE_C, Board.WHITE) / 2;
-                }
-                else if (squareFile > Board.FILE_F)
-                {
-                    safetyScore += evaluatePawnFile(Board.FILE_H, Board.WHITE);
-                    safetyScore += evaluatePawnFile(Board.FILE_G, Board.WHITE);
-                    safetyScore += evaluatePawnFile(Board.FILE_F, Board.WHITE) / 2;
-                }
-                else 
-                {
-                    for (int i = squareFile - 1; i <= squareFile + 1; i++)
-                        if (evaluationWhitePawnStructure[i] == Board.RANK_8 && evaluationBlackPawnStructure[i] == Board.RANK_1)
-                            safetyScore += -10;
-                }
-                safetyScore *= evaluationWhitePieceMaterial;
-                safetyScore /= 3100;
-            }
-            else
-            {
-                safetyScore += kingEndingSquareValue[flip[square]];
-            }
-        }
-        
-        score += safetyScore;
-        return (side == Board.BLACK)? -score : score;
-    }
-    
-    protected int evaluatePawnFile (byte file, byte side)
+    public int evaluateDevelopment (Board board, int side)
     {
         int score = 0;
+//        int sq;
+//        long c;
+//        c = (board.pieces[side][knight] & nn[side]) | (board.b[side][bishop] & bb[side]);
+//        s = nbits(c) * -8;
+//
+//        /* If we are castled or beyond the 20th move, no more ScoreDev */
+//        if (board.castled[side] || GameCnt >= 38)
+//           return (s);
+//
+//        s += NOTCASTLED;
+//
+//        /* If the king is moved, nail it, otherwise check rooks */
+//        if (Mvboard[board.king[side]] > 0) 
+//           s += KINGMOVED;
+//
+//        /* Discourage rook moves */
+//        c = board.b[side][rook];
+//        while (c) {
+//          sq = leadz(c);
+//          CLEARBIT(c, sq);
+//          if (Mvboard[sq] > 0)
+//            s += ROOKMOVED;
+//        }
+//
+//        /* Penalize a queen that moves at all */
+//        if (board.b[side][queen])
+//        {
+//           sq = leadz (board.b[side][queen]);
+//           if (Mvboard[sq] > 0)
+//              s += EARLYQUEENMOVE;
+//              /* s += Mvboard[sq] * EARLYQUEENMOVE; */
+//        }
+//
+//        /* Discourage repeat minor piece moves */
+//        c = board.b[side][knight] | board.b[side][bishop];
+//        while (c) {
+//          sq = leadz(c);
+//          CLEARBIT(c, sq);
+//          if (Mvboard[sq] > 1)
+//             s += EARLYMINORREPEAT;
+//             /* s += Mvboard[sq] * EARLYMINORREPEAT; */
+//        }
+//
+//        /* Discourage any wing pawn moves */
+//        /*   c = board.b[side][pawn] & (FileBit[0]|FileBit[1]|FileBit[6]|FileBit[7]); */
+//        c = board.b[side][pawn] & ULL(0xc3c3c3c3c3c3c3c3);
+//        while (c) {
+//          sq = leadz(c);
+//          CLEARBIT(c, sq);
+//          if (Mvboard[sq] > 0) 
+//             s += EARLYWINGPAWNMOVE;
+//        }
+//
+//        /* Discourage any repeat center pawn moves */
+//        /*   c = board.b[side][pawn] & (FileBit[2]|FileBit[3]|FileBit[4]|FileBit[5]); */
+//        c = board.b[side][pawn] & ULL(0x3c3c3c3c3c3c3c3c);
+//        while (c) {
+//          sq = leadz(c);
+//          CLEARBIT(c, sq);
+//          if (Mvboard[sq] > 1) 
+//             s += EARLYCENTERPREPEAT;
+//        }
 
-        if (side == Board.WHITE)
-        {
-            if (evaluationWhitePawnStructure[file] == Board.RANK_2);
-            else if (evaluationWhitePawnStructure[file] == Board.RANK_3)
-                score -= 10;
-            else if (evaluationWhitePawnStructure[file] != Board.RANK_8)
-                score -= 20;
-            else
-                score -= 25;
-            if (evaluationBlackPawnStructure[file] == Board.RANK_1)
-                score -= 15;  
-            else if (evaluationBlackPawnStructure[file] == Board.RANK_3)
-                score -= 10;  
-            else if (evaluationBlackPawnStructure[file] == Board.RANK_4)
-                score -= 5;
-        }
-        else
-        {
-            if (evaluationBlackPawnStructure[file] == Board.RANK_7);
-            else if (evaluationBlackPawnStructure[file] == Board.RANK_6)
-                score -= 10;
-            else if (evaluationBlackPawnStructure[file] != Board.RANK_1)
-                score -= 20;
-            else
-                score -= 25;
-            if (evaluationWhitePawnStructure[file] == Board.RANK_8)
-                score -= 15;  
-            else if (evaluationWhitePawnStructure[file] == Board.RANK_6)
-                score -= 10;  
-            else if (evaluationWhitePawnStructure[file] == Board.RANK_5)
-                score -= 5;
-        }
-        
         return score;
     }
 }
