@@ -343,6 +343,36 @@ public class Board implements Disposable, Cloneable
         epSquare = INVALIDSQUARE;
         castleState = WHITECASTLESHORT | WHITECASTLELONG | BLACKCASTLESHORT | BLACKCASTLELONG;
     }
+
+    public long getBlocker ()
+    {
+        return blocker;
+    }
+
+    public long getBlockerr315 ()
+    {
+        return blockerr315;
+    }
+
+    public long getBlockerr45 ()
+    {
+        return blockerr45;
+    }
+
+    public long getBlockerr90 ()
+    {
+        return blockerr90;
+    }
+
+    public long[] getFriends ()
+    {
+        return friends;
+    }
+
+    public long[][] getPieces ()
+    {
+        return pieces;
+    }
     
     public byte getSquareSide (byte square)
     {

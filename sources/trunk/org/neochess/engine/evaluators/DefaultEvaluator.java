@@ -11,6 +11,8 @@ public class DefaultEvaluator extends Evaluator
     private final static int PHASENUMBER = 8;
     private final static int _isolani_normal[] = { 12, 10, 8, 6, 6, 8, 10, 12 };
     private final static int _isolani_weaker[] = { -2, -4, -6, -8, -8, -6, -4, -2 };  
+    private final static long nn[] = { 0x4200000000000000L, 0x0000000000000042L };
+    private final static long bb[] = { 0x2400000000000000L, 0x0000000000000024L };
     private final static long _d2e2[] = { 0x0018000000000000L, 0x0000000000001800L };
     private final static long _brank7[] = { 0x000000000000FF00L, 0x00FF000000000000L };
     private final static long _brank8[] = { 0x00000000000000FFL, 0xFF00000000000000L };
@@ -76,7 +78,9 @@ public class DefaultEvaluator extends Evaluator
     };
     
     private Map<String, Integer> scores;
-    private int phase;
+    private long _passedPawns[] = new long[2];
+    private long _weakedPawns[] = new long[2];
+    private int _phase;
     
     public DefaultEvaluator ()
     {
@@ -135,9 +139,9 @@ public class DefaultEvaluator extends Evaluator
         int materialBlack = evaluateMaterial(board, Board.BLACK);
         int originalMaterial = ((getScore("SCORE_PAWN")*16)+(getScore("SCORE_KNIGHT")*4)+(getScore("SCORE_BISHOP")*4)+(getScore("SCORE_ROOK")*4)+getScore("SCORE_QUEEN"))*4;
         int actualMaterial = materialWhite + materialBlack - (2*getScore("SCORE_KING"));
-        phase = PHASENUMBER - (int)(((double)actualMaterial * (double)PHASENUMBER) / (double)originalMaterial);
-        phase = Math.max(phase, 0);
-        phase = Math.min(phase, PHASENUMBER);
+        _phase = PHASENUMBER - (int)(((double)actualMaterial * (double)PHASENUMBER) / (double)originalMaterial);
+        _phase = Math.max(_phase, 0);
+        _phase = Math.min(_phase, PHASENUMBER);
 
         int score = 0;
         score += (materialWhite - materialBlack);
@@ -151,7 +155,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }   
     
-    private int evaluateMaterial (Board board, int side)
+    private int evaluateMaterial (Board board, byte side)
     {
         int score = 0;
         for (byte square = Board.A1; square <= Board.H8; square++)
@@ -173,72 +177,125 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluateDevelopment (Board board, int side)
+    public int evaluateDevelopment (Board board, byte side)
     {
         int score = 0;
-//        int sq;
-//        long c;
-//        c = (board.pieces[side][knight] & nn[side]) | (board.b[side][bishop] & bb[side]);
-//        s = nbits(c) * -8;
-//
-//        /* If we are castled or beyond the 20th move, no more ScoreDev */
-//        if (board.castled[side] || GameCnt >= 38)
-//           return (s);
-//
-//        s += NOTCASTLED;
-//
-//        /* If the king is moved, nail it, otherwise check rooks */
-//        if (Mvboard[board.king[side]] > 0) 
-//           s += KINGMOVED;
-//
-//        /* Discourage rook moves */
-//        c = board.b[side][rook];
-//        while (c) {
-//          sq = leadz(c);
-//          CLEARBIT(c, sq);
-//          if (Mvboard[sq] > 0)
-//            s += ROOKMOVED;
-//        }
-//
-//        /* Penalize a queen that moves at all */
-//        if (board.b[side][queen])
-//        {
-//           sq = leadz (board.b[side][queen]);
-//           if (Mvboard[sq] > 0)
-//              s += EARLYQUEENMOVE;
-//              /* s += Mvboard[sq] * EARLYQUEENMOVE; */
-//        }
-//
-//        /* Discourage repeat minor piece moves */
-//        c = board.b[side][knight] | board.b[side][bishop];
-//        while (c) {
-//          sq = leadz(c);
-//          CLEARBIT(c, sq);
-//          if (Mvboard[sq] > 1)
-//             s += EARLYMINORREPEAT;
-//             /* s += Mvboard[sq] * EARLYMINORREPEAT; */
-//        }
-//
-//        /* Discourage any wing pawn moves */
-//        /*   c = board.b[side][pawn] & (FileBit[0]|FileBit[1]|FileBit[6]|FileBit[7]); */
-//        c = board.b[side][pawn] & ULL(0xc3c3c3c3c3c3c3c3);
-//        while (c) {
-//          sq = leadz(c);
-//          CLEARBIT(c, sq);
-//          if (Mvboard[sq] > 0) 
-//             s += EARLYWINGPAWNMOVE;
-//        }
-//
-//        /* Discourage any repeat center pawn moves */
-//        /*   c = board.b[side][pawn] & (FileBit[2]|FileBit[3]|FileBit[4]|FileBit[5]); */
-//        c = board.b[side][pawn] & ULL(0x3c3c3c3c3c3c3c3c);
-//        while (c) {
-//          sq = leadz(c);
-//          CLEARBIT(c, sq);
-//          if (Mvboard[sq] > 1) 
-//             s += EARLYCENTERPREPEAT;
-//        }
+        int sq;
+        long[][] pieces = board.getPieces();
+        long movers = (pieces[side][Board.KNIGHT] & nn[side]) | (pieces[side][Board.BISHOP] & bb[side]);
+        score = BoardUtils.getBitCount(movers) * -8;
+        return score;
+    }
+    
+    public int evaluatePawns (Board board, byte side)
+    {
+        byte square, testsquare, score = 0;
+        int pawnCounter[] = new int[8];
+        int xside = Board.getOppositeSide(side);
+        long sidePieces = board.getFriends()[side];
+        long xsidePieces = board.getFriends()[xside];
+        long sidePawns = board.getPieces()[side][Board.PAWN];
+        long xsidePawns = board.getPieces()[xside][Board.PAWN];
+        long pawnMoves;
+        long movers = sidePawns;
+        
+        _passedPawns[side] = 0;
+        _weakedPawns[side] = 0;
+        
+        while (movers != 0) 
+        {
+            square = (byte)BoardUtils.getLeastSignificantBit(movers);
+            movers &= BoardUtils.squareBitX[square];
+            score += _pawnSquareValue[side][square];
 
+            //Verificar si es un peon pasado
+            if ((xsidePawns & _passedPawnMask[side][square]) == 0)
+            {
+                if ( (side == Board.WHITE && (BoardUtils.fromtoRay[square][square|56] & sidePawns) == 0) || (side == Board.BLACK && (BoardUtils.fromtoRay[square][square&7] & sidePawns) == 0)) 
+                {
+                    _passedPawns[side] |= BoardUtils.squareBit[square];
+                    score += (getScore("SCORE_PASSEDPAWNS") * ((side == Board.WHITE)? board.getSquareRank(square) : (7-board.getSquareRank(square)) ) * _phase) / 12;
+                }
+            }
+            
+            //Verificar si es un peon debil
+            testsquare = (byte)(square + (side == Board.WHITE ? 8 : -8));
+            if (((_passedPawnMask[xside][testsquare] & ~BoardUtils.fileBits[Board.getSquareFile(square)] & sidePawns) == 0) && board.getSquareFigure(testsquare) != Board.PAWN)
+            {
+                int nbits1 = BoardUtils.getBitCount(sidePawns & BoardUtils.moveArray[xside == Board.WHITE? Board.PAWN:Board.BPAWN][testsquare]);
+                int nbits2 = BoardUtils.getBitCount(xsidePawns & BoardUtils.moveArray[side == Board.WHITE? Board.PAWN:Board.BPAWN][testsquare]);
+                if (nbits1 < nbits2) 
+                {
+                    _weakedPawns[side] |= BoardUtils.squareBit[square];
+                    score += getScore("SCORE_BACKWARDPAWNS");
+                }
+            }
+            
+            //Ataque al peon base
+            pawnMoves = ncBoardContext.getSliceBitBoard(ncBoardContext.getPawnSideType(side), square).value;
+            if ( ( ( pawnMoves & sidePawns ) != 0 ) && ( ( pawnMoves & xsidePawns ) != 0 ) )
+                score += _score[SCORE_PAWNBASEATAK];
+            
+            //Incrementar la cantidad de peones de la columna
+            pawnCounter[ ncBoard.getSquareFile(square) ]++;
+        }
+        
+        for ( int fileindex = 0; fileindex <= 7; fileindex++ )
+	{
+            //Peones doblados
+            if (pawnCounter[fileindex] > 1) score += _score[SCORE_DOUBLEDPAWNS];
+            
+            //Peones isolados
+            if ((pawnCounter[fileindex] > 0) && ((sidePawns & _isolaniPawnMask[fileindex]) == ncBitBoard.NULLBITBOARD))
+            {
+                if (( ncBitBoard.fileBit[fileindex] & xsidePawns) == ncBitBoard.NULLBITBOARD) 
+                    score += (_score[SCORE_ISOLATEDPAWNS] + _isolani_weaker[fileindex]) * pawnCounter[fileindex];
+                else 
+                    score += (_score[SCORE_ISOLATEDPAWNS] + _isolani_normal[fileindex]) * pawnCounter[fileindex];
+                _weakedPawns[sideOffset] |= (sidePawns & ncBitBoard.fileBit[fileindex]);
+            }
+	}
+        
+        //Favorecer el tener peones en el centro
+        score += ncBitBoard.getBitCount(sidePawns&_centerFiles) * _score[SCORE_CENTERPAWNS];
+        
+        if ( _computerSide == side )
+        {
+            //Penalizar tener 8 peones
+            if (ncBitBoard.getBitCount(sidePawns) == 8) score += _score[SCORE_ALLPAWNS];
+
+            //Tener peones bloqueados
+            int counter = 0;
+            if (side == ncGlobals.WHITE) {
+                counter = ncBitBoard.getBitCount( (sidePawns >>> 8) & xsidePawns & BOX_012 );
+            }
+            else {
+                counter = ncBitBoard.getBitCount( (sidePawns << 8) & xsidePawns & BOX_012 );
+            }
+            if (counter > 1) {
+                score += counter * _score[SCORE_LOCKEDPAWNS];
+            }
+        }
+        
+        //Calcular ataques al Rey
+        int kingSquare = board.getKingSquare(xside);
+        long sideQueens = board.getBitBoard(ncBoardContext.BITBOARD_QUEEN).value & sidePieces;
+        if (side == ncGlobals.WHITE && (sideQueens != 0) && ((ncBitBoard.squareBit[board.c6] | ncBitBoard.squareBit[board.f6]) & sidePawns) != 0)
+        {
+            if (sidePawns != 0 && ncBitBoard.squareBit[board.f6] != 0 && kingSquare > board.h6 && ncBoardContext.distance[kingSquare][board.g7]==1) score += _score[SCORE_PAWNNEARKING];
+            if (sidePawns != 0 && ncBitBoard.squareBit[board.c6] != 0 && kingSquare > board.h6 && ncBoardContext.distance[kingSquare][board.b7]==1) score += _score[SCORE_PAWNNEARKING];    
+        }
+        else if (side == ncGlobals.BLACK && (sideQueens != 0) && ((ncBitBoard.squareBit[board.c3] | ncBitBoard.squareBit[board.f3]) & sidePawns) != 0)
+        {
+            if (sidePawns != 0 && ncBitBoard.squareBit[board.f3] != 0 && kingSquare < board.a3 && ncBoardContext.distance[kingSquare][board.g2]==1) score += _score[SCORE_PAWNNEARKING];
+            if (sidePawns != 0 && ncBitBoard.squareBit[board.c3] != 0 && kingSquare < board.a3 && ncBoardContext.distance[kingSquare][board.b2]==1) score += _score[SCORE_PAWNNEARKING];    
+        }
+        
+        //Calcular peones bloqueados en e2, d2
+        movers.value = board.getBitBoard( ncBoardContext.BITBOARD_OCCUPIED ).value;
+        if (side == ncGlobals.WHITE && (((sidePawns & _d2e2[WHITEOFFSET]) >>> 8) & movers.value) != 0) score += _score[SCORE_BLOCKDEPAWNS];
+        if (side == ncGlobals.BLACK && (((sidePawns & _d2e2[BLACKOFFSET]) << 8) & movers.value) != 0) score += _score[SCORE_BLOCKDEPAWNS];
+        
         return score;
     }
 }
