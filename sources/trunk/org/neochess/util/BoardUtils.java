@@ -16,6 +16,11 @@ public abstract class BoardUtils
     public static long[] squareBitX315;
     public static long[] rankBits;
     public static long[] fileBits;
+    public static long[] stoneWall;
+    public static long[] rings;
+    public static long[] boxes;
+    public static long[] boardHalf;
+    public static long[] boardSide;
     public static long[][] fromtoRay;
     public static long[][] moveArray;
     public static long[][] rook00Atak; 
@@ -321,7 +326,7 @@ public abstract class BoardUtils
         int pieceRef, from, to, f, t, n;
         fromtoRay = new long[64][64];
         long moves;
-	for (pieceRef = Board.BISHOP; pieceRef <= Board.ROOK; pieceRef++) 
+        for (pieceRef = Board.BISHOP; pieceRef <= Board.ROOK; pieceRef++) 
         {
             for (from = 0; from < 120; from++) 
             {
@@ -467,6 +472,27 @@ public abstract class BoardUtils
                     distMap[f][t] |= distMap[f][j];
     }
     
+    private static void initBoardVars ()
+    {
+        stoneWall = new long[2];
+        rings = new long[4];
+        boxes = new long[2];
+        boardHalf = new long[2];
+        boardSide = new long[2];
+        stoneWall[Board.WHITE] = squareBit[Board.D4] | squareBit[Board.E3] | squareBit[Board.F4];
+        stoneWall[Board.BLACK] = squareBit[Board.D5] | squareBit[Board.E6] | squareBit[Board.F5];
+        rings[0] = 0x0000001818000000L;
+        rings[1] = 0x00003C24243C0000L;
+        rings[2] = 0x007E424242427E00L;
+        rings[3] = 0xFF818181818181FFL;
+        boxes[0] = 0x00003C3C3C3C0000L; 
+        boxes[1] = 0x007E7E7E7E7E7E00L;
+        boardHalf[Board.WHITE] = rankBits[0]|rankBits[1]|rankBits[2]|rankBits[3];
+        boardHalf[Board.BLACK] = rankBits[4]|rankBits[5]|rankBits[6]|rankBits[7];
+        boardSide[0] = fileBits[4]|fileBits[5]|fileBits[6]|fileBits[7];
+        boardSide[1] = fileBits[0]|fileBits[1]|fileBits[2]|fileBits[3];
+    }
+    
     static 
     {
         initSquareBitArrays ();
@@ -478,6 +504,7 @@ public abstract class BoardUtils
         initRotatedAtacks ();
         initDistanceArrays ();
         initRayArray ();
+        initBoardVars ();
     }
     
     public static void main(final String[] args)
