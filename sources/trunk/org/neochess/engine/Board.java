@@ -1117,6 +1117,156 @@ public class Board implements Disposable, Cloneable
         return getRookAttacks(square) | getBishopAttacks(square);
     }
     
+    public long[][] getAttacks ()
+    {
+        byte side;
+        byte square;
+        long movers;
+        long[] sidePieces;
+        long[][] atacks = new long[2][6];
+        
+        for (side = WHITE; side <= BLACK; side++)
+        {
+            sidePieces = pieces[side];
+            atacks[side][KNIGHT] = 0;
+            movers = sidePieces[KNIGHT];
+            while (movers != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(movers);
+                movers &= BoardUtils.squareBitX[square];
+                atacks[side][KNIGHT] |= BoardUtils.moveArray[KNIGHT][square];
+            }
+
+            atacks[side][BISHOP] = 0;
+            movers = sidePieces[BISHOP];
+            while (movers != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(movers);
+                movers &= BoardUtils.squareBitX[square];
+                atacks[side][BISHOP] |= getBishopAttacks(square);
+            }
+
+            atacks[side][ROOK] = 0;
+            movers = sidePieces[ROOK];
+            while (movers != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(movers);
+                movers &= BoardUtils.squareBitX[square];
+                atacks[side][ROOK] |= getRookAttacks(square);
+            }
+
+            atacks[side][QUEEN] = 0;
+            movers = sidePieces[QUEEN];
+            while (movers != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(movers);
+                movers &= BoardUtils.squareBitX[square];
+                atacks[side][ROOK] |= getQueenAttacks(square);
+            }
+
+            atacks[side][KING] = 0;
+            movers = sidePieces[KING];
+            while (movers != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(movers);
+                movers &= BoardUtils.squareBitX[square];
+                atacks[side][KING] |= BoardUtils.moveArray[KING][square];
+            }
+
+            atacks[side][PAWN] = 0;
+            if (side == WHITE)
+            {
+                movers = pieces[WHITE][PAWN] & ~BoardUtils.fileBits[0];
+                atacks[side][PAWN] |= (movers >> 7);
+                movers = pieces[WHITE][PAWN] & ~BoardUtils.fileBits[7];
+                atacks[side][PAWN] |= (movers >> 9);
+            }
+            else
+            {
+                movers = pieces[BLACK][PAWN] & ~BoardUtils.fileBits[0];
+                atacks[side][PAWN] |= (movers << 9);
+                movers = pieces[BLACK][PAWN] & ~BoardUtils.fileBits[7];
+                atacks[side][PAWN] |= (movers << 7);
+            }
+        }
+        return atacks;
+    }
+    
+    public long getPins ()
+    {
+        long pin = 0;
+        byte side, xside;
+        byte square, square2;
+        long b, c, e, f, t;
+        long[] p;
+        long[][] Ataks = getAttacks();
+        long[] allPiecesAttacks = new long[2];
+        allPiecesAttacks[WHITE] = Ataks[WHITE][PAWN] | Ataks[WHITE][KNIGHT] | Ataks[WHITE][BISHOP] | Ataks[WHITE][ROOK] | Ataks[WHITE][QUEEN] | Ataks[WHITE][KING];
+        allPiecesAttacks[BLACK] = Ataks[BLACK][PAWN] | Ataks[BLACK][KNIGHT] | Ataks[BLACK][BISHOP] | Ataks[BLACK][ROOK] | Ataks[BLACK][QUEEN] | Ataks[BLACK][KING];
+        
+        t = friends[WHITE] | friends[BLACK];
+        for (side = WHITE; side <= BLACK; side++)
+        {
+            xside = getOppositeSide(side);
+            p = pieces[xside];
+            e = p[ROOK] | p[QUEEN] | p[KING];
+            e |= (p[BISHOP] | p[KNIGHT]) & ~allPiecesAttacks[xside];
+            b = pieces[side][BISHOP];
+            while (b != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[square];
+                c = BoardUtils.moveArray[BISHOP][square] & e;
+                while (c != 0)
+                {
+                    square2 = (byte)BoardUtils.getLeastSignificantBit(c);
+                    c &= BoardUtils.squareBitX[square2];
+                    f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
+                    if (((friends[xside] & f) > 0) && BoardUtils.getBitCount(f) == 1)
+                        pin |= f;
+                }
+            }
+
+            e = p[QUEEN] | p[KING];
+            e |= (p[ROOK] | p[BISHOP] | p[KNIGHT]) & ~allPiecesAttacks[xside];
+            b = pieces[side][ROOK];
+            while (b != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[square];
+                c = BoardUtils.moveArray[ROOK][square] & e;
+                while (c != 0)
+                {
+                    square2 = (byte)BoardUtils.getLeastSignificantBit(c);
+                    c &= BoardUtils.squareBitX[square2];
+                    f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
+                    if (((friends[xside] & f) > 0) && BoardUtils.getBitCount(f) == 1)
+                        pin |= f;
+                }
+            }
+
+            e = pieces[xside][KING];
+            e |= (p[QUEEN] | p[ROOK] | p[BISHOP] | p[KNIGHT]) & ~allPiecesAttacks[xside];
+            b = pieces[side][QUEEN];
+            while (b != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[square];
+                c = BoardUtils.moveArray[QUEEN][square] & e;
+                while (c != 0)
+                {
+                    square2 = (byte)BoardUtils.getLeastSignificantBit(c);
+                    c &= BoardUtils.squareBitX[square2];
+                    f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
+                    if (((friends[xside] & f) > 0) && BoardUtils.getBitCount(f) == 1)
+                        pin |= f;
+                }
+            }
+        }
+
+        return pin;
+    }
+    
     public static byte getSquareRank (byte square)
     {
         return (byte)(square >>> 3);
