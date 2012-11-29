@@ -206,6 +206,11 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_OUTPOSTKNIGHT", 10);
         scores.put("SCORE_PINNEDKNIGHT", -30);
         scores.put("SCORE_KNIGHTTRAPPED", -250);
+        scores.put("SCORE_PINNEDBISHOP", -30);
+        scores.put("SCORE_OUTPOSTBISHOP", 8);
+        scores.put("SCORE_FIANCHETTO", 8);
+        scores.put("SCORE_GOODENDINGBISHOP", 16);
+        scores.put("SCORE_BISHOPTRAPPED", -250);
         scores.put("SCORE_DOUBLEDBISHOPS", 15);
         scores.put("SCORE_ROOKHALFFILE", 5);
         scores.put("SCORE_ROOKOPENFILE", 8);
@@ -425,13 +430,12 @@ public class DefaultEvaluator extends Evaluator
     
     public int evaluateKnights (Board board, byte side)
     {
-        byte xside, sq;
+        byte xside, square;
         int score, tempScore;
         long[][] pieces = board.getPieces();
         long knights, enemyPawns;
         if (pieces[side][Board.KNIGHT] == 0)
             return 0;
-        
         xside = Board.getOppositeSide(side);
         score = tempScore = 0;
         knights = pieces[side][Board.KNIGHT];
@@ -440,21 +444,71 @@ public class DefaultEvaluator extends Evaluator
             score += getScore("SCORE_PINNEDKNIGHT") * BoardUtils.getBitCount(knights & pinned);
         while (knights != 0)
         {
-            sq = (byte)BoardUtils.getLeastSignificantBit(knights);
-            knights &= BoardUtils.squareBitX[sq];
-            tempScore = evaluateControl(board,sq,side);
-            if ( (BoardUtils.squareBit[sq] & BoardUtils.rings[3]) != 0)
+            square = (byte)BoardUtils.getLeastSignificantBit(knights);
+            knights &= BoardUtils.squareBitX[square];
+            tempScore = evaluateControl(board,square,side);
+            if ( (BoardUtils.squareBit[square] & BoardUtils.rings[3]) != 0)
                 tempScore += getScore("SCORE_KNIGHTONRIM");
-            if (Outpost[side][sq] == 1 && ((enemyPawns & _isolaniPawnMask[Board.getSquareFile(sq)] & _passedPawnMask[side][sq]) == 0))
+            if (Outpost[side][square] == 1 && ((enemyPawns & _isolaniPawnMask[Board.getSquareFile(square)] & _passedPawnMask[side][square]) == 0))
             {
                 tempScore += getScore("SCORE_OUTPOSTKNIGHT");
-                if ((BoardUtils.moveArray[xside == Board.WHITE? Board.PAWN : Board.BPAWN][sq] & pieces[side][Board.PAWN]) != 0)
+                if ((BoardUtils.moveArray[xside == Board.WHITE? Board.PAWN : Board.BPAWN][square] & pieces[side][Board.PAWN]) != 0)
                     tempScore += getScore("SCORE_OUTPOSTKNIGHT");
             }
-            if ((BoardUtils.moveArray[Board.KNIGHT][sq] & _weakedPawns[xside]) != 0)
+            if ((BoardUtils.moveArray[Board.KNIGHT][square] & _weakedPawns[xside]) != 0)
                 tempScore += getScore("SCORE_ATAKWEAKPAWN");
             score += tempScore;
         }
+        return score;
+    }
+    
+    public int evaluateBishops (Board board, byte side)
+    {
+        int score, tempScore, bishopCount;
+        byte xside, sq;
+        long[][] pieces = board.getPieces();
+        long bishops, enemyPawns;
+        if (pieces[side][Board.BISHOP] == 0)
+            return 0;
+        score = tempScore = 0;
+        bishops = pieces[side][Board.BISHOP];
+        xside = Board.getOppositeSide(side);
+        bishopCount = 0;
+        enemyPawns = pieces[xside][Board.PAWN];
+        if ((bishops & pinned) != 0)
+            score += getScore("SCORE_PINNEDBISHOP") * BoardUtils.getBitCount(bishops & pinned);
+        while (bishops != 0)
+        {
+            sq = (byte)BoardUtils.getLeastSignificantBit(bishops);
+            bishops &= BoardUtils.squareBitX[sq];
+            bishopCount++;
+            tempScore = evaluateControl(board,sq,side);
+            if (Outpost[side][sq] == 1 && (enemyPawns & _isolaniPawnMask[Board.getSquareFile(sq)] & _passedPawnMask[side][sq]) == 0)
+            {
+                tempScore += getScore("SCORE_OUTPOSTBISHOP");
+                if ((BoardUtils.moveArray[xside == Board.WHITE? Board.PAWN : Board.BPAWN][sq] & pieces[side][Board.PAWN]) != 0)
+                    tempScore += getScore("SCORE_OUTPOSTBISHOP");
+            }
+            if (side == Board.WHITE)
+            {
+                if (kingSquare[side] >= Board.F1 && kingSquare[side] <= Board.H1 && sq == Board.G2)
+                    tempScore += getScore("SCORE_FIANCHETTO");
+                if (kingSquare[side] >= Board.A1 && kingSquare[side] <= Board.C1 && sq == Board.B2)
+                    tempScore += getScore("SCORE_FIANCHETTO");
+            }
+            else 
+            {
+                if (kingSquare[side] >= Board.F8 && kingSquare[side] <= Board.H8 && sq == Board.G7)
+                    tempScore += getScore("SCORE_FIANCHETTO");
+                if (kingSquare[side] >= Board.A8 && kingSquare[side] <= Board.C8 && sq == Board.B7)
+                    tempScore += getScore("SCORE_FIANCHETTO");
+            }
+            if ((board.getBishopAttacks(sq) & _weakedPawns[xside]) != 0)
+                tempScore += getScore("SCORE_ATAKWEAKPAWN");
+            score += tempScore;
+        }
+        if (bishopCount > 1)
+            score += getScore("SCORE_DOUBLEDBISHOPS");
         return score;
     }
     
