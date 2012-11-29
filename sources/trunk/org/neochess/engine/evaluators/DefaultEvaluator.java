@@ -79,6 +79,30 @@ public class DefaultEvaluator extends Evaluator
        0,  6, 12, 18, 18, 12,  6,  0
     };
     
+    private final static int Outpost[][] =
+    {
+        { 
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 1, 1, 1, 1, 0, 0,
+          0, 1, 1, 1, 1, 1, 1, 0,
+          0, 0, 1, 1, 1, 1, 0, 0,
+          0, 0, 0, 1, 1, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0 
+      },
+      { 
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 1, 1, 0, 0, 0,
+          0, 0, 1, 1, 1, 1, 0, 0,
+          0, 1, 1, 1, 1, 1, 1, 0,
+          0, 0, 1, 1, 1, 1, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0 
+      }
+    };
+    
     private static void _initPassedPawnMasks ()
     {
         byte square;
@@ -149,6 +173,7 @@ public class DefaultEvaluator extends Evaluator
     private Map<String, Integer> scores;
     private long _passedPawns[] = new long[2];
     private long _weakedPawns[] = new long[2];
+    private long pinned;
     private byte kingSquare[] = new byte[2];
     private int _phase;
     
@@ -177,6 +202,10 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_PAWNBASEATAK", -18);
         scores.put("SCORE_LOCKEDPAWNS", -10);
         scores.put("SCORE_ATAKWEAKPAWN", 8);
+        scores.put("SCORE_KNIGHTONRIM", -13);
+        scores.put("SCORE_OUTPOSTKNIGHT", 10);
+        scores.put("SCORE_PINNEDKNIGHT", -30);
+        scores.put("SCORE_KNIGHTTRAPPED", -250);
         scores.put("SCORE_DOUBLEDBISHOPS", 15);
         scores.put("SCORE_ROOKHALFFILE", 5);
         scores.put("SCORE_ROOKOPENFILE", 8);
@@ -214,6 +243,7 @@ public class DefaultEvaluator extends Evaluator
         _phase = Math.min(_phase, PHASENUMBER);
         kingSquare[Board.WHITE] = board.getKingSquare(Board.WHITE);
         kingSquare[Board.BLACK] = board.getKingSquare(Board.BLACK);
+        pinned = board.getPins();
         
         int score = 0;
         score += (materialWhite - materialBlack);
@@ -390,6 +420,54 @@ public class DefaultEvaluator extends Evaluator
             }
         }
         
+        return score;
+    }
+    
+    public int evaluateKnights (Board board, byte side)
+    {
+        byte xside, sq;
+        int score, tempScore;
+        long[][] pieces = board.getPieces();
+        long knights, enemyPawns;
+        if (pieces[side][Board.KNIGHT] == 0)
+            return 0;
+        
+        xside = Board.getOppositeSide(side);
+        score = tempScore = 0;
+        knights = pieces[side][Board.KNIGHT];
+        enemyPawns = pieces[xside][Board.PAWN]; 
+        if ((knights & pinned) != 0)        
+            score += getScore("SCORE_PINNEDKNIGHT") * BoardUtils.getBitCount(knights & pinned);
+        while (knights != 0)
+        {
+            sq = (byte)BoardUtils.getLeastSignificantBit(knights);
+            knights &= BoardUtils.squareBitX[sq];
+            tempScore = evaluateControl(board,sq,side);
+            if ( (BoardUtils.squareBit[sq] & BoardUtils.rings[3]) != 0)
+                tempScore += getScore("SCORE_KNIGHTONRIM");
+            if (Outpost[side][sq] == 1 && ((enemyPawns & _isolaniPawnMask[Board.getSquareFile(sq)] & _passedPawnMask[side][sq]) == 0))
+            {
+                tempScore += getScore("SCORE_OUTPOSTKNIGHT");
+                if ((BoardUtils.moveArray[xside == Board.WHITE? Board.PAWN : Board.BPAWN][sq] & pieces[side][Board.PAWN]) != 0)
+                    tempScore += getScore("SCORE_OUTPOSTKNIGHT");
+            }
+            if ((BoardUtils.moveArray[Board.KNIGHT][sq] & _weakedPawns[xside]) != 0)
+                tempScore += getScore("SCORE_ATAKWEAKPAWN");
+            score += tempScore;
+        }
+        return score;
+    }
+    
+    private int evaluateControl (Board board, byte square, byte side)
+    {
+        byte enemyKing = kingSquare[1^side];
+        byte friendlyKing = kingSquare[side];
+        long controlled = board.getSquareXAttacks(square, side);
+        int score = 0;
+        score += (4 * BoardUtils.getBitCount(controlled & BoardUtils.boxes[0]));
+        score += BoardUtils.getBitCount(controlled & BoardUtils.distMap[enemyKing][2]);
+        score += BoardUtils.getBitCount(controlled & BoardUtils.distMap[friendlyKing][2]);
+        score += (4 * BoardUtils.getBitCount(controlled));
         return score;
     }
 }

@@ -1222,7 +1222,7 @@ public class Board implements Disposable, Cloneable
                     square2 = (byte)BoardUtils.getLeastSignificantBit(c);
                     c &= BoardUtils.squareBitX[square2];
                     f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
-                    if (((friends[xside] & f) > 0) && BoardUtils.getBitCount(f) == 1)
+                    if (((friends[xside] & f) != 0) && BoardUtils.getBitCount(f) == 1)
                         pin |= f;
                 }
             }
@@ -1240,7 +1240,7 @@ public class Board implements Disposable, Cloneable
                     square2 = (byte)BoardUtils.getLeastSignificantBit(c);
                     c &= BoardUtils.squareBitX[square2];
                     f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
-                    if (((friends[xside] & f) > 0) && BoardUtils.getBitCount(f) == 1)
+                    if (((friends[xside] & f) != 0) && BoardUtils.getBitCount(f) == 1)
                         pin |= f;
                 }
             }
@@ -1258,7 +1258,7 @@ public class Board implements Disposable, Cloneable
                     square2 = (byte)BoardUtils.getLeastSignificantBit(c);
                     c &= BoardUtils.squareBitX[square2];
                     f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
-                    if (((friends[xside] & f) > 0) && BoardUtils.getBitCount(f) == 1)
+                    if (((friends[xside] & f) != 0) && BoardUtils.getBitCount(f) == 1)
                         pin |= f;
                 }
             }
