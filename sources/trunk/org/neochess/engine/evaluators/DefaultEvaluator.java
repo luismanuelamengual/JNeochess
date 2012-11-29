@@ -195,6 +195,8 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_EARLYWINGPAWNMOVE", -9);
         scores.put("SCORE_DOUBLEDPAWNS", -20);
         scores.put("SCORE_ISOLATEDPAWNS", -15);
+        scores.put("SCORE_BLOCKDEPAWNS", -40);
+        scores.put("SCORE_PAWNNEARKING", 40);
         scores.put("SCORE_ALLPAWNS", -10);
         scores.put("SCORE_CENTERPAWNS", 17);
         scores.put("SCORE_BACKWARDPAWNS", -9);
@@ -212,17 +214,21 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_GOODENDINGBISHOP", 16);
         scores.put("SCORE_BISHOPTRAPPED", -250);
         scores.put("SCORE_DOUBLEDBISHOPS", 15);
+        scores.put("SCORE_ROOK7RANK", 30);
+        scores.put("SCORE_ROOKS7RANK", 30); 
         scores.put("SCORE_ROOKHALFFILE", 5);
         scores.put("SCORE_ROOKOPENFILE", 8);
+        scores.put("SCORE_ROOKBEHINDPP", 6);
+        scores.put("SCORE_ROOKINFRONTPP", -10);
+        scores.put("SCORE_PINNEDROOK", -50);
+        scores.put("SCORE_ROOKTRAPPED", -10);
+        scores.put("SCORE_ROOKLIBERATED", 40);
         scores.put("SCORE_QUEENNOTPRESENT", -25);
         scores.put("SCORE_GOPEN", -30);
         scores.put("SCORE_HOPEN", -600); 
         scores.put("SCORE_KINGOPENFILE", -10);
         scores.put("SCORE_KINGENEMYOPENFILE", -6);
         scores.put("SCORE_KINGDEFENCEDEFICIT", -50);
-        scores.put("SCORE_PAWNNEARKING", 40);
-        scores.put("SCORE_BLOCKDEPAWNS", -40);
-        scores.put("SCORE_ROOK7RANK", 30);
         scores.put("SCORE_RUPTURE", -20);
     }
     
@@ -465,7 +471,7 @@ public class DefaultEvaluator extends Evaluator
     public int evaluateBishops (Board board, byte side)
     {
         int score, tempScore, bishopCount;
-        byte xside, sq;
+        byte xside, square;
         long[][] pieces = board.getPieces();
         long bishops, enemyPawns;
         if (pieces[side][Board.BISHOP] == 0)
@@ -479,36 +485,93 @@ public class DefaultEvaluator extends Evaluator
             score += getScore("SCORE_PINNEDBISHOP") * BoardUtils.getBitCount(bishops & pinned);
         while (bishops != 0)
         {
-            sq = (byte)BoardUtils.getLeastSignificantBit(bishops);
-            bishops &= BoardUtils.squareBitX[sq];
+            square = (byte)BoardUtils.getLeastSignificantBit(bishops);
+            bishops &= BoardUtils.squareBitX[square];
             bishopCount++;
-            tempScore = evaluateControl(board,sq,side);
-            if (Outpost[side][sq] == 1 && (enemyPawns & _isolaniPawnMask[Board.getSquareFile(sq)] & _passedPawnMask[side][sq]) == 0)
+            tempScore = evaluateControl(board,square,side);
+            if (Outpost[side][square] == 1 && (enemyPawns & _isolaniPawnMask[Board.getSquareFile(square)] & _passedPawnMask[side][square]) == 0)
             {
                 tempScore += getScore("SCORE_OUTPOSTBISHOP");
-                if ((BoardUtils.moveArray[xside == Board.WHITE? Board.PAWN : Board.BPAWN][sq] & pieces[side][Board.PAWN]) != 0)
+                if ((BoardUtils.moveArray[xside == Board.WHITE? Board.PAWN : Board.BPAWN][square] & pieces[side][Board.PAWN]) != 0)
                     tempScore += getScore("SCORE_OUTPOSTBISHOP");
             }
             if (side == Board.WHITE)
             {
-                if (kingSquare[side] >= Board.F1 && kingSquare[side] <= Board.H1 && sq == Board.G2)
+                if (kingSquare[side] >= Board.F1 && kingSquare[side] <= Board.H1 && square == Board.G2)
                     tempScore += getScore("SCORE_FIANCHETTO");
-                if (kingSquare[side] >= Board.A1 && kingSquare[side] <= Board.C1 && sq == Board.B2)
+                if (kingSquare[side] >= Board.A1 && kingSquare[side] <= Board.C1 && square == Board.B2)
                     tempScore += getScore("SCORE_FIANCHETTO");
             }
             else 
             {
-                if (kingSquare[side] >= Board.F8 && kingSquare[side] <= Board.H8 && sq == Board.G7)
+                if (kingSquare[side] >= Board.F8 && kingSquare[side] <= Board.H8 && square == Board.G7)
                     tempScore += getScore("SCORE_FIANCHETTO");
-                if (kingSquare[side] >= Board.A8 && kingSquare[side] <= Board.C8 && sq == Board.B7)
+                if (kingSquare[side] >= Board.A8 && kingSquare[side] <= Board.C8 && square == Board.B7)
                     tempScore += getScore("SCORE_FIANCHETTO");
             }
-            if ((board.getBishopAttacks(sq) & _weakedPawns[xside]) != 0)
+            if ((board.getBishopAttacks(square) & _weakedPawns[xside]) != 0)
                 tempScore += getScore("SCORE_ATAKWEAKPAWN");
             score += tempScore;
         }
         if (bishopCount > 1)
             score += getScore("SCORE_DOUBLEDBISHOPS");
+        return score;
+    }
+    
+    public int evaluateRooks (Board board, byte side)
+    {
+        int score, tempScore;
+        byte square, xside, fyle, enemyKingSquare;
+        long[][] pieces = board.getPieces();
+        long rooks;
+        if (pieces[side][Board.ROOK] == 0)
+            return 0;
+        score = tempScore = 0;
+        rooks = pieces[side][Board.ROOK];
+        xside = Board.getOppositeSide(side);
+        enemyKingSquare = kingSquare[xside];
+        if ((rooks & pinned) != 0)
+            score += getScore("SCORE_PINNEDROOK") * BoardUtils.getBitCount(rooks & pinned);
+        while (rooks != 0)
+        {
+            square = (byte)BoardUtils.getLeastSignificantBit(rooks);
+            rooks &= BoardUtils.squareBitX[square];
+            tempScore = evaluateControl(board,square,side);
+            fyle = Board.getSquareFile(square);
+            if (_phase < 7)
+            {
+                if ((pieces[side][Board.PAWN] & BoardUtils.fileBits[fyle]) == 0)
+                {
+                    if (fyle == 5 && Board.getSquareFile(kingSquare[xside]) >= Board.FILE_E)
+                        tempScore += getScore("SCORE_ROOKLIBERATED");
+                    tempScore += getScore("SCORE_ROOKHALFFILE");
+                    if ((pieces[xside][Board.PAWN] & BoardUtils.fileBits[fyle]) == 0)                    
+                        tempScore += getScore("SCORE_ROOKOPENFILE");
+                }
+            }
+            if (_phase > 6)
+            {
+                if ((BoardUtils.fileBits[fyle] & _passedPawns[Board.WHITE] & _brank58[Board.WHITE]) != 0)
+                {
+                    if (BoardUtils.getBitCount(BoardUtils.ray[square][7] & _passedPawns[Board.WHITE]) == 1)
+                        tempScore += getScore("SCORE_ROOKBEHINDPP");
+                    else if ((BoardUtils.ray[square][4] & _passedPawns[Board.WHITE]) != 0)
+                        tempScore += getScore("SCORE_ROOKINFRONTPP");
+                }
+                if ((BoardUtils.fileBits[fyle] & _passedPawns[Board.BLACK] & _brank58[Board.BLACK]) != 0)
+                {
+                    if (BoardUtils.getBitCount(BoardUtils.ray[square][4] & _passedPawns[Board.BLACK]) == 1)
+                        tempScore += getScore("SCORE_ROOKBEHINDPP");
+                    else if ((BoardUtils.ray[square][7] & _passedPawns[Board.BLACK]) != 0)
+                        tempScore += getScore("SCORE_ROOKINFRONTPP");
+                }
+            }
+            if ((board.getRookAttacks(square) & _weakedPawns[xside]) != 0)
+                tempScore += getScore("SCORE_ATAKWEAKPAWN");
+            if (Board.getSquareRank(square) == _rank7[side] && (Board.getSquareRank(enemyKingSquare) == _rank8[side] || ((pieces[xside][Board.PAWN] & BoardUtils.rankBits[Board.getSquareRank(square)]) != 0)))
+                tempScore += getScore("SCORE_ROOK7RANK");
+            score += tempScore;
+        }
         return score;
     }
     
