@@ -186,7 +186,7 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_ROOK", 500);
         scores.put("SCORE_QUEEN", 950);
         scores.put("SCORE_KING", 10000);
-        scores.put("SCORE_MINORNOTDEVELOPED", -28);
+        scores.put("SCORE_MINORNOTDEVELOPED", -15);
         scores.put("SCORE_NOTCASTLED", -20);
         scores.put("SCORE_KINGMOVED", -20);
         scores.put("SCORE_EARLYQUEENMOVE", -80);
@@ -298,7 +298,7 @@ public class DefaultEvaluator extends Evaluator
         int sq;
         long[][] pieces = board.getPieces();
         long movers = (pieces[side][Board.KNIGHT] & nn[side]) | (pieces[side][Board.BISHOP] & bb[side]);
-        score = BoardUtils.getBitCount(movers) * -8;
+        score = BoardUtils.getBitCount(movers) * getScore("SCORE_MINORNOTDEVELOPED");
         return score;
     }
     
