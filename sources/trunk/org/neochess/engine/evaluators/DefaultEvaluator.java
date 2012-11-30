@@ -223,6 +223,8 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_PINNEDROOK", -50);
         scores.put("SCORE_ROOKTRAPPED", -10);
         scores.put("SCORE_ROOKLIBERATED", 40);
+        scores.put("SCORE_PINNEDQUEEN", -90);
+        scores.put("SCORE_QUEENNEARKING", 12);
         scores.put("SCORE_QUEENNOTPRESENT", -25);
         scores.put("SCORE_GOPEN", -30);
         scores.put("SCORE_HOPEN", -600); 
@@ -570,6 +572,35 @@ public class DefaultEvaluator extends Evaluator
                 tempScore += getScore("SCORE_ATAKWEAKPAWN");
             if (Board.getSquareRank(square) == _rank7[side] && (Board.getSquareRank(enemyKingSquare) == _rank8[side] || ((pieces[xside][Board.PAWN] & BoardUtils.rankBits[Board.getSquareRank(square)]) != 0)))
                 tempScore += getScore("SCORE_ROOK7RANK");
+            score += tempScore;
+        }
+        return score;
+    }
+    
+    public int evaluateQueens (Board board, byte side)
+    {
+        int score, tempScore; 
+        byte xside, square, EnemyKing;
+        long[][] pieces = board.getPieces();
+        long queens;
+        score = tempScore = 0;
+        if (pieces[side][Board.QUEEN] == 0)
+            return 0;
+        xside = Board.getOppositeSide(side);
+        queens = pieces[side][Board.QUEEN];
+        EnemyKing = kingSquare[xside];
+
+        if ((queens & pinned) != 0)
+            score += getScore("SCORE_PINNEDQUEEN") * BoardUtils.getBitCount(queens & pinned);
+        while (queens != 0)
+        {
+            square = (byte)BoardUtils.getLeastSignificantBit(queens);
+            queens &= BoardUtils.squareBitX[square];
+            tempScore = evaluateControl(board,square,side);
+            if (BoardUtils.distance[square][EnemyKing] <= 2)
+                tempScore += getScore("SCORE_QUEENNEARKING");
+            if ((board.getQueenAttacks(square) & _weakedPawns[xside]) != 0)
+                tempScore += getScore("SCORE_ATAKWEAKPAWN");
             score += tempScore;
         }
         return score;
