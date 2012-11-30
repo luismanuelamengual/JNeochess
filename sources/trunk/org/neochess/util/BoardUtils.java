@@ -208,7 +208,7 @@ public abstract class BoardUtils
                 byte square = Board.getSquare(printFile, printRank);
                 byte piece = board.getPiece(square);
                 System.out.print (' ');
-                System.out.print (Board.getPieceChar(piece));
+                System.out.print (board.getSquareSide(square) != Board.NOSIDE? Board.getPieceChar(piece) : " ");
                 System.out.print (' ');                
                 System.out.print('|');
             }
