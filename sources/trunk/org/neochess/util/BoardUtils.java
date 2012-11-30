@@ -299,26 +299,27 @@ public abstract class BoardUtils
     
     private static void initMoveArray () 
     {
-	int pieceRef, from, to, f, t, n;
-	moveArray = new long[7][64];
-	for (pieceRef = Board.PAWN; pieceRef <= Board.BPAWN; pieceRef++) 
+	    int pieceRef, from, to, f, t, n;
+        moveArray = new long[7][64];
+        for (pieceRef = Board.PAWN; pieceRef <= Board.BPAWN; pieceRef++)
         {
-            for (from = 0; from < 120; from++) 
+            for (from = 0; from < 120; from++)
             {
                 if ((f = map[from]) == -1) continue;
                 moveArray[pieceRef][f] = NULLBITBOARD;
-                for ( n = 0; n < ndir[pieceRef]; n++ ) {
+                for (n = 0; n < ndir[pieceRef]; n++)
+                {
                     to = from;
-                    do 
+                    do
                     {
                         to += dir[pieceRef][n];
-                        if ((t = map[to]) != -1) 
+                        if ((t = map[to]) != -1)
                             moveArray[pieceRef][f] |= squareBit[t];
-                    } 
-                    while (( range[pieceRef] > 0 ) && t != -1);
+                    }
+                    while ((range[pieceRef] > 0) && t != -1);
                 }
             }
-	}
+        }
     }
 
     private static void initFromtoRay () 
