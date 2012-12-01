@@ -1066,7 +1066,7 @@ public class Board implements Disposable, Cloneable
                     }
                     else
                     {
-                        blocksq = (BoardUtils.squareBit[square] > rays? BoardUtils.getLeastSignificantBit(rays) : BoardUtils.getMostSignificantBit(rays));
+                        blocksq = (BoardUtils.dirpos[dir] == 1? BoardUtils.getMostSignificantBit(rays) : BoardUtils.getLeastSignificantBit(rays));
                         rays = BoardUtils.fromtoRay[square][blocksq];
                     }
                     attacks |= rays;
@@ -1085,7 +1085,7 @@ public class Board implements Disposable, Cloneable
                     }
                     else
                     {
-                        blocksq = (BoardUtils.squareBit[square] > rays ? BoardUtils.getLeastSignificantBit(rays) : BoardUtils.getMostSignificantBit(rays));
+                        blocksq = (BoardUtils.dirpos[dir] == 1? BoardUtils.getMostSignificantBit(rays) : BoardUtils.getLeastSignificantBit(rays));
                         rays = BoardUtils.fromtoRay[square][blocksq];
                     }
                     attacks |= rays;

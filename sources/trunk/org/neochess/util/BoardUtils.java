@@ -37,9 +37,10 @@ public abstract class BoardUtils
     public static final int ndir[] = { 2, 8, 4, 4, 8, 8, 2 };
     public static final int range[] = { 0, 0, 1, 1, 1, 0, 0 };
     public static final int slider[] = { 0, 0, 1, 1, 1, 0, 0 };
-    public static final int raybeg[] = { 0, 0, 0, 0, 4, 0, 0 };
-    public static final int rayend[] = { 0, 0, 0, 4, 8, 8, 0 };
+    public static final int raybeg[] = { 0, 0, 0, 4, 0, 0 };
+    public static final int rayend[] = { 0, 0, 4, 8, 8, 0 };
     
+    public static final int dirpos[] = { 1, 1, 0, 0, 1, 1, 0, 0 };
     public static final int dir[][] =
     { {   9,  11,   0,  0, 0,  0,  0,  0 },
       { -21, -19, -12, -8, 8, 12, 19, 21 },
