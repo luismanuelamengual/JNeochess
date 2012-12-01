@@ -249,7 +249,7 @@ public class DefaultEvaluator extends Evaluator
     {
         int materialWhite = evaluateMaterial(board, Board.WHITE);
         int materialBlack = evaluateMaterial(board, Board.BLACK);
-        int originalMaterial = ((getScore("SCORE_PAWN")*16)+(getScore("SCORE_KNIGHT")*4)+(getScore("SCORE_BISHOP")*4)+(getScore("SCORE_ROOK")*4)+getScore("SCORE_QUEEN"))*4;
+        int originalMaterial = (getScore("SCORE_PAWN")*16)+(getScore("SCORE_KNIGHT")*4)+(getScore("SCORE_BISHOP")*4)+(getScore("SCORE_ROOK")*4)+(getScore("SCORE_QUEEN")*2);
         int actualMaterial = materialWhite + materialBlack - (2*getScore("SCORE_KING"));
         _phase = PHASENUMBER - (int)(((double)actualMaterial * (double)PHASENUMBER) / (double)originalMaterial);
         _phase = Math.max(_phase, 0);
@@ -266,7 +266,7 @@ public class DefaultEvaluator extends Evaluator
         score += (evaluateBishops(board, Board.WHITE) - evaluateBishops(board, Board.BLACK));
         score += (evaluateRooks(board, Board.WHITE) - evaluateRooks(board, Board.BLACK));
         score += (evaluateQueens(board, Board.WHITE) - evaluateQueens(board, Board.BLACK));
-        score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
+//        score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
         return score;
     }   
     
