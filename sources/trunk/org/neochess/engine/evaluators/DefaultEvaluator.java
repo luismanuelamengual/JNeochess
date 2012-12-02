@@ -187,7 +187,7 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_QUEEN", 950);
         scores.put("SCORE_KING", 10000);
         scores.put("SCORE_MINORNOTDEVELOPED", -15);
-        scores.put("SCORE_NOTCASTLED", -20);
+        scores.put("SCORE_NOTCASTLED", -30);
         scores.put("SCORE_KINGMOVED", -20);
         scores.put("SCORE_EARLYQUEENMOVE", -80);
         scores.put("SCORE_EARLYMINORREPEAT", -15);
@@ -298,10 +298,35 @@ public class DefaultEvaluator extends Evaluator
     public int evaluateDevelopment (Board board, byte side)
     {
         int score = 0;
-        int sq;
-        long[][] pieces = board.getPieces();
-        long movers = (pieces[side][Board.KNIGHT] & nn[side]) | (pieces[side][Board.BISHOP] & bb[side]);
-        score = BoardUtils.getBitCount(movers) * getScore("SCORE_MINORNOTDEVELOPED");
+        if (_phase <= 2)
+        {
+            long[][] pieces = board.getPieces();
+            long movers = (pieces[side][Board.KNIGHT] & nn[side]) | (pieces[side][Board.BISHOP] & bb[side]);
+            int piecesNotDeveloped = BoardUtils.getBitCount(movers);
+            if (piecesNotDeveloped > 0)
+            {
+                score += (piecesNotDeveloped * getScore("SCORE_MINORNOTDEVELOPED"));
+                byte originalQueenSquare = side == Board.WHITE? Board.D1 : Board.D8;
+                if ((pieces[side][Board.QUEEN] & BoardUtils.squareBit[originalQueenSquare]) != 0)
+                    score += getScore("SCORE_EARLYQUEENMOVE");
+            }
+            
+            byte friendlyKing = kingSquare[side];
+            if (friendlyKing != Board.INVALIDSQUARE)
+            {
+                byte originalKingRank = side == Board.WHITE? Board.RANK_1 :  Board.RANK_8;
+                if (Board.getSquareRank(friendlyKing) != originalKingRank)
+                {
+                    score += getScore("SCORE_KINGMOVED");
+                }
+                else 
+                {
+                    long sideRooks = pieces[side][Board.ROOK];
+                    if (((BoardUtils.ray[friendlyKing][5] & sideRooks) != 0) && ((BoardUtils.ray[friendlyKing][6] & sideRooks) != 0))
+                        score += getScore("SCORE_NOTCASTLED");
+                }
+            }
+        }
         return score;
     }
     
