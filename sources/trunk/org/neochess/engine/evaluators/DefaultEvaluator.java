@@ -577,6 +577,9 @@ public class DefaultEvaluator extends Evaluator
                 tempScore += getScore("SCORE_ROOK7RANK");
             score += tempScore;
         }
+        
+        if (BoardUtils.getBitCount((pieces[side][Board.QUEEN]|pieces[side][Board.ROOK]) & _brank7[side]) > 1 && (((pieces[xside][Board.KING] & _brank8[side]) > 0) || ((pieces[xside][Board.PAWN] & _brank7[side]) > 0)))
+            score += getScore("SCORE_ROOKS7RANK");
         return score;
     }
     
@@ -620,6 +623,8 @@ public class DefaultEvaluator extends Evaluator
         score = 0;
         xside = board.getOppositeSide(side);
         square = kingSquare[side];
+        if (square == Board.INVALIDSQUARE)
+            return 0;
         file = Board.getSquareFile(square);
         rank = Board.getSquareRank(square);
         if (_phase < 6) 
