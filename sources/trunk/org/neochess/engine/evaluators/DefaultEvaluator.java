@@ -9,6 +9,8 @@ import org.neochess.util.BoardUtils;
 public class DefaultEvaluator extends Evaluator
 {
     private final static int PHASENUMBER = 8;
+    private final static int[] pawncover = { -60, -30, 0, 5, 30, 30, 30, 30, 30 };
+    private final static int[] factor = { 7, 8, 8, 7, 6, 5, 4, 2, 0, };
     private final static int[][] Passed = { { 0, 48, 48, 120, 144, 192, 240, 0}, {0, 240, 192, 144, 120, 48, 48, 0} };
     private final static int[] _isolani_normal = { 12, 10, 8, 6, 6, 8, 10, 12 };
     private final static int[] _isolani_weaker = { -2, -4, -6, -8, -8, -6, -4, -2 };  
@@ -23,8 +25,6 @@ public class DefaultEvaluator extends Evaluator
     private final static long[] sideHorizontal = { 0xF0F0F0F0F0F0F0F0L, 0x0F0F0F0F0F0F0F0FL };
     private final static long BOX_01 = 0x00003C3C3C3C0000L;
     private final static long BOX_012 = 0x007E7E7E7E7E7E00L;
-    private final static int[] _pawnCoverture = { -60, -30, 0, 5, 30, 30, 30, 30, 30 };
-    private final static int[] _safetyFactor = { 7, 8, 8, 7, 6, 5, 4, 2, 0, };
     private final static int[] _rank7 = { 6, 1 };
     private final static int[] _rank8 = { 7, 0 };
     private static long[][] _squarePawnMask = new long[2][64];
@@ -69,38 +69,38 @@ public class DefaultEvaluator extends Evaluator
 
     private final static int _scoreKingFinalist[] =
     {
-       0,  6, 12, 18, 18, 12,  6,  0,
-       6, 12, 18, 24, 24, 18, 12,  6,
-      12, 18, 24, 32, 32, 24, 18, 12,
-      18, 24, 32, 48, 48, 32, 24, 18,
-      18, 24, 32, 48, 48, 32, 24, 18,
-      12, 18, 24, 32, 32, 24, 18, 12,
-       6, 12, 18, 24, 24, 18, 12,  6,
-       0,  6, 12, 18, 18, 12,  6,  0
+        0,  6, 12, 18, 18, 12,  6,  0,
+        6, 12, 18, 24, 24, 18, 12,  6,
+       12, 18, 24, 32, 32, 24, 18, 12,
+       18, 24, 32, 48, 48, 32, 24, 18,
+       18, 24, 32, 48, 48, 32, 24, 18,
+       12, 18, 24, 32, 32, 24, 18, 12,
+        6, 12, 18, 24, 24, 18, 12,  6,
+        0,  6, 12, 18, 18, 12,  6,  0
     };
     
     private final static int Outpost[][] =
     {
         { 
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 1, 1, 1, 1, 0, 0,
-          0, 1, 1, 1, 1, 1, 1, 0,
-          0, 0, 1, 1, 1, 1, 0, 0,
-          0, 0, 0, 1, 1, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0 
-      },
-      { 
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 1, 1, 0, 0, 0,
-          0, 0, 1, 1, 1, 1, 0, 0,
-          0, 1, 1, 1, 1, 1, 1, 0,
-          0, 0, 1, 1, 1, 1, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0 
-      }
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 1, 1, 1, 1, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 0,
+            0, 0, 1, 1, 1, 1, 0, 0,
+            0, 0, 0, 1, 1, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0 
+        },
+        { 
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 1, 1, 0, 0, 0,
+            0, 0, 1, 1, 1, 1, 0, 0,
+            0, 1, 1, 1, 1, 1, 1, 0,
+            0, 0, 1, 1, 1, 1, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0 
+        }
     };
     
     private static void _initPassedPawnMasks ()
@@ -229,8 +229,11 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_GOPEN", -30);
         scores.put("SCORE_HOPEN", -600); 
         scores.put("SCORE_KINGOPENFILE", -10);
+        scores.put("SCORE_KINGOPENFILE1", -6);
         scores.put("SCORE_KINGENEMYOPENFILE", -6);
         scores.put("SCORE_KINGDEFENCEDEFICIT", -50);
+        scores.put("SCORE_KINGBACKRANKWEAK", -40);
+        scores.put("SCORE_FIANCHETTOTARGET", -13);
         scores.put("SCORE_RUPTURE", -20);
     }
     
@@ -266,7 +269,7 @@ public class DefaultEvaluator extends Evaluator
         score += (evaluateBishops(board, Board.WHITE) - evaluateBishops(board, Board.BLACK));
         score += (evaluateRooks(board, Board.WHITE) - evaluateRooks(board, Board.BLACK));
         score += (evaluateQueens(board, Board.WHITE) - evaluateQueens(board, Board.BLACK));
-//        score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
+        score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
         return score;
     }   
     
@@ -580,7 +583,7 @@ public class DefaultEvaluator extends Evaluator
     public int evaluateQueens (Board board, byte side)
     {
         int score, tempScore; 
-        byte xside, square, EnemyKing;
+        byte xside, square, enemyKing;
         long[][] pieces = board.getPieces();
         long queens;
         score = tempScore = 0;
@@ -588,7 +591,7 @@ public class DefaultEvaluator extends Evaluator
             return 0;
         xside = Board.getOppositeSide(side);
         queens = pieces[side][Board.QUEEN];
-        EnemyKing = kingSquare[xside];
+        enemyKing = kingSquare[xside];
 
         if ((queens & pinned) != 0)
             score += getScore("SCORE_PINNEDQUEEN") * BoardUtils.getBitCount(queens & pinned);
@@ -597,11 +600,131 @@ public class DefaultEvaluator extends Evaluator
             square = (byte)BoardUtils.getLeastSignificantBit(queens);
             queens &= BoardUtils.squareBitX[square];
             tempScore = evaluateControl(board,square,side);
-            if (BoardUtils.distance[square][EnemyKing] <= 2)
+            if (BoardUtils.distance[square][enemyKing] <= 2)
                 tempScore += getScore("SCORE_QUEENNEARKING");
             if ((board.getQueenAttacks(square) & _weakedPawns[xside]) != 0)
                 tempScore += getScore("SCORE_ATAKWEAKPAWN");
             score += tempScore;
+        }
+        return score;
+    }
+    
+    public int evaluateKing (Board board, byte side)
+    {
+        byte xside, square, square1, square2, file, rank;
+        int score, n, n1, n2;
+        long[][] pieces = board.getPieces();
+        long[] friends = board.getFriends();
+        long sidePawns = pieces[side][Board.PAWN];
+        long b, x;
+        score = 0;
+        xside = board.getOppositeSide(side);
+        square = kingSquare[side];
+        file = Board.getSquareFile(square);
+        rank = Board.getSquareRank(square);
+        if (_phase < 6) 
+        {
+            score += ((6 - _phase) * _scoreKing[square] + _phase * _scoreKingFinalist[square]) / 6;
+            if (side == Board.WHITE) 
+                n = BoardUtils.getBitCount(BoardUtils.moveArray[Board.KING][square] & sidePawns & BoardUtils.rankBits[rank + 1]); 
+            else 
+                n = BoardUtils.getBitCount(BoardUtils.moveArray[Board.KING][square] & sidePawns & BoardUtils.rankBits[rank - 1]);
+            score += pawncover[n];
+
+            if (file >= Board.FILE_F && ((BoardUtils.fileBits[Board.FILE_G] & pieces[side][Board.PAWN]) == 0)) 
+            {
+                if (side == Board.WHITE && board.getSquareFigure(Board.F2) == Board.PAWN)
+                    score += getScore("SCORE_GOPEN");
+                else if (side == Board.BLACK && board.getSquareFigure(Board.F7) == Board.PAWN) 
+                    score += getScore("SCORE_GOPEN");
+            }
+
+            if ((BoardUtils.fileBits[file] & sidePawns) == 0) 
+                score += getScore("SCORE_KINGOPENFILE");
+
+            if ((BoardUtils.fileBits[file] & sidePawns) == 0) 
+                score += getScore("SCORE_KINGOPENFILE1");
+
+            switch (file) 
+            {
+                case Board.FILE_A:
+                case Board.FILE_E:
+                case Board.FILE_F:
+                case Board.FILE_G:
+                    if ((BoardUtils.fileBits[file + 1] & sidePawns) == 0) 
+                        score += getScore("SCORE_KINGOPENFILE");
+                    if ((BoardUtils.fileBits[file + 1] & sidePawns) == 0) 
+                        score += getScore("SCORE_KINGOPENFILE1");
+                    break;
+                case Board.FILE_H:
+                case Board.FILE_D:
+                case Board.FILE_C:
+                case Board.FILE_B:
+                    if ((BoardUtils.fileBits[file - 1] & sidePawns) == 0) 
+                        score += getScore("SCORE_KINGOPENFILE");
+                    if ((BoardUtils.fileBits[file - 1] & sidePawns) == 0) 
+                        score += getScore("SCORE_KINGOPENFILE1");
+                    break;
+                default:
+                    break;
+            }
+            
+            if (file > Board.FILE_E && Board.getSquareFile(kingSquare[xside]) < Board.FILE_D) 
+            {
+                square2 = (side == Board.WHITE)? Board.G3 : Board.G6;
+                if ((BoardUtils.squareBit[square2] & sidePawns) != 0) 
+                    if (((BoardUtils.squareBit[Board.F4] | BoardUtils.squareBit[Board.H4] | BoardUtils.squareBit[Board.F5] | BoardUtils.squareBit[Board.H5]) & pieces[xside][Board.PAWN]) != 0) 
+                        score += getScore("SCORE_FIANCHETTOTARGET");
+            }
+            else if (file < Board.FILE_E && Board.getSquareFile(kingSquare[xside]) > Board.FILE_E) 
+            {
+                square2 = (side == Board.WHITE)? Board.B3 : Board.B6;
+                if ((BoardUtils.squareBit[square2] & sidePawns) != 0) 
+                    if (((BoardUtils.squareBit[Board.A4] | BoardUtils.squareBit[Board.C4] | BoardUtils.squareBit[Board.A5] | BoardUtils.squareBit[Board.C5]) & pieces[xside][Board.PAWN]) != 0) 
+                        score += getScore("SCORE_FIANCHETTOTARGET");
+            }
+
+            x = BoardUtils.boardHalf[side] & BoardUtils.boardSide[file <= Board.FILE_D?1:0];
+            n1 = BoardUtils.getBitCount(x & (friends[xside]));
+            if (n1 > 0) 
+            {
+                n2 = BoardUtils.getBitCount(x & (friends[side] & ~sidePawns & ~pieces[side][Board.KING]));
+                if (n1 > n2) 
+                    score += (n1 - n2) * getScore("SCORE_KINGDEFENCEDEFICIT");
+            }
+            score = (score * factor[_phase]) / 8;
+        } 
+        else 
+        {
+            score += _scoreKingFinalist[square];
+            score += evaluateControl(board,square,side); 
+            b = (pieces[Board.WHITE][Board.PAWN] | pieces[Board.BLACK][Board.PAWN]);
+            while (b != 0) 
+            {
+                square1 = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[square1];
+                if ((BoardUtils.squareBit[square1] & pieces[Board.WHITE][Board.PAWN]) != 0) 
+                    score -= BoardUtils.distance[square][square1 + 8] * 10 - 5;
+                else if ((BoardUtils.squareBit[square1] & pieces[Board.BLACK][Board.PAWN]) != 0)
+                    score -= BoardUtils.distance[square][square1 - 8] * 10 - 5;
+                else 
+                    score -= BoardUtils.distance[square][square1] - 5;
+            }
+
+            if ((BoardUtils.moveArray[Board.KING][square] & _weakedPawns[xside]) != 0) 
+                score += getScore("SCORE_ATAKWEAKPAWN") * 2;
+        }
+
+        if (_phase >= 4) 
+        {
+            if (side == Board.WHITE) 
+                if (square < Board.A2) 
+                    if ((BoardUtils.moveArray[Board.KING][square] & (~pieces[side][Board.PAWN] & BoardUtils.rankBits[1])) == 0) 
+                        score += getScore("SCORE_KINGBACKRANKWEAK");
+            else 
+                if (square > Board.H7) 
+                    if ((BoardUtils.moveArray[Board.KING][square] & (~pieces[side][Board.PAWN] & BoardUtils.rankBits[6])) == 0) 
+                        score += getScore("SCORE_KINGBACKRANKWEAK");
         }
         return score;
     }
