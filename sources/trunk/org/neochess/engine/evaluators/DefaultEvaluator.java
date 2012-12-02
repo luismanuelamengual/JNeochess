@@ -21,8 +21,6 @@ public class DefaultEvaluator extends Evaluator
     private final static long[] _brank8 = { 0x00000000000000FFL, 0xFF00000000000000L };
     private final static long[] _brank67 = { 0x0000000000FFFF00L, 0x00FFFF0000000000L };
     private final static long[] _brank58 = { 0x00000000FFFFFFFFL, 0xFFFFFFFF00000000L };
-    private final static long[] sideVertical = { 0xFFFFFFFF00000000L, 0x00000000FFFFFFFFL, };
-    private final static long[] sideHorizontal = { 0xF0F0F0F0F0F0F0F0L, 0x0F0F0F0F0F0F0F0FL };
     private final static long BOX_01 = 0x00003C3C3C3C0000L;
     private final static long BOX_012 = 0x007E7E7E7E7E7E00L;
     private final static int[] _rank7 = { 6, 1 };
@@ -30,8 +28,6 @@ public class DefaultEvaluator extends Evaluator
     private static long[][] _squarePawnMask = new long[2][64];
     private static long[][] _passedPawnMask = new long[2][64];
     private static long[] _isolaniPawnMask = new long[8];
-    private final static long[] _initialKnights = { BoardUtils.squareBit[Board.B1] | BoardUtils.squareBit[Board.G1], BoardUtils.squareBit[Board.B8] | BoardUtils.squareBit[Board.G8] };
-    private final static long[] _initialBishops = { BoardUtils.squareBit[Board.C1] | BoardUtils.squareBit[Board.F1], BoardUtils.squareBit[Board.C8] | BoardUtils.squareBit[Board.F8] };
     private final static long _centerFiles = BoardUtils.fileBits[Board.FILE_D] | BoardUtils.fileBits[Board.FILE_E];
     private final static int _pawnSquareValue[][] = 
     {
@@ -307,7 +303,7 @@ public class DefaultEvaluator extends Evaluator
             {
                 score += (piecesNotDeveloped * getScore("SCORE_MINORNOTDEVELOPED"));
                 byte originalQueenSquare = side == Board.WHITE? Board.D1 : Board.D8;
-                if ((pieces[side][Board.QUEEN] & BoardUtils.squareBit[originalQueenSquare]) != 0)
+                if ((pieces[side][Board.QUEEN] & BoardUtils.squareBit[originalQueenSquare]) == 0)
                     score += getScore("SCORE_EARLYQUEENMOVE");
             }
             
@@ -400,9 +396,6 @@ public class DefaultEvaluator extends Evaluator
         //Favorecer el tener peones en el centro
         score += BoardUtils.getBitCount(sidePawns & _centerFiles) * getScore("SCORE_CENTERPAWNS");
         
-        //Penalizar tener 8 peones
-        if (BoardUtils.getBitCount(sidePawns) == 8) score += getScore("SCORE_ALLPAWNS");
-
         //Tener peones bloqueados
         int counter = 0;
         if (side == Board.WHITE)         
