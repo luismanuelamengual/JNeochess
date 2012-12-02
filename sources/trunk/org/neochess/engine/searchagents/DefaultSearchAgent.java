@@ -352,7 +352,7 @@ public class DefaultSearchAgent extends SearchAgent
             else
             {
                 byte endSquareFigure = searchBoard.getSquareFigure(endSquare);
-                destinationValue = (endSquareFigure == Board.EMPTY)? Board.QUEEN : endSquareFigure;
+                destinationValue = PIECEVALUE[(endSquareFigure == Board.EMPTY)? Board.QUEEN : endSquareFigure];
             }
             testMove.setScore(destinationValue - sourceValue);
         }

@@ -266,6 +266,7 @@ public class DefaultEvaluator extends Evaluator
         score += (evaluateRooks(board, Board.WHITE) - evaluateRooks(board, Board.BLACK));
         score += (evaluateQueens(board, Board.WHITE) - evaluateQueens(board, Board.BLACK));
         score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
+        score += (board.getSideToMove() == Board.WHITE)? 20 : -20;
         return score;
     }   
     
@@ -395,15 +396,6 @@ public class DefaultEvaluator extends Evaluator
         
         //Favorecer el tener peones en el centro
         score += BoardUtils.getBitCount(sidePawns & _centerFiles) * getScore("SCORE_CENTERPAWNS");
-        
-        //Tener peones bloqueados
-        int counter = 0;
-        if (side == Board.WHITE)         
-            counter = BoardUtils.getBitCount((sidePawns >>> 8) & xsidePawns & BOX_012);
-        else 
-            counter = BoardUtils.getBitCount((sidePawns << 8) & xsidePawns & BOX_012);
-        if (counter > 1) 
-            score += counter * getScore("SCORE_LOCKEDPAWNS");
         
         //Calcular ataques al Rey
         byte xsideKingSquare = kingSquare[xside];
@@ -662,14 +654,6 @@ public class DefaultEvaluator extends Evaluator
             else 
                 n = BoardUtils.getBitCount(BoardUtils.moveArray[Board.KING][square] & sidePawns & BoardUtils.rankBits[rank - 1]);
             score += pawncover[n];
-
-            if (file >= Board.FILE_F && ((BoardUtils.fileBits[Board.FILE_G] & pieces[side][Board.PAWN]) == 0)) 
-            {
-                if (side == Board.WHITE && board.getSquareFigure(Board.F2) == Board.PAWN)
-                    score += getScore("SCORE_GOPEN");
-                else if (side == Board.BLACK && board.getSquareFigure(Board.F7) == Board.PAWN) 
-                    score += getScore("SCORE_GOPEN");
-            }
 
             if ((BoardUtils.fileBits[file] & sidePawns) == 0) 
                 score += getScore("SCORE_KINGOPENFILE");
