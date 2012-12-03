@@ -185,7 +185,7 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_MINORNOTDEVELOPED", -15);
         scores.put("SCORE_NOTCASTLED", -30);
         scores.put("SCORE_KINGMOVED", -20);
-        scores.put("SCORE_EARLYQUEENMOVE", -80);
+        scores.put("SCORE_EARLYQUEENMOVE", -50);
         scores.put("SCORE_EARLYMINORREPEAT", -15);
         scores.put("SCORE_EARLYCENTERPREPEAT", -12);
         scores.put("SCORE_EARLYWINGPAWNMOVE", -9);
@@ -305,7 +305,7 @@ public class DefaultEvaluator extends Evaluator
                 score += (piecesNotDeveloped * getScore("SCORE_MINORNOTDEVELOPED"));
                 byte originalQueenSquare = side == Board.WHITE? Board.D1 : Board.D8;
                 if ((pieces[side][Board.QUEEN] & BoardUtils.squareBit[originalQueenSquare]) == 0)
-                    score += getScore("SCORE_EARLYQUEENMOVE");
+                    score += piecesNotDeveloped * getScore("SCORE_EARLYQUEENMOVE");
             }
             
             byte friendlyKing = kingSquare[side];
