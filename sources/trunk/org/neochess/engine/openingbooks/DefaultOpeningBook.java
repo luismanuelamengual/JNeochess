@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Random;
 import org.neochess.engine.Board;
 import org.neochess.engine.Move;
+import org.neochess.util.ResourceUtils;
 
 public class DefaultOpeningBook extends OpeningBook
 {
@@ -26,8 +27,14 @@ public class DefaultOpeningBook extends OpeningBook
     public DefaultOpeningBook (String filename)
     {
         this.filename = filename;
+        File file = new File(this.filename);
+        if (!file.exists())
+        {
+            String resourceName = '/' + DefaultOpeningBook.class.getPackage().getName().replace('.', '/') + "/OpeningBook.bin";
+            ResourceUtils.copyResourceToFile(resourceName, this.filename);
+        }
     }
-
+    
     public void createOpeningBook (String sourceFilename)
     {
         System.out.println ("Creating Opening Book ....");

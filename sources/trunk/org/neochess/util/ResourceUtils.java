@@ -54,7 +54,8 @@ public abstract class ResourceUtils
             FileOutputStream fileOutputStream = null;
             try
             {
-                file.getParentFile().mkdirs();
+                if (file.getParentFile() != null)
+                    file.getParentFile().mkdirs();
                 if (file.createNewFile())
                 {
                     inputStream = getResourceAsStream(resource);
