@@ -20,6 +20,7 @@ import org.neochess.client.Session.SessionListener;
 import org.neochess.engine.Clock;
 import org.neochess.engine.ComputerPlayer;
 import org.neochess.engine.HumanPlayer;
+import org.neochess.engine.openingbooks.DefaultOpeningBook;
 import org.neochess.engine.searchagents.DefaultSearchAgent;
 import org.neochess.general.Disposable;
 import org.neochess.util.ResourceUtils;
@@ -279,7 +280,7 @@ public final class MainFrame extends JFrame implements ActionListener, Disposabl
             case "localmatch":
                 HumanPlayer localWhitePlayer = new HumanPlayer ();
                 localWhitePlayer.setNickName("Human Player");
-                ComputerPlayer localBlackPlayer = new ComputerPlayer (new DefaultSearchAgent());
+                ComputerPlayer localBlackPlayer = new ComputerPlayer (new DefaultSearchAgent(), new DefaultOpeningBook());
                 localBlackPlayer.setNickName("CPU Player");
                 MatchFrame localMatchFrame = new MatchFrame ();
                 localMatchFrame.setWhitePlayer(localWhitePlayer);

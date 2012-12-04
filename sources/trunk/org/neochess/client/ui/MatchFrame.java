@@ -83,7 +83,6 @@ public class MatchFrame extends InternalFrame implements ActionListener
         setJMenuBar (createMenuBar());
         setVisible(true);
         pack();
-        initializeOpeningBookFile();
         updateMenuBar();
     }
 
@@ -534,11 +533,6 @@ public class MatchFrame extends InternalFrame implements ActionListener
     public MatchOutputPanel getOutputPanel()
     {
         return outputPanel;
-    }
-    
-    private void initializeOpeningBookFile ()
-    {
-        ResourceUtils.copyResourceToFile(Application.getInstance().getResourceGeneralPath() + "OpeningBook.bin", Application.getHomePath() + File.separatorChar + "OpeningBook.bin");
     }
     
     public int getDisplayPly()
