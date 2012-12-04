@@ -178,7 +178,7 @@ public class DefaultEvaluator extends Evaluator
         scores = new HashMap<String, Integer>();
         scores.put("SCORE_PAWN", 100);
         scores.put("SCORE_KNIGHT", 300);
-        scores.put("SCORE_BISHOP", 300);
+        scores.put("SCORE_BISHOP", 320);
         scores.put("SCORE_ROOK", 500);
         scores.put("SCORE_QUEEN", 950);
         scores.put("SCORE_KING", 10000);
@@ -266,7 +266,7 @@ public class DefaultEvaluator extends Evaluator
         score += (evaluateRooks(board, Board.WHITE) - evaluateRooks(board, Board.BLACK));
         score += (evaluateQueens(board, Board.WHITE) - evaluateQueens(board, Board.BLACK));
         score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
-        score += (board.getSideToMove() == Board.WHITE)? 20 : -20;
+        score += (board.getSideToMove() == Board.WHITE)? 15 : -15;
         return score;
     }   
     
