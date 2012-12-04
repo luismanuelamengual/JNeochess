@@ -177,10 +177,10 @@ public class DefaultEvaluator extends Evaluator
     {
         scores = new HashMap<String, Integer>();
         scores.put("SCORE_PAWN", 100);
-        scores.put("SCORE_KNIGHT", 300);
-        scores.put("SCORE_BISHOP", 320);
-        scores.put("SCORE_ROOK", 500);
-        scores.put("SCORE_QUEEN", 950);
+        scores.put("SCORE_KNIGHT", 350);
+        scores.put("SCORE_BISHOP", 350);
+        scores.put("SCORE_ROOK", 550);
+        scores.put("SCORE_QUEEN", 1100);
         scores.put("SCORE_KING", 10000);
         scores.put("SCORE_MINORNOTDEVELOPED", -15);
         scores.put("SCORE_NOTCASTLED", -30);
