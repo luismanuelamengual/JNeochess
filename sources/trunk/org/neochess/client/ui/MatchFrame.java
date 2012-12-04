@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -29,7 +28,6 @@ import org.neochess.engine.Match;
 import org.neochess.engine.Move;
 import org.neochess.engine.Player;
 import org.neochess.engine.User;
-import org.neochess.util.ResourceUtils;
 
 public class MatchFrame extends InternalFrame implements ActionListener
 {
