@@ -230,12 +230,12 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_RUPTURE", -20);
     }
     
-    public void setScore (String key, int value)
+    private void setScore (String key, int value)
     {
         scores.put(key, value);
     }
     
-    public int getScore (String key)
+    private int getScore (String key)
     {
         return scores.get(key);
     }
@@ -289,7 +289,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluateDevelopment (Board board, byte side)
+    private int evaluateDevelopment (Board board, byte side)
     {
         int score = 0;
         if (phase <= 2)
@@ -324,7 +324,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluatePawns (Board board, byte side)
+    private int evaluatePawns (Board board, byte side)
     {
         byte square, testsquare, score = 0;
         byte xside = Board.getOppositeSide(side);
@@ -452,7 +452,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluateKnights (Board board, byte side)
+    private int evaluateKnights (Board board, byte side)
     {
         byte xside, square;
         int score, tempScore;
@@ -486,7 +486,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluateBishops (Board board, byte side)
+    private int evaluateBishops (Board board, byte side)
     {
         int score, tempScore, bishopCount;
         byte xside, square;
@@ -539,7 +539,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluateRooks (Board board, byte side)
+    private int evaluateRooks (Board board, byte side)
     {
         int score, tempScore;
         byte square, xside, fyle, enemyKingSquare;
@@ -599,7 +599,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluateQueens (Board board, byte side)
+    private int evaluateQueens (Board board, byte side)
     {
         int score, tempScore; 
         byte xside, square, enemyKing;
@@ -628,7 +628,7 @@ public class DefaultEvaluator extends Evaluator
         return score;
     }
     
-    public int evaluateKing (Board board, byte side)
+    private int evaluateKing (Board board, byte side)
     {
         byte xside, square, square1, square2, file, rank;
         int score, n, n1, n2;
