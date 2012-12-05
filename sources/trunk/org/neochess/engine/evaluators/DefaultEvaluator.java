@@ -169,6 +169,8 @@ public class DefaultEvaluator extends Evaluator
     private long weakPawns[] = new long[2];
     private long pinned;
     private int phase;
+    private long[][] squaresAttacked;
+    private long[] squaresAttackedBySide;
     
     public DefaultEvaluator ()
     {
@@ -228,6 +230,7 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_KINGBACKRANKWEAK", -40);
         scores.put("SCORE_FIANCHETTOTARGET", -13);
         scores.put("SCORE_RUPTURE", -20);
+        scores.put("SCORE_HUNGEDPIECE", -20);
     }
     
     private void setScore (String key, int value)
@@ -252,7 +255,11 @@ public class DefaultEvaluator extends Evaluator
         phase = Math.min(phase, PHASENUMBER);
         kingSquare[Board.WHITE] = board.getKingSquare(Board.WHITE);
         kingSquare[Board.BLACK] = board.getKingSquare(Board.BLACK);
-        pinned = board.getPins();
+        squaresAttacked = board.getAttacks();
+        squaresAttackedBySide = new long[2];
+        squaresAttackedBySide[Board.WHITE] = squaresAttacked[Board.WHITE][Board.PAWN] | squaresAttacked[Board.WHITE][Board.KNIGHT] | squaresAttacked[Board.WHITE][Board.BISHOP] | squaresAttacked[Board.WHITE][Board.ROOK] | squaresAttacked[Board.WHITE][Board.QUEEN] | squaresAttacked[Board.WHITE][Board.KING];
+        squaresAttackedBySide[Board.BLACK] = squaresAttacked[Board.BLACK][Board.PAWN] | squaresAttacked[Board.BLACK][Board.KNIGHT] | squaresAttacked[Board.BLACK][Board.BISHOP] | squaresAttacked[Board.BLACK][Board.ROOK] | squaresAttacked[Board.BLACK][Board.QUEEN] | squaresAttacked[Board.BLACK][Board.KING];
+        pinned = getPinnedPieces(board);
         
         int score = 0;
         score += (materialWhite - materialBlack);
@@ -264,6 +271,7 @@ public class DefaultEvaluator extends Evaluator
         score += (evaluateQueens(board, Board.WHITE) - evaluateQueens(board, Board.BLACK));
         score += (evaluateKing(board, Board.WHITE) - evaluateKing(board, Board.BLACK));
         score += (board.getSideToMove() == Board.WHITE)? 15 : -15;
+        score += getScore("SCORE_HUNGEDPIECE") * (getHungedPiecesCount(board, Board.WHITE) - getHungedPiecesCount(board, Board.BLACK));
         return score;
     }   
     
@@ -755,5 +763,102 @@ public class DefaultEvaluator extends Evaluator
         if (friendlyKing != Board.INVALIDSQUARE)
             score += BoardUtils.getBitCount(controlled & BoardUtils.distMap[friendlyKing][2]);
         return score;
+    }
+    
+    private int getHungedPiecesCount (Board board, byte side)
+    {
+        long c, n, b, r, q;
+        long[][] pieces = board.getPieces();
+        byte xside = Board.getOppositeSide(side);
+        int hunged = 0;
+        n = (squaresAttacked[xside][Board.PAWN] & pieces[side][Board.KNIGHT]);
+        n |= (squaresAttackedBySide[xside] & pieces[side][Board.KNIGHT] & ~squaresAttackedBySide[side]);
+        b = (squaresAttacked[xside][Board.PAWN] & pieces[side][Board.BISHOP]);
+        b |= (squaresAttackedBySide[xside] & pieces[side][Board.BISHOP] & ~squaresAttackedBySide[side]);
+        r = squaresAttacked[xside][Board.PAWN] | squaresAttacked[xside][Board.KNIGHT] | squaresAttacked[xside][Board.BISHOP];
+        r = (r & pieces[side][Board.ROOK]);
+        r |= (squaresAttackedBySide[xside] & pieces[side][Board.ROOK] & ~squaresAttackedBySide[side]);
+        q = squaresAttacked[xside][Board.PAWN] | squaresAttacked[xside][Board.KNIGHT] | squaresAttacked[xside][Board.BISHOP] | squaresAttacked[xside][Board.ROOK];
+        q = (q & pieces[side][Board.QUEEN]);
+        q |= (squaresAttackedBySide[xside] & pieces[side][Board.QUEEN] & ~squaresAttackedBySide[side]);
+        c = n | b | r | q;
+        if (c != 0)
+            hunged += BoardUtils.getBitCount(c);
+        if ((squaresAttackedBySide[xside] & pieces[side][Board.KING]) != 0)
+            hunged++;
+        return hunged;
+    }
+    
+    private long getPinnedPieces (Board board)
+    {
+        long pin = 0;
+        byte side, xside;
+        byte square, square2;
+        long b, c, e, f, t;
+        long[] p;
+        long[] friends = board.getFriends();
+        long[][] pieces = board.getPieces();
+        
+        t = friends[Board.WHITE] | friends[Board.BLACK];
+        for (side = Board.WHITE; side <= Board.BLACK; side++)
+        {
+            xside = Board.getOppositeSide(side);
+            p = pieces[xside];
+            e = p[Board.ROOK] | p[Board.QUEEN] | p[Board.KING];
+            e |= (p[Board.BISHOP] | p[Board.KNIGHT]) & ~squaresAttackedBySide[xside];
+            b = pieces[side][Board.BISHOP];
+            while (b != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[square];
+                c = BoardUtils.moveArray[Board.BISHOP][square] & e;
+                while (c != 0)
+                {
+                    square2 = (byte)BoardUtils.getLeastSignificantBit(c);
+                    c &= BoardUtils.squareBitX[square2];
+                    f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
+                    if (((friends[xside] & f) != 0) && BoardUtils.getBitCount(f) == 1)
+                        pin |= f;
+                }
+            }
+
+            e = p[Board.QUEEN] | p[Board.KING];
+            e |= (p[Board.ROOK] | p[Board.BISHOP] | p[Board.KNIGHT]) & ~squaresAttackedBySide[xside];
+            b = pieces[side][Board.ROOK];
+            while (b != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[square];
+                c = BoardUtils.moveArray[Board.ROOK][square] & e;
+                while (c != 0)
+                {
+                    square2 = (byte)BoardUtils.getLeastSignificantBit(c);
+                    c &= BoardUtils.squareBitX[square2];
+                    f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
+                    if (((friends[xside] & f) != 0) && BoardUtils.getBitCount(f) == 1)
+                        pin |= f;
+                }
+            }
+
+            e = pieces[xside][Board.KING];
+            e |= (p[Board.QUEEN] | p[Board.ROOK] | p[Board.BISHOP] | p[Board.KNIGHT]) & ~squaresAttackedBySide[xside];
+            b = pieces[side][Board.QUEEN];
+            while (b != 0)
+            {
+                square = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[square];
+                c = BoardUtils.moveArray[Board.QUEEN][square] & e;
+                while (c != 0)
+                {
+                    square2 = (byte)BoardUtils.getLeastSignificantBit(c);
+                    c &= BoardUtils.squareBitX[square2];
+                    f = t & BoardUtils.squareBitX[square] & BoardUtils.fromtoRay[square2][square];
+                    if (((friends[xside] & f) != 0) && BoardUtils.getBitCount(f) == 1)
+                        pin |= f;
+                }
+            }
+        }
+
+        return pin;
     }
 }
