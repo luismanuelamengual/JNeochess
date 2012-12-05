@@ -19,7 +19,7 @@ public class DefaultSearchAgent extends SearchAgent
     protected final static int ASPIRATIONWINDOW_SIZE = 80;
     protected final static int ASPIRATIONWINDOW_TOLERANCE = 255;
     protected final static int MAX_DEPTH = 64;
-    protected final static int[] PIECEVALUE = {100, 300, 315, 500, 950, 10000};
+    protected final static int[] PIECEVALUE = {100, 350, 350, 550, 1100, 10000};
 
     private Evaluator evaluator;
     private Board searchBoard;
@@ -364,134 +364,134 @@ public class DefaultSearchAgent extends SearchAgent
         Collections.sort(moves, Collections.reverseOrder());
     }
     
-//    private int SEE (Move move)
-//    {
-//        byte f, t, sq, piece, side, xside;
-//        int n, lastval;
-//        int[] swaplist = new int[20];
-//        long b, c, r;
-//        long[] d, e;
-//
-//        f = move.getInitialSquare();
-//        t = move.getEndSquare();
-//        side = searchBoard.getSquareSide(f);
-//        xside = searchBoard.getOppositeSide(side);
-//
-//        /*  Squares attacking t for side and xside  */
-//        b = searchBoard.getSquareAttackers(t, side);
-//        c = searchBoard.getSquareAttackers(t, xside);
-//        b &= BoardUtils.squareBitX[f];
-//        
-//        if (BoardUtils.sliderX[searchBoard.getSquareFigure(f)] == 1)
-//        {
-//            AddXrayPiece(t, f, side,  & b,  & c);
-//        }
-//
-//        d = board.b[side];
-//        e = board.b[xside];
-//        if (move & PROMOTION)
-//        {
-//            swaplist[0] = Value[PROMOTEPIECE(move)] - ValueP;
-//            lastval = -Value[PROMOTEPIECE(move)];
-//        }
-//        else
-//        {
-//            swaplist[0] = (move & ENPASSANT ? ValueP : Value[cboard[t]]);
-//            lastval = -Value[cboard[f]];
-//        }
-//        n = 1;
-//        while (1)
-//        {
-//            if (c == NULLBITBOARD)
-//            {
-//                break;
-//            }
-//            for (piece = pawn; piece <= king; piece++)
-//            {
-//                r = c & e[piece];
-//                if (r)
-//                {
-//                    sq = leadz(r);
-//                    CLEARBIT(c, sq);
-//                    if (xray[piece])
-//                    {
-//                        AddXrayPiece(t, sq, xside,  & c,  & b);
-//                    }
-//                    swaplist[n] = swaplist[n - 1] + lastval;
-//                    n++;
-//                    lastval = Value[piece];
-//                    break;
-//                }
-//            }
-//
-//            if (b == NULLBITBOARD)
-//            {
-//                break;
-//            }
-//            for (piece = pawn; piece <= king; piece++)
-//            {
-//                r = b & d[piece];
-//                if (r)
-//                {
-//                    sq = leadz(r);
-//                    CLEARBIT(b, sq);
-//                    if (xray[piece])
-//                    {
-//                        AddXrayPiece(t, sq, side,  & b,  & c);
-//                    }
-//                    swaplist[n] = swaplist[n - 1] + lastval;
-//                    n++;
-//                    lastval = -Value[piece];
-//                    break;
-//                }
-//            }
-//        }
-//
-//        --n;
-//        while (n)
-//        {
-//            if (n & 1)
-//            {
-//                if (swaplist[n] <= swaplist[n - 1])
-//                {
-//                    swaplist[n - 1] = swaplist[n];
-//                }
-//            }
-//            else
-//            {
-//                if (swaplist[n] >= swaplist[n - 1])
-//                {
-//                    swaplist[n - 1] = swaplist[n];
-//                }
-//            }
-//            --n;
-//        }
-//        return (swaplist[0]);
-//    }
-//    
-//    protected void addXrayPiece (int t, int sq, int side, long b, long c)
-//    {
-//        int dir, nsq, piece;
-//        long a;
-//
-//        dir = BoardUtils.directions[t][sq];
-//        a = BoardUtils.ray[sq][dir] & searchBoard.getBlocker();
-//        if (a == 0)
-//            return;
-//        
-//        nsq = (t < sq ? leadz(a) : trailz(a));
-//        piece = cboard[nsq];
-//        if ((piece == queen) || (piece == rook && dir > 3) || (piece == bishop && dir < 4))
-//        {
-//            if (BitPosArray[nsq] & board.friends[side])
-//            {
-//                 * b |= BitPosArray[nsq];
-//            }
-//            else
-//            {
-//                 * c |= BitPosArray[nsq];
-//            }
-//        }
-//        return;
-//    }
+    protected int SEE (Move move)
+    {
+        byte f, t, sq, figure, side, xside;
+        int n, lastval;
+        int[] swaplist = new int[20];
+        long b, c, r;
+        long[] d, e;
+        long[][] pieces = searchBoard.getPieces();
+        long[] friends = searchBoard.getFriends();
+        byte nsq, nfigure;
+        int dir;
+        long a;
+
+        f = move.getInitialSquare();
+        t = move.getEndSquare();
+        side = searchBoard.getSquareSide(f);
+        xside = searchBoard.getOppositeSide(side);
+        b = searchBoard.getSquareAttackers(t, side);
+        c = searchBoard.getSquareAttackers(t, xside);
+        b &= BoardUtils.squareBitX[f];
+        
+        if (BoardUtils.sliderX[searchBoard.getSquareFigure(f)] == 1)
+        {
+            dir = BoardUtils.directions[t][f];
+            a = BoardUtils.ray[f][dir] & searchBoard.getBlocker();
+            if (a != 0)
+            {
+                nsq = (byte)(t < f ? BoardUtils.getLeastSignificantBit(a) : BoardUtils.getMostSignificantBit(a));
+                nfigure = searchBoard.getSquareFigure(nsq);
+                if ((nfigure == Board.QUEEN) || (nfigure == Board.ROOK && dir > 3) || (nfigure == Board.BISHOP && dir < 4))
+                {
+                    if ((BoardUtils.squareBit[nsq] & friends[side]) != 0)
+                        b |= BoardUtils.squareBit[nsq];
+                    else
+                        c |= BoardUtils.squareBit[nsq];
+                }
+            }
+        }
+
+        d = pieces[side];
+        e = pieces[xside];
+        swaplist[0] = ((searchBoard.getSquareFigure(f) == Board.PAWN && t == searchBoard.getEnPassantSquare())? PIECEVALUE[Board.PAWN] : PIECEVALUE[searchBoard.getSquareFigure(t)]);
+        lastval = -PIECEVALUE[searchBoard.getSquareFigure(f)];
+        n = 1;
+        while (true)
+        {
+            if (c == 0)
+            {
+                break;
+            }
+            for (figure = Board.PAWN; figure <= Board.KING; figure++)
+            {
+                r = c & e[figure];
+                if (r != 0)
+                {
+                    sq = (byte)BoardUtils.getLeastSignificantBit(r);
+                    c &= BoardUtils.squareBitX[sq];
+                    if (BoardUtils.sliderX[figure] == 1)
+                    {
+                        dir = BoardUtils.directions[t][sq];
+                        a = BoardUtils.ray[sq][dir] & searchBoard.getBlocker();
+                        if (a != 0)
+                        {
+                            nsq = (byte)(t < sq ? BoardUtils.getLeastSignificantBit(a) : BoardUtils.getMostSignificantBit(a));
+                            nfigure = searchBoard.getSquareFigure(nsq);
+                            if ((nfigure == Board.QUEEN) || (nfigure == Board.ROOK && dir > 3) || (nfigure == Board.BISHOP && dir < 4))
+                            {
+                                if ((BoardUtils.squareBit[nsq] & friends[xside]) != 0)
+                                    c |= BoardUtils.squareBit[nsq];
+                                else
+                                    b |= BoardUtils.squareBit[nsq];
+                            }
+                        }
+                    }
+                    swaplist[n] = swaplist[n - 1] + lastval;
+                    n++;
+                    lastval = PIECEVALUE[figure];
+                    break;
+                }
+            }
+
+            if (b == 0)
+            {
+                break;
+            }
+            for (figure = Board.PAWN; figure <= Board.KING; figure++)
+            {
+                r = b & d[figure];
+                if (r != 0)
+                {
+                    sq = (byte)BoardUtils.getLeastSignificantBit(r);
+                    b &= BoardUtils.squareBitX[sq];
+                    if (BoardUtils.sliderX[figure] == 1)
+                    {
+                        dir = BoardUtils.directions[t][sq];
+                        a = BoardUtils.ray[sq][dir] & searchBoard.getBlocker();
+                        if (a != 0)
+                        {
+                            nsq = (byte)(t < sq ? BoardUtils.getLeastSignificantBit(a) : BoardUtils.getMostSignificantBit(a));
+                            nfigure = searchBoard.getSquareFigure(nsq);
+                            if ((nfigure == Board.QUEEN) || (nfigure == Board.ROOK && dir > 3) || (nfigure == Board.BISHOP && dir < 4))
+                            {
+                                if ((BoardUtils.squareBit[nsq] & friends[side]) != 0)
+                                    b |= BoardUtils.squareBit[nsq];
+                                else
+                                    c |= BoardUtils.squareBit[nsq];
+                            }
+                        }
+                    }
+                    swaplist[n] = swaplist[n - 1] + lastval;
+                    n++;
+                    lastval = -PIECEVALUE[figure];
+                    break;
+                }
+            }
+        }
+
+        --n;
+        while (n > 0)
+        {
+            if ((n & 1) != 0)
+                if (swaplist[n] <= swaplist[n - 1])
+                    swaplist[n - 1] = swaplist[n];
+            else
+                if (swaplist[n] >= swaplist[n - 1])
+                    swaplist[n - 1] = swaplist[n];
+            --n;
+        }
+        return (swaplist[0]);
+    }
 }
