@@ -346,16 +346,25 @@ public class DefaultSearchAgent extends SearchAgent
             byte endSquare = testMove.getEndSquare();
             int sourceValue = PIECEVALUE[searchBoard.getSquareFigure(initialSquare)];
             int destinationValue = 0;
-            if (endSquare == searchBoard.getEnPassantSquare())
+            
+            if (searchBoard.getSquareFigure(initialSquare) == Board.PAWN && endSquare == searchBoard.getEnPassantSquare())
             {
-                destinationValue = Board.PAWN;
+                destinationValue = PIECEVALUE[Board.PAWN];
             }
             else
             {
                 byte endSquareFigure = searchBoard.getSquareFigure(endSquare);
                 destinationValue = PIECEVALUE[(endSquareFigure == Board.EMPTY)? Board.QUEEN : endSquareFigure];
             }
-            testMove.setScore(destinationValue - sourceValue);
+            if (sourceValue <= destinationValue)
+            {
+                testMove.setScore(destinationValue - sourceValue);
+            }
+            else
+            {
+                int swapOffValue = SEE(testMove);
+                testMove.setScore(swapOffValue < 0? -INFINITY : swapOffValue);
+            }
         }
     }
     
@@ -485,11 +494,15 @@ public class DefaultSearchAgent extends SearchAgent
         while (n > 0)
         {
             if ((n & 1) != 0)
+            {
                 if (swaplist[n] <= swaplist[n - 1])
                     swaplist[n - 1] = swaplist[n];
+            }
             else
+            {
                 if (swaplist[n] >= swaplist[n - 1])
                     swaplist[n - 1] = swaplist[n];
+            }
             --n;
         }
         return (swaplist[0]);
