@@ -263,30 +263,41 @@ public class DefaultSearchAgent extends SearchAgent
         int quiescResult;
         byte sideToMove = board.getSideToMove();
         boolean foundPV = false;
-        boolean inCheck = board.inCheck();
         
         //Chequear que el lado a jugar tenga el Rey
         if (board.getKingSquare(sideToMove) == Board.INVALIDSQUARE)
              return (-MATE + ply - 2);
         
         //Funcion de evaluacion
+        boolean inCheck = board.inCheck();
         quiescResult = evaluateBoard(board);
         if (quiescResult >= beta && !inCheck) return quiescResult;
-        if (quiescResult > alpha) alpha = quiescResult;
-        
-        //Prepare principalVariation
-        preparePrincipalVariation (ply);
         
         //Generacion de movimientos
         List<Move> moves = getMoveList(ply);
         moves.clear();
-        board.getCaptureMoves(moves);
-        if (moves.size() == 0) 
-            return quiescResult;
-
-        //Ponderación y Ordenamiento de movimientos
-        ponderCaptureMoves(moves);
+        if (inCheck)
+        {
+            board.getEscapeMoves(moves);
+            if (moves.size() == 0)
+                return (-MATE+ply-2);
+            if (quiescResult >= beta)
+                return quiescResult;
+            ponderMoves(moves);
+        }
+        else
+        {
+            board.getCaptureMoves(moves);
+            if (moves.size() == 0) 
+                return quiescResult;
+            ponderCaptureMoves(moves);
+        }
         sortMoves(moves);
+        
+        if (quiescResult > alpha) alpha = quiescResult;
+        
+        //Prepare principalVariation
+        preparePrincipalVariation (ply);
         
         //Iterar sobre los movimientos posibles
         for (Move testMove : moves)
