@@ -36,6 +36,7 @@ public abstract class BoardUtils
     private static int[] bitCount;
     public static final int ndir[] = { 2, 8, 4, 4, 8, 8, 2 };
     public static final int range[] = { 0, 0, 1, 1, 1, 0, 0 };
+    public static final int slider[] = { 0, 0, 1, 1, 1, 0, 0 };
     public static final int sliderX[] = { 1, 0, 1, 1, 1, 0 };
     public static final int raybeg[] = { 0, 0, 0, 4, 0, 0 };
     public static final int rayend[] = { 0, 0, 4, 8, 8, 0 };

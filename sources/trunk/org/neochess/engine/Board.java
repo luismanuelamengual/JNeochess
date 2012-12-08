@@ -900,6 +900,111 @@ public class Board implements Disposable, Cloneable
         }
     }
     
+    public List<Move> getEscapeMoves ()
+    {
+        List<Move> moveList = new ArrayList<Move>();
+        getEscapeMoves (moveList);
+        return moveList;
+    }
+    
+    public void getEscapeMoves (List<Move> moveList)
+    {
+        byte side, xside;
+        byte kingsq, chksq, sq, sq1, epsq;
+        int dir;
+        long checkers, b, c, p, escapes;
+        escapes = 0;
+        side = getSideToMove();
+        xside = getOppositeSide(side);
+ 
+        kingsq = getKingSquare(side);
+        checkers = getSquareAttackers(kingsq, xside);
+        p = pieces[side][PAWN];
+
+        if (BoardUtils.getBitCount(checkers) == 1) 
+        {
+            chksq = (byte)BoardUtils.getLeastSignificantBit(checkers);
+            b = getSquareAttackers(chksq, side);
+            b &= ~pieces[side][KING];
+            while (b != 0) 
+            {
+                sq = (byte)BoardUtils.getLeastSignificantBit(b);
+                b &= BoardUtils.squareBitX[sq];
+                if (!isPinningKing(sq, side)) 
+                    moveList.add(new Move(sq, chksq));
+            }
+
+            if (getEnPassantSquare() > -1) 
+            {
+                epsq = getEnPassantSquare();
+                if (epsq + (side == WHITE ? -8 : 8) == chksq) 
+                {
+                    b = BoardUtils.moveArray[xside == WHITE?PAWN:BPAWN][epsq] & p;
+                    while (b != 0) 
+                    {
+                        sq = (byte)BoardUtils.getLeastSignificantBit(b);
+                        b &= BoardUtils.squareBitX[sq];
+                        if (!isPinningKing(sq, side)) 
+                            moveList.add(new Move(sq, epsq));
+                    }
+                }
+            }
+
+            if (BoardUtils.slider[getSquareFigure(chksq)] == 1) 
+            {
+                c = BoardUtils.fromtoRay[kingsq][chksq] & BoardUtils.squareBitX[chksq];
+                while (c != 0) 
+                {
+                    sq = (byte)BoardUtils.getLeastSignificantBit(c);
+                    c &= BoardUtils.squareBitX[sq];
+                    b = getSquareAttackers(sq, side);
+                    b &= ~(pieces[side][KING] | p);
+
+                    if (side == WHITE && sq > H2) 
+                    {
+                        if ((BoardUtils.squareBit[sq - 8] & p) != 0) 
+                            b |= BoardUtils.squareBit[sq - 8];
+                        
+                        if (getSquareRank(sq) == 3 && squareSide[sq - 8] == NOSIDE && ((BoardUtils.squareBit[sq - 16] & p) != 0)) 
+                            b |= BoardUtils.squareBit[sq - 16];
+                    }
+                    if (side == BLACK && sq < H7) {
+                        if ((BoardUtils.squareBit[sq + 8] & p) != 0) 
+                            b |= BoardUtils.squareBit[sq + 8];
+                        if (getSquareRank(sq) == 4 && squareSide[sq + 8] == NOSIDE && ((BoardUtils.squareBit[sq + 16] & p) != 0)) 
+                            b |= BoardUtils.squareBit[sq + 16];
+                    }
+                    while (b != 0) 
+                    {
+                        sq1 = (byte)BoardUtils.getLeastSignificantBit(b);
+                        b &= BoardUtils.squareBitX[sq1];
+                        if (!isPinningKing(sq1, side)) 
+                            moveList.add(new Move(sq1, sq));
+                    }
+                }
+            }
+        }
+
+        if (checkers != 0) 
+            escapes = BoardUtils.moveArray[KING][kingsq] & ~friends[side];
+        
+        while (checkers != 0) 
+        {
+            chksq = (byte)BoardUtils.getLeastSignificantBit(checkers);
+            checkers &= BoardUtils.squareBitX[chksq];
+            dir = BoardUtils.directions[chksq][kingsq];
+            if (BoardUtils.slider[getSquareFigure(chksq)] == 1) 
+                escapes &= ~BoardUtils.ray[chksq][dir];
+        }
+        while (escapes != 0) 
+        {
+            sq = (byte)BoardUtils.getLeastSignificantBit(escapes);
+            escapes &= BoardUtils.squareBitX[sq];
+            if (!isSquareAttacked(sq, xside)) 
+                moveList.add(new Move(kingsq, sq));
+        }
+    }
+    
     public List<Move> getLegalMoves ()
     {
         List<Move> moveList = new ArrayList<Move>();
@@ -1190,6 +1295,28 @@ public class Board implements Disposable, Cloneable
             }
         }
         return atacks;
+    }
+    
+    private boolean isPinningKing (byte sq, byte side)
+    {
+        int xside;
+        int KingSq, dir, sq1;
+        long b;
+        KingSq = getKingSquare(side);
+        if ((dir = BoardUtils.directions[KingSq][sq]) == -1) 
+            return false;
+        xside = 1 ^ side;
+        if ((BoardUtils.fromtoRay[KingSq][sq] & BoardUtils.squareBitX[sq] & blocker) != 0) 
+            return false;
+        b = (BoardUtils.ray[KingSq][dir] ^ BoardUtils.fromtoRay[KingSq][sq]) & blocker;
+        if (b == 0) 
+            return false;
+        sq1 = (sq > KingSq ? BoardUtils.getLeastSignificantBit(b) : BoardUtils.getMostSignificantBit(b));
+        if (dir <= 3 && ((BoardUtils.squareBit[sq1] & (pieces[xside][QUEEN] | pieces[xside][BISHOP])) != 0)) 
+            return true;
+        if (dir >= 4 && ((BoardUtils.squareBit[sq1] & (pieces[xside][QUEEN] | pieces[xside][ROOK])) != 0)) 
+            return true;
+        return false;
     }
     
     public static byte getSquareRank (byte square)
