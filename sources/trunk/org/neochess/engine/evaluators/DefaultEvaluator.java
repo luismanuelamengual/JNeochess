@@ -26,35 +26,12 @@ public class DefaultEvaluator extends Evaluator
     private final static long[][] passedPawnMask = new long[2][64];
     private final static long[] isolaniPawnMask = new long[8];
     private final static long centerFiles = 0x000000FFFF000000L; 
-    private final static int[][] pawnSquareValue = 
-    {
-        {
-            0,  0,  0,  0,  0,  0,  0,  0,
-            5,  5,  5,-15,-15,  5,  5,  5,
-           -2, -2, -2,  6,  6, -2, -2, -2,
-            0,  0,  0, 25, 25,  0,  0,  0,
-            2,  2, 12, 16, 16, 12,  2,  2,
-            4,  8, 12, 16, 16, 12,  4,  4,
-            4,  8, 12, 16, 16, 12,  4,  4,
-            0,  0,  0,  0,  0,  0,  0,  0
-        },
-        {  
-            0,  0,  0,  0,  0,  0,  0,  0,
-            4,  8, 12, 16, 16, 12,  4,  4,
-            4,  8, 12, 16, 16, 12,  4,  4,
-            2,  2, 12, 16, 16, 12,  2,  2,
-            0,  0,  0, 25, 25,  0,  0,  0,
-           -2, -2, -2,  6,  6, -2, -2, -2,
-            5,  5,  5,-15,-15,  5,  5,  5,
-            0,  0,  0,  0,  0,  0,  0,  0
-        }
-    };
     
     private final static int[][] scorePawn = 
     {
         {  
             0,   0,   0,   0,   0,   0,   0,   0,
-            0,   0,   0, -40, -40,   0,   0,   0,
+            0,   0,   0, -30, -30,   0,   0,   0,
             1,   2,   3, -10, -10,   3,   2,   1,
             2,   4,   6,   8,   8,   6,   4,   2,
             3,   6,   9,  12,  12,   9,   6,   3,
@@ -69,7 +46,7 @@ public class DefaultEvaluator extends Evaluator
             3,   6,   9,  12,  12,   9,   6,   3,
             2,   4,   6,   8,   8,   6,   4,   2,
             1,   2,   3, -10, -10,   3,   2,   1,
-            0,   0,   0, -40, -40,   0,   0,   0,
+            0,   0,   0, -30, -30,   0,   0,   0,
             0,   0,   0,   0,   0,   0,   0,   0
         }
     };
@@ -399,7 +376,7 @@ public class DefaultEvaluator extends Evaluator
         {
             square = (byte)BoardUtils.getLeastSignificantBit(movers);
             movers &= BoardUtils.squareBitX[square];
-            score += pawnSquareValue[side][square];
+            score += scorePawn[side][square];
 
             //Verificar si es un peon pasado
             if ((xsidePawns & passedPawnMask[side][square]) == 0)
@@ -529,8 +506,7 @@ public class DefaultEvaluator extends Evaluator
             square = (byte)BoardUtils.getLeastSignificantBit(knights);
             knights &= BoardUtils.squareBitX[square];
             tempScore = evaluateControl(board,square,side);
-            if ( (BoardUtils.squareBit[square] & BoardUtils.rings[3]) != 0)
-                tempScore += getScore("SCORE_KNIGHTONRIM");
+            tempScore += scoreKnight[square];
             if (outpost[side][square] == 1 && ((enemyPawns & isolaniPawnMask[Board.getSquareFile(square)] & passedPawnMask[side][square]) == 0))
             {
                 tempScore += getScore("SCORE_OUTPOSTKNIGHT");
@@ -565,6 +541,7 @@ public class DefaultEvaluator extends Evaluator
             bishops &= BoardUtils.squareBitX[square];
             bishopCount++;
             tempScore = evaluateControl(board,square,side);
+            tempScore += scoreBishop[square];
             if (outpost[side][square] == 1 && (enemyPawns & isolaniPawnMask[Board.getSquareFile(square)] & passedPawnMask[side][square]) == 0)
             {
                 tempScore += getScore("SCORE_OUTPOSTBISHOP");
