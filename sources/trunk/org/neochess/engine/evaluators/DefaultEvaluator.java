@@ -16,6 +16,8 @@ public class DefaultEvaluator extends Evaluator
     private final static int[] isolaniWeakerFactor = { -2, -4, -6, -8, -8, -6, -4, -2 };  
     private final static long[] rootKnights = { 0x4200000000000000L, 0x0000000000000042L };
     private final static long[] rootBithops = { 0x2400000000000000L, 0x0000000000000024L };
+    private final static long[] rootRooks = { BoardUtils.squareBit[Board.A1] | BoardUtils.squareBit[Board.H1], BoardUtils.squareBit[Board.A8] | BoardUtils.squareBit[Board.H8] };
+    private final static long[] rootQueens = { BoardUtils.squareBit[Board.D1], BoardUtils.squareBit[Board.D8] };
     private final static long[] d2e2 = { 0x0018000000000000L, 0x0000000000001800L };
     private final static long[] rank7 = { 0x000000000000FF00L, 0x00FF000000000000L };
     private final static long[] rank8 = { 0x00000000000000FFL, 0xFF00000000000000L };
@@ -212,6 +214,7 @@ public class DefaultEvaluator extends Evaluator
         scores.put("SCORE_NOTCASTLED", -30);
         scores.put("SCORE_KINGMOVED", -20);
         scores.put("SCORE_EARLYQUEENMOVE", -50);
+        scores.put("SCORE_EARLYROOKMOVE", -50);
         scores.put("SCORE_EARLYMINORREPEAT", -15);
         scores.put("SCORE_EARLYCENTERPREPEAT", -12);
         scores.put("SCORE_EARLYWINGPAWNMOVE", -9);
@@ -335,9 +338,10 @@ public class DefaultEvaluator extends Evaluator
             if (piecesNotDeveloped > 0)
             {
                 score += (piecesNotDeveloped * getScore("SCORE_MINORNOTDEVELOPED"));
-                byte originalQueenSquare = side == Board.WHITE? Board.D1 : Board.D8;
-                if ((pieces[side][Board.QUEEN] & BoardUtils.squareBit[originalQueenSquare]) == 0)
+                if ((pieces[side][Board.QUEEN] & rootQueens[side]) == 0)
                     score += piecesNotDeveloped * getScore("SCORE_EARLYQUEENMOVE");
+                if ((pieces[side][Board.ROOK] & rootRooks[side]) == 0)
+                    score += piecesNotDeveloped * getScore("SCORE_EARLYROOKMOVE");
             }
             
             byte friendlyKing = kingSquare[side];
@@ -681,10 +685,18 @@ public class DefaultEvaluator extends Evaluator
         if (phase < 6) 
         {
             score += ((6 - phase) * scoreKing[square] + phase * scoreKingEnding[square]) / 6;
-            if (side == Board.WHITE) 
-                n = BoardUtils.getBitCount(BoardUtils.moveArray[Board.KING][square] & sidePawns & BoardUtils.rankBits[rank + 1]); 
+            
+            n = 0;
+            if (side == Board.WHITE)
+            {
+                if (rank < Board.RANK_8)
+                    n = BoardUtils.getBitCount(BoardUtils.moveArray[Board.KING][square] & sidePawns & BoardUtils.rankBits[rank + 1]); 
+            }
             else 
-                n = BoardUtils.getBitCount(BoardUtils.moveArray[Board.KING][square] & sidePawns & BoardUtils.rankBits[rank - 1]);
+            {
+                if (rank > Board.RANK_1)
+                    n = BoardUtils.getBitCount(BoardUtils.moveArray[Board.KING][square] & sidePawns & BoardUtils.rankBits[rank - 1]);
+            }
             score += pawncover[n];
 
             if ((BoardUtils.fileBits[file] & sidePawns) == 0) 
