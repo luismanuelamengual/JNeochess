@@ -112,7 +112,13 @@ public class MatchFrame extends InternalFrame implements ActionListener
             if (command != null)
             {
                 if (command.startsWith("chessset-"))
+                {
                     ((JRadioButtonMenuItem)menuItem).setSelected(boardPanel.getChessSet().equals(command.substring("chessset-".length())));
+                }
+                else if (command.startsWith("boardtype-"))
+                {
+                    ((JRadioButtonMenuItem)menuItem).setSelected(boardPanel.getSquareStyle() == Integer.parseInt(command.substring("boardtype-".length())));
+                }
             }
         }
     }
@@ -124,6 +130,11 @@ public class MatchFrame extends InternalFrame implements ActionListener
         if (action.startsWith("chessset-"))
         {
             boardPanel.setChessSet(action.substring("chessset-".length()));
+            updateMenuBar ();
+        }
+        else if (action.startsWith("boardtype-"))
+        {
+            boardPanel.setSquareStyle(Integer.parseInt(action.substring("boardtype-".length())));
             updateMenuBar ();
         }
         switch (action)
@@ -245,17 +256,17 @@ public class MatchFrame extends InternalFrame implements ActionListener
     {        
         JMenu menu = new JMenu("Change board type");
         menu.setActionCommand("chessset");
-        menu.add (createRadioButtonMenuItem("Solid", "boardtype-solid"));
-        menu.add (createRadioButtonMenuItem("horizontal Stripes", "boardtype-horizontalStripes"));
-        menu.add (createRadioButtonMenuItem("Vertical Stripes", "boardtype-verticalStripes"));
-        menu.add (createRadioButtonMenuItem("Horizontal Vertical Stripes", "boardtype-horizontalVerticalStripes"));
-        menu.add (createRadioButtonMenuItem("Diagonal Down", "boardtype-diagonalDown"));
-        menu.add (createRadioButtonMenuItem("Diagonal Up", "boardtype-diagonalUp"));
-        menu.add (createRadioButtonMenuItem("Squared", "boardtype-squared"));
-        menu.add (createRadioButtonMenuItem("Crossed", "boardtype-crossed"));
-        menu.add (createRadioButtonMenuItem("Horizontal Gradient", "boardtype-horizontalGradient"));
-        menu.add (createRadioButtonMenuItem("Vertica Gradient", "boardtype-verticalGradient"));
-        menu.add (createRadioButtonMenuItem("Diagonal Gradient", "boardtype-diagonalGradient"));
+        menu.add (createRadioButtonMenuItem("Solid", "boardtype-" + BoardPanel.SQUARESTYLE_PLAIN));
+        menu.add (createRadioButtonMenuItem("horizontal Stripes", "boardtype-" + BoardPanel.SQUARESTYLE_HORIZONTAL));
+        menu.add (createRadioButtonMenuItem("Vertical Stripes", "boardtype-" + BoardPanel.SQUARESTYLE_VERTICAL));
+        menu.add (createRadioButtonMenuItem("Horizontal Vertical Stripes", "boardtype-" + BoardPanel.SQUARESTYLE_MIXED));
+        menu.add (createRadioButtonMenuItem("Diagonal Down", "boardtype-" + BoardPanel.SQUARESTYLE_DIAGONALDOWN));
+        menu.add (createRadioButtonMenuItem("Diagonal Up", "boardtype-" + BoardPanel.SQUARESTYLE_DIAGONALUP));
+        menu.add (createRadioButtonMenuItem("Squared", "boardtype-" + BoardPanel.SQUARESTYLE_SQUARED));
+        menu.add (createRadioButtonMenuItem("Crossed", "boardtype-" + BoardPanel.SQUARESTYLE_CROSSED));
+        menu.add (createRadioButtonMenuItem("Horizontal Gradient", "boardtype-" + BoardPanel.SQUARESTYLE_HORIZONALGRADIENT));
+        menu.add (createRadioButtonMenuItem("VerticaL Gradient", "boardtype-" + BoardPanel.SQUARESTYLE_VERTICALGRADIENT));
+        menu.add (createRadioButtonMenuItem("Diagonal Gradient", "boardtype-" + BoardPanel.SQUARESTYLE_DIAGONALGRADIENT));
         return menu;
     }
     

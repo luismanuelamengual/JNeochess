@@ -126,6 +126,17 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         return this.chessSetManager.getChessSet();
     }
     
+    public void setSquareStyle (int squareStyle)
+    {
+        this.squareStyle = squareStyle;
+        update ();
+    }
+    
+    public int getSquareStyle ()
+    {
+        return squareStyle;
+    }
+    
     public void update ()
     {
         repaint();
