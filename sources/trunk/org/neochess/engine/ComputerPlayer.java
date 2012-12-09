@@ -47,44 +47,45 @@ public class ComputerPlayer extends Player
         
         if (bestMove == null)
         {
-            Clock clock = match.getTurnClock();
             long searchTime = 30000;
+            Clock clock = match.getTurnClock();
             if (clock != null)
             {
                 long remainingTime = clock.getRemainingTime();
-                if (remainingTime > 60000)
+                if (remainingTime < 120000)
                 {
-                    if (movesMade < 35)
-                    {
-                        long availiableTime = 75 * remainingTime / 100;
-                        int movesLimit = 35 - movesMade;
-                        searchTime = availiableTime / movesLimit;
-                    }
-                    else
-                    {
-                        searchTime = remainingTime / 15;
-                    }
+                    searchTime = remainingTime / 40;
+                    searchTime = Math.max(searchTime, 500);
                 }
                 else
                 {
-                    searchTime = remainingTime / 20;
+                    long elapsedTime = clock.getTime() - remainingTime;
+                    long availiableTime = 80 * clock.getTime() / 100;
+                    int maxMoveLimit = 40;
+                    if (movesMade < maxMoveLimit && elapsedTime < availiableTime)
+                    {
+                        int moveLimit = maxMoveLimit - movesMade;
+                        long timeLimit = availiableTime - elapsedTime;
+                        searchTime = timeLimit / moveLimit;
+                    }
+                    else
+                    {
+                        searchTime = elapsedTime / movesMade;
+                        
+                        Clock oppositeClock = match.getClock(Board.getOppositeSide(match.getSideToMove()));
+                        if (oppositeClock != null)
+                        {
+                            long timeDifference = remainingTime - oppositeClock.getRemainingTime();
+                            if (timeDifference > 0)
+                                searchTime += 20 * timeDifference / 100;
+                            else
+                                searchTime = 80 * searchTime / 100;
+                        }
+                        if (clock.getIncrement() > 0 && clock.getIncrement() < (remainingTime-searchTime))
+                            searchTime += clock.getIncrement();
+                    }
+                    searchTime = Math.max(searchTime, 2000);
                 }
-                
-                Clock oppositeClock = match.getClock(Board.getOppositeSide(match.getSideToMove()));
-                if (oppositeClock != null)
-                {
-                    long timeDifference = remainingTime - oppositeClock.getRemainingTime();
-                    if (timeDifference > 0)
-                        searchTime += 20 * timeDifference / 100;
-                    else if (timeDifference < -30000)
-                        searchTime = 80 * searchTime / 100;
-                }
-                if (clock.getIncrement() > 0 && clock.getIncrement() < (remainingTime-searchTime))
-                    searchTime += clock.getIncrement();
-                
-                if (searchTime < 50)
-                    searchTime = 50;
-                searchTime = (95 * searchTime) / 100;
             }
             bestMove = searchAgent.startSearch(board, searchTime);
         }
