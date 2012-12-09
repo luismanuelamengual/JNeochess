@@ -81,6 +81,26 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         matchFrame = null;
     }
 
+    public void setLightColor(Color lightColor) 
+    {
+        this.lightColor = lightColor;
+    }
+
+    public void setDarkColor(Color darkColor) 
+    {
+        this.darkColor = darkColor;
+    }
+
+    public Color getLightColor() 
+    {
+        return lightColor;
+    }
+
+    public Color getDarkColor() 
+    {
+        return darkColor;
+    }
+
     public boolean isHumanMoveEnabled ()
     {
         return humanMoveEnabled;

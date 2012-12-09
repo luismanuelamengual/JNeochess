@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import javax.swing.JColorChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -141,6 +142,12 @@ public class MatchFrame extends InternalFrame implements ActionListener
         {
             case "exit":
                 close();
+                break;
+            case "lightSquares":
+                boardPanel.setLightColor(JColorChooser.showDialog(this, "Select light squares color", boardPanel.getLightColor()));
+                break;
+            case "darkSquares":
+                boardPanel.setDarkColor(JColorChooser.showDialog(this, "Select dark squares color", boardPanel.getDarkColor()));
                 break;
         }
     }
