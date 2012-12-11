@@ -145,9 +145,23 @@ public class MatchFrame extends InternalFrame implements ActionListener
                 break;
             case "lightSquares":
                 boardPanel.setLightColor(JColorChooser.showDialog(this, "Select light squares color", boardPanel.getLightColor()));
+                boardPanel.update();
                 break;
             case "darkSquares":
                 boardPanel.setDarkColor(JColorChooser.showDialog(this, "Select dark squares color", boardPanel.getDarkColor()));
+                boardPanel.update();
+                break;
+            case "showMoveIndicator":
+                boardPanel.setShowSquareIndicator(!boardPanel.isShowSquareIndicator());
+                boardPanel.update();
+                break;
+            case "showLastMoveIndicator":
+                boardPanel.setShowCurrentMoveArrow(!boardPanel.isShowCurrentMoveArrow());
+                boardPanel.update();
+                break;
+            case "lastMoveIndicatorColor":
+                boardPanel.setCurrentMoveArrowColor(JColorChooser.showDialog(this, "Select move Indicator color", boardPanel.getCurrentMoveArrowColor()));
+                boardPanel.update();
                 break;
         }
     }
@@ -240,7 +254,7 @@ public class MatchFrame extends InternalFrame implements ActionListener
         menu.add (createMenuItem("Set dark square color", "darkSquares"));
         menu.add (createMenuItem("Show move indicator", "showMoveIndicator"));
         menu.add (createMenuItem("Show last move indicator", "showLastMoveIndicator"));
-        menu.add (createMenuItem("Set move indicator color", "moveIndicatorColor"));
+        menu.add (createMenuItem("Set last move indicator color", "lastMoveIndicatorColor"));
         menu.addSeparator();
         menu.add (createMenuItem("Board flipped", "boardFlipped"));
         menu.add (createMenuItem("Sounds enabled", "soundsEnabled"));

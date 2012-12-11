@@ -83,6 +83,36 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         matchFrame = null;
     }
 
+    public Color getCurrentMoveArrowColor() 
+    {
+        return currentMoveArrowColor;
+    }
+
+    public void setCurrentMoveArrowColor(Color currentMoveArrowColor) 
+    {
+        this.currentMoveArrowColor = currentMoveArrowColor;
+    }
+    
+    public boolean isShowCurrentMoveArrow() 
+    {
+        return showCurrentMoveArrow;
+    }
+
+    public void setShowCurrentMoveArrow(boolean showCurrentMoveArrow) 
+    {
+        this.showCurrentMoveArrow = showCurrentMoveArrow;
+    }
+
+    public boolean isShowSquareIndicator() 
+    {
+        return showSquareIndicator;
+    }
+
+    public void setShowSquareIndicator(boolean showSquareIndicator) 
+    {
+        this.showSquareIndicator = showSquareIndicator;
+    }
+
     public void setLightColor(Color lightColor) 
     {
         this.lightColor = lightColor;
