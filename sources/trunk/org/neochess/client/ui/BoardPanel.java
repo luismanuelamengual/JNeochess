@@ -2,6 +2,8 @@
 package org.neochess.client.ui;
 
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -20,7 +22,7 @@ import org.neochess.util.ColorUtils;
 import org.neochess.util.GraphicsUtils;
 import org.neochess.util.ResourceUtils;
 
-public class BoardPanel extends JPanel implements Disposable, MouseListener, MouseMotionListener, MatchFrame.MatchFrameListener
+public class BoardPanel extends JPanel implements Disposable, MouseListener, MouseMotionListener, ComponentListener, MatchFrame.MatchFrameListener
 {
     public static final int SQUARESTYLE_PLAIN = 0;
     public static final int SQUARESTYLE_HORIZONTAL = 1;
@@ -63,17 +65,17 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     { 
         this.matchFrame = matchFrame;
         this.matchFrame.addMatchFrameListener(this);
-        int panelWidth = boardDimension.width + Math.min ((boardPosition.x*2), 120);
-        int panelHeight = boardDimension.height + Math.min ((boardPosition.y*2), 120);  
-        setPreferredSize( new Dimension(panelWidth, panelHeight));
+        setPreferredSize(new Dimension(340, 340));
         setDoubleBuffered(true);
         addMouseListener (this);
         addMouseMotionListener (this);
+        addComponentListener(this);
     }
 
     @Override
     public void dispose()
     {
+        removeComponentListener(this);
         removeMouseListener (this);
         removeMouseMotionListener (this);
         removeAll();
@@ -164,7 +166,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
     
     @Override
     public void paint (Graphics screen)
-    {
+    {   
         Graphics2D screen2d = (Graphics2D)screen;
         screen2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         screen2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -571,9 +573,24 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         }
     }
     
+    @Override
+    public void componentResized(ComponentEvent e) 
+    {
+        Dimension dimension = this.getSize();
+        int boardBuffer = 30;
+        int preferredBoardSize = Math.min(dimension.height, dimension.width);
+        preferredBoardSize -= (boardBuffer * 2);
+        preferredBoardSize -= (preferredBoardSize % 8);
+        boardPosition = new Point(boardBuffer, boardBuffer);
+        boardDimension = new Dimension(preferredBoardSize, preferredBoardSize);
+    }
+    
     public void mouseClicked (MouseEvent evt) {}
     public void mouseEntered (MouseEvent evt) {}
     public void mouseExited (MouseEvent evt) {}
+    @Override public void componentMoved(ComponentEvent e) {}
+    @Override public void componentShown(ComponentEvent e) {}
+    @Override public void componentHidden(ComponentEvent e) {}
 
     public class ChessSetManager 
     {

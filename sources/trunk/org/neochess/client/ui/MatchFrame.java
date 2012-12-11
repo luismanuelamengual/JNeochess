@@ -236,7 +236,6 @@ public class MatchFrame extends InternalFrame implements ActionListener
         menu.setActionCommand("settings");
         menu.add (createChangeChesssetMenu());
         menu.add (createChangeBoardTypeMenu());
-        menu.add (createMenuItem("Change Board Size", "changeBoardSize"));
         menu.add (createMenuItem("Set light square color", "lightSquares"));
         menu.add (createMenuItem("Set dark square color", "darkSquares"));
         menu.add (createMenuItem("Show move indicator", "showMoveIndicator"));
