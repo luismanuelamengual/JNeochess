@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JColorChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -204,6 +205,14 @@ public class MatchFrame extends InternalFrame implements ActionListener
         return miNew;
     }
     
+    private JCheckBoxMenuItem createCheckboxMenuItem (String text, String actionCommand) 
+    {
+        JCheckBoxMenuItem miNew = new JCheckBoxMenuItem(text);
+        miNew.setActionCommand (actionCommand);
+        miNew.addActionListener(this);
+        return miNew;
+    }
+    
     private JRadioButtonMenuItem createRadioButtonMenuItem (String text, String ActionCommand) 
     {
         JRadioButtonMenuItem miNew = new JRadioButtonMenuItem(text);
@@ -252,12 +261,12 @@ public class MatchFrame extends InternalFrame implements ActionListener
         menu.add (createChangeBoardTypeMenu());
         menu.add (createMenuItem("Set light square color", "lightSquares"));
         menu.add (createMenuItem("Set dark square color", "darkSquares"));
-        menu.add (createMenuItem("Show move indicator", "showMoveIndicator"));
-        menu.add (createMenuItem("Show last move indicator", "showLastMoveIndicator"));
         menu.add (createMenuItem("Set last move indicator color", "lastMoveIndicatorColor"));
+        menu.add (createCheckboxMenuItem("Show move indicator", "showMoveIndicator"));
+        menu.add (createCheckboxMenuItem("Show last move indicator", "showLastMoveIndicator"));
         menu.addSeparator();
-        menu.add (createMenuItem("Board flipped", "boardFlipped"));
-        menu.add (createMenuItem("Sounds enabled", "soundsEnabled"));
+        menu.add (createCheckboxMenuItem("Board flipped", "boardFlipped"));
+        menu.add (createCheckboxMenuItem("Sounds enabled", "soundsEnabled"));
         return menu;
     }
     
