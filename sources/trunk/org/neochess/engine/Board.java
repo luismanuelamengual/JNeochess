@@ -344,6 +344,58 @@ public class Board implements Disposable, Cloneable
         castleState = WHITECASTLESHORT | WHITECASTLELONG | BLACKCASTLESHORT | BLACKCASTLELONG;
     }
     
+    public String getFenPosition ()
+    {
+        String fen = "";
+        for (byte rank = RANK_8; rank >= RANK_1; rank--)
+        {
+            for (byte file = FILE_A; file <= FILE_H; file++)
+            {
+                byte square = getSquare(file, rank);
+                byte piece = getPiece(square);
+                switch (piece)
+                {
+                    case EMPTY: 
+                        int spaceCounter = 1;
+                        while ((++file) <= FILE_H)
+                        {
+                            byte testSquare = getSquare(file, rank);
+                            if (getPiece(testSquare) == EMPTY)
+                                spaceCounter++;
+                            else
+                                break;
+                        }
+                        fen += String.valueOf(spaceCounter);
+                        file--;
+                        break;
+                    default:
+                        fen += getPieceChar(piece);
+                        break;
+                }
+            }
+            if (rank > RANK_1)
+                fen += "/";
+        }
+        
+        fen += " ";
+        fen += getSideToMove() == WHITE? "w" : "b";
+        fen += " ";
+        if (castleState != 0)
+        {
+            if ((castleState & WHITECASTLESHORT) > 0) fen += "K";
+            if ((castleState & WHITECASTLELONG) > 0) fen += "Q";
+            if ((castleState & BLACKCASTLESHORT) > 0) fen += "k";
+            if ((castleState & BLACKCASTLELONG) > 0) fen += "q";
+        }
+        else
+        {
+            fen += "-";
+        }
+        fen += " ";
+        fen += epSquare != INVALIDSQUARE? getSquareString(epSquare) : "-";
+        return fen;
+    }
+    
     public void setFenPosition (String fen) 
     {
         clear();
@@ -398,6 +450,9 @@ public class Board implements Disposable, Cloneable
                 c = fen.charAt(++i);
             }		
         }
+        
+        String remainingText = fen.substring(++i);
+        epSquare = (!remainingText.equals("-"))? getSquare(remainingText) : INVALIDSQUARE;
     }
 
     public long getBlocker ()
