@@ -343,6 +343,62 @@ public class Board implements Disposable, Cloneable
         epSquare = INVALIDSQUARE;
         castleState = WHITECASTLESHORT | WHITECASTLELONG | BLACKCASTLESHORT | BLACKCASTLELONG;
     }
+    
+    public void setFenPosition (String fen) 
+    {
+        clear();
+        byte i,s;
+        char c;
+        epSquare = INVALIDSQUARE;
+        i=0;
+        s=56;
+        c = fen.charAt(0);
+        while (c != ' ') 
+        {
+            switch (c) 
+            {
+                case '/': s-=16; break;
+                case '1': s+=1;  break;
+                case '2': s+=2;  break;
+                case '3': s+=3;  break;
+                case '4': s+=4;  break;
+                case '5': s+=5;  break;
+                case '6': s+=6;  break;
+                case '7': s+=7;  break;
+                case '8': s+=8;  break;		
+                case 'p': putPiece (s, BLACKPAWN); s++; break;
+                case 'n': putPiece (s, BLACKKNIGHT); s++; break;
+                case 'b': putPiece (s, BLACKBISHOP); s++; break;
+                case 'r': putPiece (s, BLACKROOK); s++; break;
+                case 'q': putPiece (s, BLACKQUEEN); s++; break;
+                case 'k': putPiece (s, BLACKKING); s++; break;
+                case 'P': putPiece (s, WHITEPAWN); s++; break;
+                case 'N': putPiece (s, WHITEKNIGHT); s++; break;
+                case 'B': putPiece (s, WHITEBISHOP); s++; break;
+                case 'R': putPiece (s, WHITEROOK); s++; break;
+                case 'Q': putPiece (s, WHITEQUEEN); s++; break;
+                case 'K': putPiece (s, WHITEKING); s++; break;        
+            }	
+            c = fen.charAt(++i);
+        }
+        c = fen.charAt(++i);
+        if (c == 'w') sideToMove = WHITE;	
+        else if (c == 'b') sideToMove = BLACK;	
+        i+=2;
+        castleState = 0;
+        if (i < fen.length()) 
+        {
+            c = fen.charAt(i);
+            while(c!=' ') 
+            {
+                if ( c == 'K') castleState |= WHITECASTLESHORT;
+                else if ( c == 'Q') castleState |= WHITECASTLELONG;
+                else if ( c == 'k') castleState |= BLACKCASTLESHORT;
+                else if ( c == 'q') castleState |= BLACKCASTLELONG;	
+                c = fen.charAt(++i);
+            }		
+        }
+    }
 
     public long getBlocker ()
     {
