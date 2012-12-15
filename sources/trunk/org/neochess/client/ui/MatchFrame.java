@@ -2,6 +2,7 @@
 package org.neochess.client.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -145,12 +146,20 @@ public class MatchFrame extends InternalFrame implements ActionListener
                 close();
                 break;
             case "lightSquares":
-                boardPanel.setLightColor(JColorChooser.showDialog(this, "Select light squares color", boardPanel.getLightColor()));
-                boardPanel.update();
+                Color lightSquaresColor = JColorChooser.showDialog(this, "Select light squares color", boardPanel.getLightColor());
+                if (lightSquaresColor != null)
+                {
+                    boardPanel.setLightColor(lightSquaresColor);
+                    boardPanel.update();
+                }
                 break;
             case "darkSquares":
-                boardPanel.setDarkColor(JColorChooser.showDialog(this, "Select dark squares color", boardPanel.getDarkColor()));
-                boardPanel.update();
+                Color darkSquaresColor = JColorChooser.showDialog(this, "Select dark squares color", boardPanel.getDarkColor());
+                if (darkSquaresColor != null)
+                {
+                    boardPanel.setDarkColor(darkSquaresColor);
+                    boardPanel.update();
+                }
                 break;
             case "showMoveIndicator":
                 boardPanel.setShowSquareIndicator(!boardPanel.isShowSquareIndicator());
@@ -161,8 +170,12 @@ public class MatchFrame extends InternalFrame implements ActionListener
                 boardPanel.update();
                 break;
             case "lastMoveIndicatorColor":
-                boardPanel.setCurrentMoveArrowColor(JColorChooser.showDialog(this, "Select move Indicator color", boardPanel.getCurrentMoveArrowColor()));
-                boardPanel.update();
+                Color moveIndicatorColor = JColorChooser.showDialog(this, "Select move Indicator color", boardPanel.getCurrentMoveArrowColor());
+                if (moveIndicatorColor != null)
+                {
+                    boardPanel.setCurrentMoveArrowColor(moveIndicatorColor);
+                    boardPanel.update();
+                }
                 break;
         }
     }
@@ -264,9 +277,7 @@ public class MatchFrame extends InternalFrame implements ActionListener
         menu.add (createMenuItem("Set last move indicator color", "lastMoveIndicatorColor"));
         menu.add (createCheckboxMenuItem("Show move indicator", "showMoveIndicator"));
         menu.add (createCheckboxMenuItem("Show last move indicator", "showLastMoveIndicator"));
-        menu.addSeparator();
         menu.add (createCheckboxMenuItem("Board flipped", "boardFlipped"));
-        menu.add (createCheckboxMenuItem("Sounds enabled", "soundsEnabled"));
         return menu;
     }
     
