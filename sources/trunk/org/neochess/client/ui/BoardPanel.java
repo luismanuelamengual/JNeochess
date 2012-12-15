@@ -292,6 +292,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
         }
         else 
         {
+            screen.setColor(Color.WHITE);
             for (int level = 1; level <= borderWidth; level++) 
                 screen.draw3DRect(boardPosition.x-level, boardPosition.y-level, boardDimension.width+(level*2), boardDimension.height+(level*2), true);
         }

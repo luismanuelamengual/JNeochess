@@ -123,6 +123,19 @@ public class MatchFrame extends InternalFrame implements ActionListener
                     ((JRadioButtonMenuItem)menuItem).setSelected(boardPanel.getSquareStyle() == Integer.parseInt(command.substring("boardtype-".length())));
                 }
             }
+            
+            switch (command)
+            {
+                case "showMoveIndicator":
+                    ((JCheckBoxMenuItem)menuItem).setSelected(boardPanel.isShowSquareIndicator());
+                    break;
+                case "showLastMoveIndicator":
+                    ((JCheckBoxMenuItem)menuItem).setSelected(boardPanel.isShowCurrentMoveArrow());
+                    break;
+                case "boardFlipped":
+                    ((JCheckBoxMenuItem)menuItem).setSelected(this.isBoardFlipped());
+                    break;
+            }
         }
     }
     
@@ -164,10 +177,12 @@ public class MatchFrame extends InternalFrame implements ActionListener
             case "showMoveIndicator":
                 boardPanel.setShowSquareIndicator(!boardPanel.isShowSquareIndicator());
                 boardPanel.update();
+                updateMenuBar ();
                 break;
             case "showLastMoveIndicator":
                 boardPanel.setShowCurrentMoveArrow(!boardPanel.isShowCurrentMoveArrow());
                 boardPanel.update();
+                updateMenuBar ();
                 break;
             case "lastMoveIndicatorColor":
                 Color moveIndicatorColor = JColorChooser.showDialog(this, "Select move Indicator color", boardPanel.getCurrentMoveArrowColor());
@@ -176,6 +191,11 @@ public class MatchFrame extends InternalFrame implements ActionListener
                     boardPanel.setCurrentMoveArrowColor(moveIndicatorColor);
                     boardPanel.update();
                 }
+                updateMenuBar ();
+                break;
+            case "boardFlipped":
+                setBoardFlipped(!isBoardFlipped());
+                updateMenuBar ();
                 break;
         }
     }
