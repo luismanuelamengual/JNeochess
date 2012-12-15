@@ -556,6 +556,7 @@ public class BoardPanel extends JPanel implements Disposable, MouseListener, Mou
 
     public void onMatchBoardFlipped (MatchFrame match, boolean flipped)
     {
+        boardFlipped = match.isBoardFlipped();
         update();
     }
     
