@@ -135,6 +135,24 @@ public class MatchFrame extends InternalFrame implements ActionListener
                 case "boardFlipped":
                     ((JCheckBoxMenuItem)menuItem).setSelected(this.isBoardFlipped());
                     break;
+                case "repeat":
+                    menuItem.setEnabled(match.getState() != Match.STATE_PLAYING && match.getState() != Match.STATE_NOTSTARTED);
+                    break;
+                case "rematch":
+                    menuItem.setEnabled(match.getState() != Match.STATE_PLAYING && match.getState() != Match.STATE_NOTSTARTED);
+                    break;
+                case "resign":
+                    menuItem.setEnabled(match.getState() == Match.STATE_PLAYING);
+                    break;
+                case "offerDraw":
+                    menuItem.setEnabled(match.getState() == Match.STATE_PLAYING);
+                    break;
+                case "forceMove":
+                    break;
+                case "suggestMove":
+                    break;
+                case "tackbackMove":
+                    break;
             }
         }
     }
@@ -196,6 +214,20 @@ public class MatchFrame extends InternalFrame implements ActionListener
             case "boardFlipped":
                 setBoardFlipped(!isBoardFlipped());
                 updateMenuBar ();
+                break;
+            case "repeat":
+                break;
+            case "rematch":
+                break;
+            case "resign":
+                break;
+            case "offerDraw":
+                break;
+            case "forceMove":
+                break;
+            case "suggestMove":
+                break;
+            case "tackbackMove":
                 break;
         }
     }
